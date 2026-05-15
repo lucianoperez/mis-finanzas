@@ -268,6 +268,10 @@
   .export-btn { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 7px 14px; border: 0.5px solid var(--border-md); background: var(--surface); border-radius: var(--radius); cursor: pointer; color: var(--text); transition: background 0.12s; }
   .export-btn:hover { background: var(--surface2); }
   .export-btn svg { flex-shrink: 0; }
+  .pw-wrap { position: relative; }
+  .pw-wrap input { padding-right: 40px; }
+  .pw-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text3); font-size: 18px; padding: 4px; line-height: 1; }
+  .pw-toggle:hover { color: var(--text); }
 </style>
 </head>
 <body>
@@ -286,11 +290,11 @@
     </div>
     <div class="form-group" id="auth-password-group">
       <label>Contraseña</label>
-      <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" />
+      <div class="pw-wrap"><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" /><button type="button" class="pw-toggle" data-target="auth-password" title="Mostrar contraseña">👁</button></div>
     </div>
     <div class="form-group" id="auth-password2-group" style="display:none;">
       <label>Repetir contraseña</label>
-      <input type="password" id="auth-password2" placeholder="••••••••" />
+      <div class="pw-wrap"><input type="password" id="auth-password2" placeholder="••••••••" /><button type="button" class="pw-toggle" data-target="auth-password2" title="Mostrar contraseña">👁</button></div>
     </div>
     <button id="auth-submit" class="btn-save" style="width:100%; padding:10px; font-size:14px; margin-top:4px;">Ingresar</button>
     <div style="text-align:center; margin-top:14px;">
@@ -815,6 +819,14 @@ function setAuthLoading(on) {
   document.getElementById('auth-loading').style.display = on ? '' : 'none';
   document.getElementById('auth-submit').disabled = on;
 }
+
+document.querySelectorAll('.pw-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const inp = document.getElementById(btn.dataset.target);
+    if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; btn.title = 'Ocultar contraseña'; }
+    else { inp.type = 'password'; btn.textContent = '👁'; btn.title = 'Mostrar contraseña'; }
+  });
+});
 
 document.getElementById('auth-toggle').addEventListener('click', () => {
   _isRegister = !_isRegister;
