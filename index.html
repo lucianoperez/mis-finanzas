@@ -2033,7 +2033,7 @@ function getAllItems() {
 
 function highlight(text, query) {
   if (!query) return text;
-  const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\]/g,'\$&') + ')', 'gi');
+  const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
   return text.replace(re, '<span class="search-highlight">$1</span>');
 }
 
