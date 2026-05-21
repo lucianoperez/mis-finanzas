@@ -1517,6 +1517,10 @@ function switchSection(id){
   const sec=document.getElementById('section-'+id);if(sec)sec.classList.add('active');
   if(id==='resumen'){const at=document.querySelector('#resumen-tabs .nav-tab.active'),v=at?at.dataset.view:'resumen';if(v==='resumen')renderResumen();else if(v==='comparativo')renderComparativo();else if(v==='analisis')setTimeout(renderAnalisis,50);}
   if(id==='tarjetas')renderCardConfig();
+  // Panel de distribución solo en Gestión mensual
+  const distBtn=document.getElementById('dist-toggle-btn');
+  if(distBtn){distBtn.style.display=id==='mensual'?'':'none';}
+  if(id!=='mensual')toggleDistPanel(false);
 }
 document.querySelectorAll('.sidebar-item').forEach(item=>item.addEventListener('click',()=>switchSection(item.dataset.section)));
 
