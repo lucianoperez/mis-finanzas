@@ -288,6 +288,18 @@
   .dist-color-bar { display:flex; flex-direction:column; gap:2px; width:6px; height:44px; }
   .dist-color-bar span { border-radius:2px; flex-shrink:0; }
 
+  /* ── ADMIN PANEL ─────────────────────────────────────── */
+  .admin-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .admin-table th { text-align:left; font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.6px; padding:10px 14px; border-bottom:0.5px solid var(--border); white-space:nowrap; }
+  .admin-table td { padding:10px 14px; border-bottom:0.5px solid var(--border); vertical-align:middle; }
+  .admin-table tr:last-child td { border-bottom:none; }
+  .admin-badge { display:inline-flex; align-items:center; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:600; }
+  .admin-badge.active { background:var(--green-bg); color:var(--green); }
+  .admin-badge.banned { background:var(--red-bg); color:var(--red); }
+  .admin-action-btn { font-size:11px; padding:3px 10px; border-radius:6px; border:0.5px solid var(--border-md); background:none; cursor:pointer; font-family:inherit; transition:opacity 0.12s; }
+  .admin-action-btn:hover { opacity:0.75; }
+  .admin-action-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
   /* ── MODALS ──────────────────────────────────────────── */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
   .modal-overlay.open { display: flex; }
@@ -512,6 +524,10 @@
       <button class="sidebar-item" data-section="tarjetas" title="Tarjetas">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         <span class="sidebar-label">Tarjetas</span>
+      </button>
+      <button class="sidebar-item" id="admin-nav-btn" data-section="admin" title="Admin" style="display:none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span class="sidebar-label">Admin</span>
       </button>
     </div>
 
@@ -756,6 +772,43 @@
       </div>
     </section>
 
+    <!-- ══ SECCIÓN 4: ADMIN ═══════════════════════════════════════════ -->
+    <section id="section-admin" class="app-section">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title">Panel de administración</h1>
+          <p class="section-sub">Usuarios registrados en la plataforma</p>
+        </div>
+        <div class="section-header-right">
+          <button id="admin-refresh-btn" class="add-btn" style="font-size:12px;padding:5px 14px;">↻ Actualizar</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Usuarios</span>
+          <span id="admin-user-count" style="font-size:12px;color:var(--text3);"></span>
+        </div>
+        <div style="padding:0;overflow-x:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Registrado</th>
+                <th>Último acceso</th>
+                <th>Confirmado</th>
+                <th>Estado</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-tbody">
+              <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:28px;">Cargando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -925,8 +978,8 @@ if(!state.recurring)state.recurring=[];
 
 // ── AUTH ─────────────────────────────────────────────────────────────
 let _isRegister=false;
-function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('main-app').style.display='none';toggleDistPanel(false);document.getElementById('dist-toggle-btn').style.display='none';document.getElementById('dist-panel').style.display='none';}
-function showApp(email){document.getElementById('login-screen').style.display='none';document.getElementById('main-app').style.display='';document.getElementById('dist-toggle-btn').style.display='';document.getElementById('dist-panel').style.display='';const el=document.getElementById('auth-user-email');if(el)el.textContent=email||'';}
+function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('main-app').style.display='none';toggleDistPanel(false);document.getElementById('dist-toggle-btn').style.display='none';document.getElementById('dist-panel').style.display='none';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display='none';}
+function showApp(email){document.getElementById('login-screen').style.display='none';document.getElementById('main-app').style.display='';document.getElementById('dist-toggle-btn').style.display='';document.getElementById('dist-panel').style.display='';const el=document.getElementById('auth-user-email');if(el)el.textContent=email||'';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display=(email===ADMIN_EMAIL)?'':'none';}
 function setAuthError(m){const el=document.getElementById('login-error');el.textContent=m;el.style.display=m?'':'none';}
 function setAuthLoading(on){document.getElementById('auth-loading').style.display=on?'':'none';document.getElementById('auth-submit').disabled=on;}
 document.querySelectorAll('.pw-toggle').forEach(btn=>{btn.addEventListener('click',()=>{const inp=document.getElementById(btn.dataset.target);if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁';}});});
@@ -1508,6 +1561,51 @@ document.getElementById('save-saving').addEventListener('click',()=>{
 });
 
 // ══════════════════════════════════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════════════════════════════════
+const ADMIN_EMAIL='luciano.v.perez@hotmail.com';
+const EDGE_FN_URL=SUPABASE_URL+'/functions/v1/admin-users';
+
+async function adminLoadUsers(){
+  const tbody=document.getElementById('admin-users-tbody');
+  const countEl=document.getElementById('admin-user-count');
+  if(!tbody)return;
+  tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:28px;">Cargando…</td></tr>';
+  try{
+    const r=await fetch(EDGE_FN_URL,{headers:{'Authorization':'Bearer '+_accessToken,'apikey':SUPABASE_ANON}});
+    if(!r.ok){const e=await r.json().catch(()=>({}));tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--red);padding:28px;">Error: '+(e.error||r.status)+'</td></tr>';return;}
+    const data=await r.json();
+    const users=(data.users||[]).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    if(countEl)countEl.textContent=users.length+' usuario'+(users.length!==1?'s':'');
+    if(!users.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:28px;">Sin usuarios registrados.</td></tr>';return;}
+    const fmt=d=>d?new Date(d).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+    tbody.innerHTML=users.map(u=>{
+      const banned=u.banned_until&&new Date(u.banned_until)>new Date();
+      const confirmed=!!u.email_confirmed_at;
+      const isMe=u.id===_userId;
+      const badge=banned?'<span class="admin-badge banned">Baneado</span>':'<span class="admin-badge active">Activo</span>';
+      const confBadge=confirmed?'<span style="color:var(--green);font-size:12px;">✓</span>':'<span style="color:var(--text3);font-size:12px;">✗</span>';
+      const actionBtn=isMe
+        ?'<span style="font-size:11px;color:var(--text3);">Sos vos</span>'
+        :`<button class="admin-action-btn" data-id="${u.id}" data-action="${banned?'unban':'ban'}" style="color:${banned?'var(--green)':'var(--red);'};">${banned?'Desbanear':'Banear'}</button>`;
+      return`<tr><td>${u.email||'—'}</td><td>${fmt(u.created_at)}</td><td>${fmt(u.last_sign_in_at)}</td><td style="text-align:center;">${confBadge}</td><td>${badge}</td><td>${actionBtn}</td></tr>`;
+    }).join('');
+    tbody.querySelectorAll('.admin-action-btn').forEach(btn=>{
+      btn.addEventListener('click',async()=>{
+        const uid=btn.dataset.id,act=btn.dataset.action;
+        btn.disabled=true;btn.textContent='…';
+        const res=await fetch(EDGE_FN_URL,{method:'POST',headers:{'Authorization':'Bearer '+_accessToken,'apikey':SUPABASE_ANON,'Content-Type':'application/json'},body:JSON.stringify({userId:uid,action:act})});
+        if(res.ok){await adminLoadUsers();}else{btn.disabled=false;btn.textContent=act==='ban'?'Banear':'Desbanear';alert('Error al actualizar el usuario.');}
+      });
+    });
+  }catch(err){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--red);padding:28px;">Error de conexión.</td></tr>';
+  }
+}
+
+document.getElementById('admin-refresh-btn').addEventListener('click',adminLoadUsers);
+
+// ══════════════════════════════════════════════════════════════════════
 // NAVEGACIÓN LATERAL
 // ══════════════════════════════════════════════════════════════════════
 function switchSection(id){
@@ -1517,6 +1615,7 @@ function switchSection(id){
   const sec=document.getElementById('section-'+id);if(sec)sec.classList.add('active');
   if(id==='resumen'){const at=document.querySelector('#resumen-tabs .nav-tab.active'),v=at?at.dataset.view:'resumen';if(v==='resumen')renderResumen();else if(v==='comparativo')renderComparativo();else if(v==='analisis')setTimeout(renderAnalisis,50);}
   if(id==='tarjetas')renderCardConfig();
+  if(id==='admin')adminLoadUsers();
   // Panel de distribución solo en Gestión mensual
   const distBtn=document.getElementById('dist-toggle-btn');
   if(distBtn){distBtn.style.display=id==='mensual'?'':'none';}
