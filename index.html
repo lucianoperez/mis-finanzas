@@ -280,6 +280,14 @@
   .group-header .gtotal     { color: var(--cc-text); }
   .item-colored             { border-left-color: var(--cc-border); background: var(--cc-item-bg); }
 
+  /* ── DIST PANEL ─────────────────────────────────────── */
+  .dist-panel { position:fixed; top:0; right:-280px; width:260px; height:100vh; background:var(--surface); border-left:0.5px solid var(--border-md); box-shadow:-8px 0 32px rgba(0,0,0,0.25); z-index:150; display:flex; flex-direction:column; transition:right 0.25s cubic-bezier(.4,0,.2,1); padding:20px 16px; box-sizing:border-box; }
+  .dist-panel.open { right:0; }
+  .dist-toggle-btn { position:fixed; top:50%; right:0; transform:translateY(-50%); background:var(--surface); border:0.5px solid var(--border-md); border-right:none; border-radius:8px 0 0 8px; padding:10px 9px; cursor:pointer; z-index:151; display:flex; align-items:center; box-shadow:-4px 0 12px rgba(0,0,0,0.15); transition:right 0.25s cubic-bezier(.4,0,.2,1); }
+  .dist-toggle-btn.panel-open { right:260px; }
+  .dist-color-bar { display:flex; flex-direction:column; gap:2px; width:6px; height:44px; }
+  .dist-color-bar span { border-radius:2px; flex-shrink:0; }
+
   /* ── MODALS ──────────────────────────────────────────── */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
   .modal-overlay.open { display: flex; }
@@ -917,8 +925,8 @@ if(!state.recurring)state.recurring=[];
 
 // ── AUTH ─────────────────────────────────────────────────────────────
 let _isRegister=false;
-function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('main-app').style.display='none';}
-function showApp(email){document.getElementById('login-screen').style.display='none';document.getElementById('main-app').style.display='';const el=document.getElementById('auth-user-email');if(el)el.textContent=email||'';}
+function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('main-app').style.display='none';toggleDistPanel(false);document.getElementById('dist-toggle-btn').style.display='none';document.getElementById('dist-panel').style.display='none';}
+function showApp(email){document.getElementById('login-screen').style.display='none';document.getElementById('main-app').style.display='';document.getElementById('dist-toggle-btn').style.display='';document.getElementById('dist-panel').style.display='';const el=document.getElementById('auth-user-email');if(el)el.textContent=email||'';}
 function setAuthError(m){const el=document.getElementById('login-error');el.textContent=m;el.style.display=m?'':'none';}
 function setAuthLoading(on){document.getElementById('auth-loading').style.display=on?'':'none';document.getElementById('auth-submit').disabled=on;}
 document.querySelectorAll('.pw-toggle').forEach(btn=>{btn.addEventListener('click',()=>{const inp=document.getElementById(btn.dataset.target);if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁';}});});
@@ -1066,8 +1074,56 @@ document.addEventListener('click',e=>{
 });
 
 // ── RENDER ALL ───────────────────────────────────────────────────────
+const DIST_COLORS=['#5DCAA5','#F59E0B','#818CF8','#F0997B','#34D399','#FB923C','#60A5FA','#A78BFA'];
+function renderDistPanel(){
+  const md=getMonthData(state.currentYear,state.currentMonth);
+  const grupos={};
+  md.egresos.forEach(e=>{
+    const key=e.tipo==='tarjeta'?(e.card||'Tarjeta'):e.tipo==='fijo'?'Gastos fijos':'Efectivo';
+    grupos[key]=(grupos[key]||0)+Number(e.monto);
+  });
+  const labels=Object.keys(grupos),data=Object.values(grupos);
+  const totalEg=data.reduce((a,b)=>a+b,0);
+  const totalIng=md.ingresos.reduce((a,e)=>a+Number(e.monto),0);
+  const colors=labels.map((_,i)=>DIST_COLORS[i%DIST_COLORS.length]);
+  document.getElementById('dist-panel-title').textContent='Distribución · '+MONTHS[state.currentMonth]+' '+state.currentYear;
+  document.getElementById('dist-total-eg').textContent='$'+totalEg.toLocaleString('es-AR');
+  document.getElementById('dist-total-ing').textContent='$'+totalIng.toLocaleString('es-AR');
+  const chartEl=document.getElementById('dist-chart');
+  if(totalEg>0){
+    NativeChart.doughnut('dist-chart',labels,data,colors);
+    const svg=chartEl.querySelector('svg');
+    if(svg)svg.querySelectorAll('rect, text').forEach(el=>el.remove());
+  } else {
+    chartEl.innerHTML='<div style="height:200px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;">Sin egresos este mes</div>';
+  }
+  const legend=document.getElementById('dist-legend');
+  legend.innerHTML='';
+  labels.forEach((lbl,i)=>{
+    const pct=Math.round(data[i]/totalEg*100);
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;';
+    row.innerHTML=`<span style="width:11px;height:11px;border-radius:3px;background:${colors[i]};flex-shrink:0;"></span><span style="font-size:13px;color:var(--text1);flex:1;">${lbl}</span><span style="font-size:12px;color:var(--text2);">$${data[i].toLocaleString('es-AR')}</span><span style="font-size:11px;font-weight:600;color:${colors[i]};background:${colors[i]}22;padding:2px 6px;border-radius:4px;">${pct}%</span>`;
+    legend.appendChild(row);
+  });
+  const bar=document.getElementById('dist-color-bar');
+  bar.innerHTML='';
+  labels.forEach((lbl,i)=>{
+    const h=Math.max(2,Math.round((data[i]/Math.max(totalEg,1))*44));
+    const seg=document.createElement('span');
+    seg.style.cssText=`height:${h}px;background:${colors[i]};`;
+    bar.appendChild(seg);
+  });
+}
+let _distOpen=false;
+function toggleDistPanel(force){
+  _distOpen=force!==undefined?force:!_distOpen;
+  document.getElementById('dist-panel').classList.toggle('open',_distOpen);
+  document.getElementById('dist-toggle-btn').classList.toggle('panel-open',_distOpen);
+}
+
 function renderAll(){
-  renderMonthLabel();renderCards();renderLists();renderSummary();renderSavings();
+  renderMonthLabel();renderCards();renderLists();renderSummary();renderSavings();renderDistPanel();
   const rs=document.getElementById('section-resumen');
   if(rs&&rs.classList.contains('active')){
     if(document.getElementById('view-resumen').style.display!=='none')renderResumen();
@@ -1285,10 +1341,14 @@ document.getElementById('save-edit-ingreso').addEventListener('click',()=>{
 });
 document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));
+  if(e.key==='Escape'){document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));toggleDistPanel(false);}
   if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();doUndo();}
 });
-// undo-btn listener handled via document delegation (element rendered after script tag)
+// undo-btn y dist panel listeners via delegation (elementos renderizados después del script tag)
+document.addEventListener('click',e=>{
+  if(e.target.id==='dist-toggle-btn'||e.target.closest('#dist-toggle-btn'))toggleDistPanel();
+  if(e.target.id==='dist-panel-close')toggleDistPanel(false);
+});
 
 // ── NATIVE CHART ENGINE ──────────────────────────────────────────────
 const NativeChart={
@@ -1516,6 +1576,29 @@ document.getElementById('save-rename-card').addEventListener('click',()=>{
   });
 })();
 </script>
+<!-- ── DIST PANEL ────────────────────────────────────── -->
+<div class="dist-panel" id="dist-panel" style="display:none;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <span id="dist-panel-title" style="font-size:12px;font-weight:600;color:var(--text2);letter-spacing:0.4px;text-transform:uppercase;">Distribución</span>
+    <button id="dist-panel-close" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;padding:2px 4px;">×</button>
+  </div>
+  <div id="dist-chart" style="width:100%;height:200px;"></div>
+  <div id="dist-legend" style="display:flex;flex-direction:column;gap:10px;margin-top:18px;"></div>
+  <div style="margin-top:auto;padding-top:16px;border-top:0.5px solid var(--border-md);display:flex;flex-direction:column;gap:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;">
+      <span style="font-size:11px;color:var(--text3);">Total egresos</span>
+      <span id="dist-total-eg" style="font-size:18px;font-weight:700;color:var(--red);"></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;">
+      <span style="font-size:11px;color:var(--text3);">Total ingresos</span>
+      <span id="dist-total-ing" style="font-size:18px;font-weight:700;color:#5DCAA5;"></span>
+    </div>
+  </div>
+</div>
+<button class="dist-toggle-btn" id="dist-toggle-btn" style="display:none;">
+  <div class="dist-color-bar" id="dist-color-bar"></div>
+</button>
+
 <div class="undo-toast" id="undo-toast">
   <span class="undo-toast-msg" id="undo-toast-msg">Eliminado</span>
   <button class="undo-action-btn" id="undo-btn">↩ Deshacer</button>
