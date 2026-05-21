@@ -149,7 +149,24 @@
   .section-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
   /* ── MONTH NAV ───────────────────────────────────────── */
-  .month-nav { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 6px 10px; }
+  .month-nav { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 6px 10px; position: relative; }
+  .month-label { cursor: pointer; }
+  .month-label:hover { color: var(--blue); }
+  .month-picker-popup { position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%); background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; box-shadow:0 8px 28px rgba(0,0,0,0.22); z-index:300; width:212px; display:none; }
+  .month-picker-popup.open { display:block; }
+  .mp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .mp-header button { background:none; border:none; cursor:pointer; color:var(--text2); font-size:20px; padding:0 6px; line-height:1; }
+  .mp-header button:hover { color:var(--text1); }
+  .mp-header span { font-weight:600; color:var(--text1); font-size:14px; }
+  .mp-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; }
+  .mp-btn { padding:7px 2px; border:none; border-radius:6px; cursor:pointer; background:none; color:var(--text2); font-size:12px; font-weight:500; text-transform:capitalize; }
+  .mp-btn:hover { background:var(--surface3); color:var(--text1); }
+  .mp-btn.active { background:var(--blue); color:#fff; }
+  .undo-toast { position:fixed; bottom:76px; left:50%; transform:translateX(-50%); background:#222; color:#fff; padding:10px 14px 10px 18px; border-radius:10px; display:flex; align-items:center; gap:14px; z-index:500; box-shadow:0 4px 20px rgba(0,0,0,0.35); opacity:0; pointer-events:none; transition:opacity 0.18s; white-space:nowrap; }
+  .undo-toast.visible { opacity:1; pointer-events:auto; }
+  .undo-toast-msg { font-size:13px; }
+  .undo-action-btn { background:var(--blue); border:none; color:#fff; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600; }
+  .undo-action-btn:hover { opacity:0.85; }
   .month-btn { width: 30px; height: 30px; border: 0.5px solid var(--border-md); background: var(--surface2); border-radius: var(--radius); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; color: var(--text); transition: background 0.12s; }
   .month-btn:hover { background: var(--border); }
   .month-label { font-size: 15px; font-weight: 600; min-width: 160px; text-align: center; color: var(--text); }
@@ -491,6 +508,14 @@
             <button class="month-btn" id="prev-month">&#8249;</button>
             <span class="month-label" id="month-label"></span>
             <button class="month-btn" id="next-month">&#8250;</button>
+            <div class="month-picker-popup" id="month-picker">
+              <div class="mp-header">
+                <button id="mp-prev-year">&#8249;</button>
+                <span id="mp-year"></span>
+                <button id="mp-next-year">&#8250;</button>
+              </div>
+              <div class="mp-grid" id="mp-grid"></div>
+            </div>
           </div>
           <div class="export-bar">
             <button class="export-btn" id="export-excel">
@@ -973,6 +998,50 @@ function renderSavingsResumen(){
   tbody.innerHTML=html;
 }
 
+// ── UNDO ────────────────────────────────────────────────────────────
+let _undoEntry=null,_undoTimer=null;
+function pushUndo(action,label){
+  _undoEntry=action;
+  if(_undoTimer)clearTimeout(_undoTimer);
+  document.getElementById('undo-toast-msg').textContent=label||'Acción realizada';
+  document.getElementById('undo-toast').classList.add('visible');
+  _undoTimer=setTimeout(clearUndo,5000);
+}
+function clearUndo(){
+  _undoEntry=null;
+  document.getElementById('undo-toast').classList.remove('visible');
+  if(_undoTimer){clearTimeout(_undoTimer);_undoTimer=null;}
+}
+function doUndo(){
+  if(!_undoEntry)return;const a=_undoEntry;clearUndo();
+  if(a.type==='del-eg')getMonthData(a.y,a.m).egresos.splice(a.idx,0,a.item);
+  else if(a.type==='del-ing')getMonthData(a.y,a.m).ingresos.splice(a.idx,0,a.item);
+  else if(a.type==='del-rec')state.recurring.push(a.item);
+  else if(a.type==='edit-eg')getMonthData(a.y,a.m).egresos[a.idx]=a.prev;
+  else if(a.type==='edit-ing')getMonthData(a.y,a.m).ingresos[a.idx]=a.prev;
+  renderAll();
+}
+
+// ── MONTH PICKER ────────────────────────────────────────────────────
+let _mpYear=new Date().getFullYear();
+function renderMPGrid(){
+  document.getElementById('mp-year').textContent=_mpYear;
+  const grid=document.getElementById('mp-grid');
+  grid.innerHTML=MSHORT.map((s,i)=>`<button class="mp-btn${_mpYear===state.currentYear&&i===state.currentMonth?' active':''}" data-m="${i}">${s}</button>`).join('');
+  grid.querySelectorAll('.mp-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.currentYear=_mpYear;state.currentMonth=+b.dataset.m;renderAll();closeMP();}));
+}
+function openMP(){_mpYear=state.currentYear;renderMPGrid();document.getElementById('month-picker').classList.add('open');}
+function closeMP(){document.getElementById('month-picker').classList.remove('open');}
+let _mpJustOpened=false;
+document.getElementById('month-label').addEventListener('click',e=>{e.stopPropagation();if(document.getElementById('month-picker').classList.contains('open')){closeMP();}else{openMP();_mpJustOpened=true;}});
+document.getElementById('mp-prev-year').addEventListener('click',e=>{e.stopPropagation();_mpYear--;renderMPGrid();});
+document.getElementById('mp-next-year').addEventListener('click',e=>{e.stopPropagation();_mpYear++;renderMPGrid();});
+document.addEventListener('click',e=>{
+  if(e.target.id==='undo-btn'){doUndo();return;}
+  if(_mpJustOpened){_mpJustOpened=false;return;}
+  closeMP();
+});
+
 // ── RENDER ALL ───────────────────────────────────────────────────────
 function renderAll(){
   renderMonthLabel();renderCards();renderLists();renderSummary();renderSavings();
@@ -1032,8 +1101,8 @@ function renderLists(){
     Object.keys(tarjetas).forEach(card=>{if(!tarjetas[card].length)return;const cc=cardColorClass(card);html+='<div class="group-header '+cc+'"><span class="gname">Tarjeta '+card+'</span><span class="gtotal">'+fmt(tarjetas[card].reduce((a,x)=>a+ +x.monto,0))+'</span></div>';tarjetas[card].forEach(e=>{const ir=!!e.id;html+=itemHTML(e,cc,ir?-1:md.egresos.indexOf(e),ir);});});
     if(allEfec.length){html+='<div class="group-header cc-efec"><span class="gname">Efectivo</span><span class="gtotal">'+fmt(allEfec.reduce((a,x)=>a+ +x.monto,0))+'</span></div>';allEfec.forEach(e=>{const ir=!!e.id;html+=itemHTML(e,'cc-efec',ir?-1:md.egresos.indexOf(e),ir);});}
     eList.innerHTML=html;
-    eList.querySelectorAll('.del-normal').forEach(b=>{b.addEventListener('click',()=>{md.egresos.splice(+b.dataset.idx,1);renderAll();});});
-    eList.querySelectorAll('.del-rec').forEach(b=>{b.addEventListener('click',()=>{if(confirm('¿Eliminar TODAS las cuotas de este gasto?')){state.recurring=state.recurring.filter(r=>r.id!==b.dataset.rid);renderAll();}});});
+    eList.querySelectorAll('.del-normal').forEach(b=>{b.addEventListener('click',()=>{const idx=+b.dataset.idx;pushUndo({type:'del-eg',y:state.currentYear,m:state.currentMonth,idx,item:{...md.egresos[idx]}},'Egreso eliminado');md.egresos.splice(idx,1);renderAll();});});
+    eList.querySelectorAll('.del-rec').forEach(b=>{b.addEventListener('click',()=>{if(confirm('¿Eliminar TODAS las cuotas de este gasto?')){const rec=state.recurring.find(r=>r.id===b.dataset.rid);if(rec)pushUndo({type:'del-rec',item:{...rec}},'Cuotas eliminadas');state.recurring=state.recurring.filter(r=>r.id!==b.dataset.rid);renderAll();}});});
     eList.querySelectorAll('.edit-eg').forEach(b=>{b.addEventListener('click',()=>openEditEgreso(state.currentYear,state.currentMonth,+b.dataset.idx));});
     eList.querySelectorAll('.edit-rec').forEach(b=>{b.addEventListener('click',()=>openEditRecurring(b.dataset.rid));});
     eList.querySelectorAll('.pagar-eg').forEach(b=>{b.addEventListener('click',()=>{md.egresos[+b.dataset.idx].pendiente=false;renderAll();});});
@@ -1046,7 +1115,7 @@ function renderLists(){
       const tagsHtml=(ing.tags||[]).map(t=>tagChipHTML(t)).join('');
       return'<div class="item"><div class="item-left"><span class="item-name">'+ing.desc+fechaHtml+'</span><span>'+badge+'</span>'+(tagsHtml?'<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;">'+tagsHtml+'</div>':'')+'</div><div class="item-right"><span class="item-amount ingreso">+'+fmt(ing.monto)+'</span><button class="edit-btn edit-ing" data-idx="'+idx+'">✎</button><button class="del-btn" data-idx="'+idx+'">×</button></div></div>';
     }).join('');
-    iList.querySelectorAll('.del-btn').forEach(b=>{b.addEventListener('click',()=>{md.ingresos.splice(+b.dataset.idx,1);renderAll();});});
+    iList.querySelectorAll('.del-btn').forEach(b=>{b.addEventListener('click',()=>{const idx=+b.dataset.idx;pushUndo({type:'del-ing',y:state.currentYear,m:state.currentMonth,idx,item:{...md.ingresos[idx]}},'Ingreso eliminado');md.ingresos.splice(idx,1);renderAll();});});
     iList.querySelectorAll('.edit-ing').forEach(b=>{b.addEventListener('click',()=>openEditIngreso(state.currentYear,state.currentMonth,+b.dataset.idx));});
   }
   const recT=recItems.reduce((a,x)=>a+ +x.monto,0),egT=md.egresos.reduce((a,x)=>a+ +x.monto,0)+recT,ingT=md.ingresos.reduce((a,x)=>a+ +x.monto,0);
@@ -1179,18 +1248,24 @@ document.getElementById('save-edit-egreso').addEventListener('click',()=>{
   const desc=document.getElementById('edit-eg-desc').value.trim(),monto=parseFloat(document.getElementById('edit-eg-monto').value);if(!desc||isNaN(monto)||monto<=0)return;
   const {dia,mes}=parseDateInput(document.getElementById('edit-eg-fecha').value);
   const isPendiente=document.getElementById('edit-eg-pendiente').checked;
-  if(_editEgRid){const ri=state.recurring.findIndex(r=>r.id===_editEgRid);if(ri>=0){const cuotas=parseInt(document.getElementById('edit-eg-cuotas').value);if(!cuotas||cuotas<2){document.getElementById('edit-eg-cuotas').focus();return;}state.recurring[ri]={...state.recurring[ri],desc,monto,cuotas};if(dia)state.recurring[ri].dia=dia;else delete state.recurring[ri].dia;if(mes)state.recurring[ri].mes=mes;else delete state.recurring[ri].mes;state.recurring[ri].tags=[..._editEgTags];}}
-  else{const tipo=document.getElementById('edit-eg-tipo').value,entry={desc,monto,tipo};if(tipo==='tarjeta')entry.card=document.getElementById('edit-eg-card').value;if(dia)entry.dia=dia;if(mes)entry.mes=mes;if(isPendiente)entry.pendiente=true;else delete entry.pendiente;entry.tags=[..._editEgTags];getMonthData(_editEgY,_editEgM).egresos[_editEgIdx]=entry;}
+  if(_editEgRid){const ri=state.recurring.findIndex(r=>r.id===_editEgRid);if(ri>=0){const cuotas=parseInt(document.getElementById('edit-eg-cuotas').value);if(!cuotas||cuotas<2){document.getElementById('edit-eg-cuotas').focus();return;}pushUndo({type:'del-rec',item:{...state.recurring[ri]}},'Edición de cuotas');state.recurring[ri]={...state.recurring[ri],desc,monto,cuotas};if(dia)state.recurring[ri].dia=dia;else delete state.recurring[ri].dia;if(mes)state.recurring[ri].mes=mes;else delete state.recurring[ri].mes;state.recurring[ri].tags=[..._editEgTags];}}
+  else{const prev={...getMonthData(_editEgY,_editEgM).egresos[_editEgIdx]};pushUndo({type:'edit-eg',y:_editEgY,m:_editEgM,idx:_editEgIdx,prev},'Egreso editado');const tipo=document.getElementById('edit-eg-tipo').value,entry={desc,monto,tipo};if(tipo==='tarjeta')entry.card=document.getElementById('edit-eg-card').value;if(dia)entry.dia=dia;if(mes)entry.mes=mes;if(isPendiente)entry.pendiente=true;else delete entry.pendiente;entry.tags=[..._editEgTags];getMonthData(_editEgY,_editEgM).egresos[_editEgIdx]=entry;}
   document.getElementById('modal-edit-egreso').classList.remove('open');renderAll();
 });
 document.getElementById('cancel-edit-ingreso').addEventListener('click',()=>document.getElementById('modal-edit-ingreso').classList.remove('open'));
 document.getElementById('save-edit-ingreso').addEventListener('click',()=>{
   const desc=document.getElementById('edit-ing-desc').value.trim(),monto=parseFloat(document.getElementById('edit-ing-monto').value),cat=document.getElementById('edit-ing-cat').value.trim()||'Ingreso';if(!desc||isNaN(monto)||monto<=0)return;
-  const {dia,mes}=parseDateInput(document.getElementById('edit-ing-fecha').value);const entry={desc,monto,cat};if(dia)entry.dia=dia;if(mes)entry.mes=mes;entry.tags=[..._editIngTags];
+  const {dia,mes}=parseDateInput(document.getElementById('edit-ing-fecha').value);
+  const prev={...getMonthData(_editIngY,_editIngM).ingresos[_editIngIdx]};pushUndo({type:'edit-ing',y:_editIngY,m:_editIngM,idx:_editIngIdx,prev},'Ingreso editado');
+  const entry={desc,monto,cat};if(dia)entry.dia=dia;if(mes)entry.mes=mes;entry.tags=[..._editIngTags];
   getMonthData(_editIngY,_editIngM).ingresos[_editIngIdx]=entry;document.getElementById('modal-edit-ingreso').classList.remove('open');renderAll();
 });
 document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(o=>o.classList.remove('open'));
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();doUndo();}
+});
+// undo-btn listener handled via document delegation (element rendered after script tag)
 
 // ── NATIVE CHART ENGINE ──────────────────────────────────────────────
 const NativeChart={
@@ -1418,5 +1493,9 @@ document.getElementById('save-rename-card').addEventListener('click',()=>{
   });
 })();
 </script>
+<div class="undo-toast" id="undo-toast">
+  <span class="undo-toast-msg" id="undo-toast-msg">Eliminado</span>
+  <button class="undo-action-btn" id="undo-btn">↩ Deshacer</button>
+</div>
 </body>
 </html>
