@@ -230,6 +230,10 @@
   .badge-cuota-last { background: var(--green-bg); color: var(--green); border: 0.5px solid var(--green); }
   .item-last-cuota .item-name { text-decoration: line-through; text-decoration-color: var(--green); }
   .item-last-cuota { opacity: 0.7; }
+  .item-pendiente { background: #FFFBEB !important; border-left-color: #F59E0B !important; }
+  .badge-pendiente { background:#FEF3C7; color:#92400E; border-radius:4px; font-size:10px; padding:1px 6px; margin-left:5px; font-weight:600; vertical-align:middle; }
+  .pagar-btn { background:#F59E0B; color:#fff; border:none; border-radius:5px; padding:3px 9px; cursor:pointer; font-size:11px; font-weight:600; margin-left:4px; transition:background 0.15s; }
+  .pagar-btn:hover { background:#D97706; }
   .empty-state { text-align: center; padding: 2rem 1rem; color: var(--text3); font-size: 13px; }
 
   /* ── COLOR GROUPS ────────────────────────────────────── */
@@ -712,13 +716,14 @@
     <div class="form-group" id="eg-card-group" style="display:none;"><label>Tarjeta</label><select id="eg-card"></select></div>
     <div class="form-group">
       <label>Fecha (opcional)</label>
-      <div class="form-row"><div class="form-group"><select id="eg-dia"></select></div><div class="form-group"><select id="eg-mes"></select></div></div>
+      <input type="date" id="eg-fecha" />
     </div>
     <div class="form-group"><label>Etiquetas (opcional)</label><div class="tags-input-wrap" id="eg-tags-wrap"><input type="text" id="eg-tag-input" placeholder="Agregá etiquetas..." /></div></div>
     <label class="cuota-toggle"><input type="checkbox" id="eg-cuota-check" /><span>Gasto en cuotas</span></label>
     <div class="cuota-fields" id="eg-cuota-fields">
       <div class="form-group"><label>Cantidad de cuotas</label><input type="number" id="eg-cuotas" placeholder="Ej: 6" min="2" max="120" step="1" /><div class="form-hint">El monto ingresado es el valor de cada cuota.</div></div>
     </div>
+    <label class="cuota-toggle"><input type="checkbox" id="eg-pendiente" /><span>Marcar como pendiente de pago</span></label>
     <div class="modal-actions"><button class="btn-cancel" id="cancel-egreso">Cancelar</button><button class="btn-save" id="save-egreso">Guardar egreso</button></div>
   </div>
 </div>
@@ -732,7 +737,7 @@
     <div class="form-group"><label>Categoría</label><input type="text" id="ing-cat" placeholder="Ej: Sueldo, Freelance, Dividendos..." /></div>
     <div class="form-group">
       <label>Fecha (opcional)</label>
-      <div class="form-row"><div class="form-group"><select id="ing-dia"></select></div><div class="form-group"><select id="ing-mes"></select></div></div>
+      <input type="date" id="ing-fecha" />
     </div>
     <div class="form-group"><label>Etiquetas (opcional)</label><div class="tags-input-wrap" id="ing-tags-wrap"><input type="text" id="ing-tag-input" placeholder="Agregá etiquetas..." /></div></div>
     <div class="modal-actions"><button class="btn-cancel" id="cancel-ingreso">Cancelar</button><button class="btn-save" id="save-ingreso">Guardar ingreso</button></div>
@@ -751,8 +756,9 @@
     <div class="form-group" id="edit-eg-cuotas-group" style="display:none;"><label>Cantidad de cuotas</label><input type="number" id="edit-eg-cuotas" min="2" max="120" step="1" /><div class="form-hint">Modificar afecta todos los meses de este gasto.</div></div>
     <div class="form-group">
       <label>Fecha (opcional)</label>
-      <div class="form-row"><div class="form-group"><select id="edit-eg-dia"></select></div><div class="form-group"><select id="edit-eg-mes"></select></div></div>
+      <input type="date" id="edit-eg-fecha" />
     </div>
+    <label class="cuota-toggle"><input type="checkbox" id="edit-eg-pendiente" /><span>Pendiente de pago</span></label>
     <div class="modal-actions"><button class="btn-cancel" id="cancel-edit-egreso">Cancelar</button><button class="btn-save" id="save-edit-egreso">Guardar cambios</button></div>
   </div>
 </div>
@@ -766,7 +772,7 @@
     <div class="form-group"><label>Categoría</label><input type="text" id="edit-ing-cat" /></div>
     <div class="form-group">
       <label>Fecha (opcional)</label>
-      <div class="form-row"><div class="form-group"><select id="edit-ing-dia"></select></div><div class="form-group"><select id="edit-ing-mes"></select></div></div>
+      <input type="date" id="edit-ing-fecha" />
     </div>
     <div class="form-group"><label>Etiquetas (opcional)</label><div class="tags-input-wrap" id="edit-ing-tags-wrap"><input type="text" id="edit-ing-tag-input" placeholder="Agregá etiquetas..." /></div></div>
     <div class="modal-actions"><button class="btn-cancel" id="cancel-edit-ingreso">Cancelar</button><button class="btn-save" id="save-edit-ingreso">Guardar cambios</button></div>
@@ -992,10 +998,8 @@ function renderCards(){
   const editCs=document.getElementById('edit-eg-card');if(editCs)editCs.innerHTML=ecs.innerHTML;
 }
 
-function fillDateSelects(did,mid){
-  document.getElementById(did).innerHTML='<option value="">Día</option>'+Array.from({length:31},(_,i)=>'<option value="'+(i+1)+'">'+(i+1)+'</option>').join('');
-  document.getElementById(mid).innerHTML='<option value="">Mes</option>'+MONTHS.map((m,i)=>'<option value="'+(i+1)+'">'+m+'</option>').join('');
-}
+function dateInputVal(dia,mes,yr){if(!dia||!mes)return'';const y=yr||state.currentYear;return y+'-'+String(mes).padStart(2,'0')+'-'+String(dia).padStart(2,'0');}
+function parseDateInput(val){if(!val)return{dia:'',mes:''};const p=val.split('-');return{dia:String(+p[2]),mes:String(+p[1])};}
 function fmtFecha(item){if(!item.dia||!item.mes)return'';return item.dia+' '+MSHORT[+item.mes-1];}
 
 function itemHTML(item,cc,idx,isRec){
@@ -1003,10 +1007,12 @@ function itemHTML(item,cc,idx,isRec){
   let cuotaBadge='';
   if(item.cuotaNum!==undefined){const cls=item.isLast?'badge badge-cuota-last':'badge badge-cuota';cuotaBadge='<span class="'+cls+'">'+item.cuotaNum+'/'+item.cuotas+(item.isLast?' ✓':'')+'</span>';}
   const tagsHtml=(item.tags||[]).map(t=>tagChipHTML(t)).join('');
-  const lastCls=item.isLast?' item-last-cuota':'',ccCls=cc?' item-colored '+cc:'';
+  const lastCls=item.isLast?' item-last-cuota':'',ccCls=cc?' item-colored '+cc:'',pendingCls=item.pendiente?' item-pendiente':'';
+  const pendingBadge=item.pendiente?'<span class="badge-pendiente">⏳ Pendiente</span>':'';
+  const pagarBtn=(item.pendiente&&!isRec)?'<button class="pagar-btn pagar-eg" data-idx="'+idx+'">✓ Pagar</button>':'';
   const delBtn=isRec?'<button class="del-btn del-rec" data-rid="'+item.id+'" title="Eliminar todas las cuotas">×</button>':'<button class="del-btn del-normal" data-idx="'+idx+'" title="Eliminar">×</button>';
   const editBtn=isRec?'<button class="edit-btn edit-rec" data-rid="'+item.id+'" title="Editar cuotas">✎</button>':'<button class="edit-btn edit-eg" data-idx="'+idx+'" title="Editar">✎</button>';
-  return '<div class="item'+ccCls+lastCls+'">'+'<div class="item-left"><span class="item-name">'+item.desc+fechaHtml+cuotaBadge+'</span>'+(tagsHtml?'<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;">'+tagsHtml+'</div>':'')+'</div><div class="item-right"><span class="item-amount egreso">−'+fmt(item.monto)+'</span>'+editBtn+delBtn+'</div></div>';
+  return '<div class="item'+ccCls+lastCls+pendingCls+'">'+'<div class="item-left"><span class="item-name">'+item.desc+fechaHtml+cuotaBadge+pendingBadge+'</span>'+(tagsHtml?'<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;">'+tagsHtml+'</div>':'')+'</div><div class="item-right"><span class="item-amount egreso">−'+fmt(item.monto)+'</span>'+pagarBtn+editBtn+delBtn+'</div></div>';
 }
 
 function renderLists(){
@@ -1030,6 +1036,7 @@ function renderLists(){
     eList.querySelectorAll('.del-rec').forEach(b=>{b.addEventListener('click',()=>{if(confirm('¿Eliminar TODAS las cuotas de este gasto?')){state.recurring=state.recurring.filter(r=>r.id!==b.dataset.rid);renderAll();}});});
     eList.querySelectorAll('.edit-eg').forEach(b=>{b.addEventListener('click',()=>openEditEgreso(state.currentYear,state.currentMonth,+b.dataset.idx));});
     eList.querySelectorAll('.edit-rec').forEach(b=>{b.addEventListener('click',()=>openEditRecurring(b.dataset.rid));});
+    eList.querySelectorAll('.pagar-eg').forEach(b=>{b.addEventListener('click',()=>{md.egresos[+b.dataset.idx].pendiente=false;renderAll();});});
   }
   if(!md.ingresos.length){iList.innerHTML='<div class="empty-state">Sin ingresos este mes</div>';}
   else{
@@ -1109,7 +1116,8 @@ function _popEditEg(e,isRec){
   const cs=document.getElementById('edit-eg-card');cs.innerHTML=state.cards.map(c=>'<option>'+c+'</option>').join('');if(e.card)cs.value=e.card;
   document.getElementById('edit-eg-card-group').style.display=e.tipo==='tarjeta'?'':'none';
   document.getElementById('edit-eg-cuotas-group').style.display=isRec?'':'none';if(isRec)document.getElementById('edit-eg-cuotas').value=e.cuotas||'';
-  fillDateSelects('edit-eg-dia','edit-eg-mes');if(e.dia)document.getElementById('edit-eg-dia').value=e.dia;if(e.mes)document.getElementById('edit-eg-mes').value=e.mes;
+  document.getElementById('edit-eg-fecha').value=dateInputVal(e.dia,e.mes,_editEgY||state.currentYear);
+  document.getElementById('edit-eg-pendiente').checked=!!e.pendiente;
   _editEgTags=[...(e.tags||[])];setTimeout(()=>initTagInput('edit-eg-tags-wrap','edit-eg-tag-input',()=>_editEgTags,v=>{_editEgTags=v;}),50);
   document.getElementById('modal-edit-egreso').classList.add('open');setTimeout(()=>document.getElementById('edit-eg-desc').focus(),80);
 }
@@ -1117,7 +1125,7 @@ let _editIngY,_editIngM,_editIngIdx;
 function openEditIngreso(y,m,idx){
   _editIngY=y;_editIngM=m;_editIngIdx=idx;const ing=getMonthData(y,m).ingresos[idx];if(!ing)return;
   document.getElementById('edit-ing-desc').value=ing.desc||'';document.getElementById('edit-ing-monto').value=ing.monto||'';document.getElementById('edit-ing-cat').value=ing.cat||'';
-  fillDateSelects('edit-ing-dia','edit-ing-mes');if(ing.dia)document.getElementById('edit-ing-dia').value=ing.dia;if(ing.mes)document.getElementById('edit-ing-mes').value=ing.mes;
+  document.getElementById('edit-ing-fecha').value=dateInputVal(ing.dia,ing.mes,_editIngY||state.currentYear);
   _editIngTags=[...(ing.tags||[])];setTimeout(()=>initTagInput('edit-ing-tags-wrap','edit-ing-tag-input',()=>_editIngTags,v=>{_editIngTags=v;}),50);
   document.getElementById('modal-edit-ingreso').classList.add('open');setTimeout(()=>document.getElementById('edit-ing-desc').focus(),80);
 }
@@ -1143,23 +1151,24 @@ document.getElementById('new-card-input').addEventListener('keydown',e=>{if(e.ke
 document.getElementById('eg-tipo').addEventListener('change',function(){document.getElementById('eg-card-group').style.display=this.value==='tarjeta'?'':'none';});
 document.getElementById('eg-cuota-check').addEventListener('change',function(){document.getElementById('eg-cuota-fields').classList.toggle('show',this.checked);});
 
-document.getElementById('open-egreso').addEventListener('click',()=>{document.getElementById('eg-desc').value='';document.getElementById('eg-monto').value='';document.getElementById('eg-cuotas').value='';document.getElementById('eg-cuota-check').checked=false;document.getElementById('eg-cuota-fields').classList.remove('show');fillDateSelects('eg-dia','eg-mes');renderCards();document.getElementById('modal-egreso').classList.add('open');setTimeout(()=>document.getElementById('eg-desc').focus(),80);});
+document.getElementById('open-egreso').addEventListener('click',()=>{document.getElementById('eg-desc').value='';document.getElementById('eg-monto').value='';document.getElementById('eg-cuotas').value='';document.getElementById('eg-cuota-check').checked=false;document.getElementById('eg-cuota-fields').classList.remove('show');document.getElementById('eg-fecha').value='';document.getElementById('eg-pendiente').checked=false;renderCards();document.getElementById('modal-egreso').classList.add('open');setTimeout(()=>document.getElementById('eg-desc').focus(),80);});
 document.getElementById('cancel-egreso').addEventListener('click',()=>document.getElementById('modal-egreso').classList.remove('open'));
 document.getElementById('save-egreso').addEventListener('click',()=>{
-  const desc=document.getElementById('eg-desc').value.trim(),monto=parseFloat(document.getElementById('eg-monto').value),tipo=document.getElementById('eg-tipo').value,esDia=document.getElementById('eg-dia').value,esMes=document.getElementById('eg-mes').value;
+  const desc=document.getElementById('eg-desc').value.trim(),monto=parseFloat(document.getElementById('eg-monto').value),tipo=document.getElementById('eg-tipo').value;
+  const {dia:esDia,mes:esMes}=parseDateInput(document.getElementById('eg-fecha').value);
   if(!desc||isNaN(monto)||monto<=0){document.getElementById('eg-desc').focus();return;}
   const isCuota=document.getElementById('eg-cuota-check').checked,cuotas=isCuota?parseInt(document.getElementById('eg-cuotas').value):0;
   if(isCuota){if(!cuotas||cuotas<2){document.getElementById('eg-cuotas').focus();return;}const id='r'+Date.now()+Math.random().toString(36).slice(2,6);const entry={id,desc,monto,tipo,cuotas,startYear:state.currentYear,startMonth:state.currentMonth};if(tipo==='tarjeta')entry.card=document.getElementById('eg-card').value;if(esDia)entry.dia=esDia;if(esMes)entry.mes=esMes;state.recurring.push(entry);}
-  else{const entry={desc,monto,tipo};if(tipo==='tarjeta')entry.card=document.getElementById('eg-card').value;if(esDia)entry.dia=esDia;if(esMes)entry.mes=esMes;if(window._pendingEgTags&&window._pendingEgTags.length){entry.tags=window._pendingEgTags;window._pendingEgTags=[];}getMonthData(state.currentYear,state.currentMonth).egresos.push(entry);}
+  else{const isPendiente=document.getElementById('eg-pendiente').checked;const entry={desc,monto,tipo};if(tipo==='tarjeta')entry.card=document.getElementById('eg-card').value;if(esDia)entry.dia=esDia;if(esMes)entry.mes=esMes;if(isPendiente)entry.pendiente=true;if(window._pendingEgTags&&window._pendingEgTags.length){entry.tags=window._pendingEgTags;window._pendingEgTags=[];}getMonthData(state.currentYear,state.currentMonth).egresos.push(entry);}
   document.getElementById('modal-egreso').classList.remove('open');renderAll();
 });
 
-document.getElementById('open-ingreso').addEventListener('click',()=>{document.getElementById('ing-desc').value='';document.getElementById('ing-monto').value='';document.getElementById('ing-cat').value='';fillDateSelects('ing-dia','ing-mes');document.getElementById('modal-ingreso').classList.add('open');setTimeout(()=>document.getElementById('ing-desc').focus(),80);});
+document.getElementById('open-ingreso').addEventListener('click',()=>{document.getElementById('ing-desc').value='';document.getElementById('ing-monto').value='';document.getElementById('ing-cat').value='';document.getElementById('ing-fecha').value='';document.getElementById('modal-ingreso').classList.add('open');setTimeout(()=>document.getElementById('ing-desc').focus(),80);});
 document.getElementById('cancel-ingreso').addEventListener('click',()=>document.getElementById('modal-ingreso').classList.remove('open'));
 document.getElementById('save-ingreso').addEventListener('click',()=>{
   const desc=document.getElementById('ing-desc').value.trim(),monto=parseFloat(document.getElementById('ing-monto').value),cat=document.getElementById('ing-cat').value.trim()||'Ingreso';
   if(!desc||isNaN(monto)||monto<=0){document.getElementById('ing-desc').focus();return;}
-  const dia=document.getElementById('ing-dia').value,mes=document.getElementById('ing-mes').value;const entry={desc,monto,cat};if(dia)entry.dia=dia;if(mes)entry.mes=mes;
+  const {dia,mes}=parseDateInput(document.getElementById('ing-fecha').value);const entry={desc,monto,cat};if(dia)entry.dia=dia;if(mes)entry.mes=mes;
   getMonthData(state.currentYear,state.currentMonth).ingresos.push(entry);document.getElementById('modal-ingreso').classList.remove('open');renderAll();
 });
 
@@ -1168,15 +1177,16 @@ document.getElementById('edit-eg-tipo').addEventListener('change',function(){doc
 document.getElementById('cancel-edit-egreso').addEventListener('click',()=>document.getElementById('modal-edit-egreso').classList.remove('open'));
 document.getElementById('save-edit-egreso').addEventListener('click',()=>{
   const desc=document.getElementById('edit-eg-desc').value.trim(),monto=parseFloat(document.getElementById('edit-eg-monto').value);if(!desc||isNaN(monto)||monto<=0)return;
-  const dia=document.getElementById('edit-eg-dia').value,mes=document.getElementById('edit-eg-mes').value;
+  const {dia,mes}=parseDateInput(document.getElementById('edit-eg-fecha').value);
+  const isPendiente=document.getElementById('edit-eg-pendiente').checked;
   if(_editEgRid){const ri=state.recurring.findIndex(r=>r.id===_editEgRid);if(ri>=0){const cuotas=parseInt(document.getElementById('edit-eg-cuotas').value);if(!cuotas||cuotas<2){document.getElementById('edit-eg-cuotas').focus();return;}state.recurring[ri]={...state.recurring[ri],desc,monto,cuotas};if(dia)state.recurring[ri].dia=dia;else delete state.recurring[ri].dia;if(mes)state.recurring[ri].mes=mes;else delete state.recurring[ri].mes;state.recurring[ri].tags=[..._editEgTags];}}
-  else{const tipo=document.getElementById('edit-eg-tipo').value,entry={desc,monto,tipo};if(tipo==='tarjeta')entry.card=document.getElementById('edit-eg-card').value;if(dia)entry.dia=dia;if(mes)entry.mes=mes;entry.tags=[..._editEgTags];getMonthData(_editEgY,_editEgM).egresos[_editEgIdx]=entry;}
+  else{const tipo=document.getElementById('edit-eg-tipo').value,entry={desc,monto,tipo};if(tipo==='tarjeta')entry.card=document.getElementById('edit-eg-card').value;if(dia)entry.dia=dia;if(mes)entry.mes=mes;if(isPendiente)entry.pendiente=true;else delete entry.pendiente;entry.tags=[..._editEgTags];getMonthData(_editEgY,_editEgM).egresos[_editEgIdx]=entry;}
   document.getElementById('modal-edit-egreso').classList.remove('open');renderAll();
 });
 document.getElementById('cancel-edit-ingreso').addEventListener('click',()=>document.getElementById('modal-edit-ingreso').classList.remove('open'));
 document.getElementById('save-edit-ingreso').addEventListener('click',()=>{
   const desc=document.getElementById('edit-ing-desc').value.trim(),monto=parseFloat(document.getElementById('edit-ing-monto').value),cat=document.getElementById('edit-ing-cat').value.trim()||'Ingreso';if(!desc||isNaN(monto)||monto<=0)return;
-  const dia=document.getElementById('edit-ing-dia').value,mes=document.getElementById('edit-ing-mes').value;const entry={desc,monto,cat};if(dia)entry.dia=dia;if(mes)entry.mes=mes;entry.tags=[..._editIngTags];
+  const {dia,mes}=parseDateInput(document.getElementById('edit-ing-fecha').value);const entry={desc,monto,cat};if(dia)entry.dia=dia;if(mes)entry.mes=mes;entry.tags=[..._editIngTags];
   getMonthData(_editIngY,_editIngM).ingresos[_editIngIdx]=entry;document.getElementById('modal-edit-ingreso').classList.remove('open');renderAll();
 });
 document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
