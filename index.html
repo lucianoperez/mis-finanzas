@@ -186,6 +186,18 @@
   .panel-total { font-size: 13px; font-weight: 600; }
   .panel-total.egreso  { color: var(--red); }
   .panel-total.ingreso { color: var(--green); }
+  /* Panel egresos */
+  .panel-egreso { border-color: rgba(153,60,29,0.2); }
+  .panel-egreso .panel-header { background: var(--red-bg); border-bottom-color: rgba(153,60,29,0.15); }
+  .panel-egreso .panel-title  { color: var(--red); }
+  /* Panel ingresos */
+  .panel-ingreso { border-color: rgba(15,110,86,0.2); }
+  .panel-ingreso .panel-header { background: var(--green-bg); border-bottom-color: rgba(15,110,86,0.15); }
+  .panel-ingreso .panel-title  { color: var(--green); }
+  /* Buscador */
+  .search-bar-styled { background: var(--blue-bg) !important; border-color: rgba(24,95,165,0.25) !important; }
+  .search-bar-styled input::placeholder { color: var(--blue) !important; opacity: 0.6; }
+  .search-bar-styled .search-icon { color: var(--blue) !important; }
 
   /* ── BUTTONS ─────────────────────────────────────────── */
   .add-btn { font-size: 12px; font-weight: 600; padding: 6px 14px; border: 0.5px solid var(--border-md); background: var(--surface2); border-radius: var(--radius); cursor: pointer; color: var(--text); transition: background 0.12s; font-family: inherit; }
@@ -502,7 +514,7 @@
         <span class="cuotas-bar-detail" id="cuotas-terminan-list"></span>
       </div>
 
-      <div class="search-bar">
+      <div class="search-bar search-bar-styled">
         <span class="search-icon">🔍</span>
         <input type="text" id="search-input" placeholder="Buscar en todos los meses... (descripción o etiqueta)" />
         <button class="search-clear" id="search-clear">×</button>
@@ -511,7 +523,7 @@
 
       <div id="view-mes">
         <div class="main-grid">
-          <div class="panel">
+          <div class="panel panel-egreso">
             <div class="panel-header">
               <span class="panel-title">Egresos</span>
               <div style="display:flex;align-items:center;gap:10px;">
@@ -521,7 +533,7 @@
             </div>
             <div class="item-list" id="egreso-list"><div class="empty-state">Sin egresos este mes</div></div>
           </div>
-          <div class="panel">
+          <div class="panel panel-ingreso">
             <div class="panel-header">
               <span class="panel-title">Ingresos</span>
               <div style="display:flex;align-items:center;gap:10px;">
