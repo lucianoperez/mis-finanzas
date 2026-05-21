@@ -299,6 +299,16 @@
   .admin-action-btn { font-size:11px; padding:3px 10px; border-radius:6px; border:0.5px solid var(--border-md); background:none; cursor:pointer; font-family:inherit; transition:opacity 0.12s; }
   .admin-action-btn:hover { opacity:0.75; }
   .admin-action-btn:disabled { opacity:0.4; cursor:not-allowed; }
+  .admin-row-actions { display:flex; gap:6px; flex-wrap:wrap; }
+  /* ── ADMIN STATS ─────────────────────────────────────── */
+  .admin-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:18px; }
+  .admin-stat { background:var(--surface2); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:14px 16px; }
+  .admin-stat-value { font-size:24px; font-weight:700; color:var(--text); line-height:1.1; }
+  .admin-stat-label { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-top:6px; }
+  .admin-stat.is-green .admin-stat-value { color:var(--green); }
+  .admin-stat.is-blue  .admin-stat-value { color:var(--blue); }
+  .admin-stat.is-amber .admin-stat-value { color:var(--amber); }
+  @media (max-width:680px){ .admin-stats { grid-template-columns:repeat(2,1fr); } }
 
   /* ── MODALS ──────────────────────────────────────────── */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
@@ -784,6 +794,13 @@
         </div>
       </div>
 
+      <div class="admin-stats" id="admin-stats">
+        <div class="admin-stat"><div class="admin-stat-value" id="admin-stat-total">—</div><div class="admin-stat-label">Total usuarios</div></div>
+        <div class="admin-stat is-green"><div class="admin-stat-value" id="admin-stat-active">—</div><div class="admin-stat-label">Activos (7 días)</div></div>
+        <div class="admin-stat is-blue"><div class="admin-stat-value" id="admin-stat-new">—</div><div class="admin-stat-label">Nuevos este mes</div></div>
+        <div class="admin-stat is-amber"><div class="admin-stat-value" id="admin-stat-unconfirmed">—</div><div class="admin-stat-label">Sin confirmar</div></div>
+      </div>
+
       <div class="panel">
         <div class="panel-header">
           <span class="panel-title">Usuarios</span>
@@ -797,12 +814,13 @@
                 <th>Registrado</th>
                 <th>Último acceso</th>
                 <th>Confirmado</th>
+                <th>Datos</th>
                 <th>Estado</th>
                 <th>Acción</th>
               </tr>
             </thead>
             <tbody id="admin-users-tbody">
-              <tr><td colspan="6" style="text-align:center;color:var(--text3);padding:28px;">Cargando…</td></tr>
+              <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:28px;">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1566,18 +1584,69 @@ document.getElementById('save-saving').addEventListener('click',()=>{
 const ADMIN_EMAIL='luciano.v.perez@hotmail.com';
 const EDGE_FN_URL=SUPABASE_URL+'/functions/v1/admin-users';
 
+// Formatea bytes a un texto legible en KB. Devuelve '—' si no hay datos.
+function adminFmtSize(bytes){
+  if(!bytes||bytes<=0)return'—';
+  const kb=bytes/1024;
+  if(kb<1)return'<1 KB';
+  if(kb<100)return kb.toFixed(1)+' KB';
+  return Math.round(kb)+' KB';
+}
+
+// Calcula y pinta las stats rápidas a partir de la lista de usuarios.
+function adminRenderStats(users){
+  const now=new Date();
+  const weekAgo=new Date(now.getTime()-7*24*60*60*1000);
+  const monthStart=new Date(now.getFullYear(),now.getMonth(),1);
+  let active=0,newThisMonth=0,unconfirmed=0;
+  users.forEach(u=>{
+    if(u.last_sign_in_at&&new Date(u.last_sign_in_at)>=weekAgo)active++;
+    if(u.created_at&&new Date(u.created_at)>=monthStart)newThisMonth++;
+    if(!u.email_confirmed_at)unconfirmed++;
+  });
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set('admin-stat-total',users.length);
+  set('admin-stat-active',active);
+  set('admin-stat-new',newThisMonth);
+  set('admin-stat-unconfirmed',unconfirmed);
+}
+
+// Ejecuta una acción admin por POST y refresca la tabla si tiene éxito.
+async function adminDoAction(uid,action,btn,labelOnFail){
+  btn.disabled=true;
+  const original=btn.textContent;
+  btn.textContent='…';
+  try{
+    const res=await fetch(EDGE_FN_URL,{method:'POST',headers:{'Authorization':'Bearer '+_accessToken,'apikey':SUPABASE_ANON,'Content-Type':'application/json'},body:JSON.stringify({userId:uid,action})});
+    if(res.ok){
+      if(action==='reset-password')alert('Email de reseteo de contraseña enviado.');
+      else if(action==='resend-confirmation')alert('Email de confirmación reenviado.');
+      else if(action==='delete-data')alert('Datos del usuario eliminados.');
+      await adminLoadUsers();
+    }else{
+      const e=await res.json().catch(()=>({}));
+      btn.disabled=false;btn.textContent=labelOnFail||original;
+      alert('Error: '+(e.error||res.status));
+    }
+  }catch(err){
+    btn.disabled=false;btn.textContent=labelOnFail||original;
+    alert('Error de conexión.');
+  }
+}
+
 async function adminLoadUsers(){
   const tbody=document.getElementById('admin-users-tbody');
   const countEl=document.getElementById('admin-user-count');
   if(!tbody)return;
-  tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:28px;">Cargando…</td></tr>';
+  tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:28px;">Cargando…</td></tr>';
   try{
     const r=await fetch(EDGE_FN_URL,{headers:{'Authorization':'Bearer '+_accessToken,'apikey':SUPABASE_ANON}});
-    if(!r.ok){const e=await r.json().catch(()=>({}));tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--red);padding:28px;">Error: '+(e.error||r.status)+'</td></tr>';return;}
+    if(!r.ok){const e=await r.json().catch(()=>({}));tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--red);padding:28px;">Error: '+(e.error||r.status)+'</td></tr>';return;}
     const data=await r.json();
     const users=(data.users||[]).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    adminRenderStats(users);
     if(countEl)countEl.textContent=users.length+' usuario'+(users.length!==1?'s':'');
-    if(!users.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:28px;">Sin usuarios registrados.</td></tr>';return;}
+    if(!users.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:28px;">Sin usuarios registrados.</td></tr>';return;}
     const fmt=d=>d?new Date(d).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
     tbody.innerHTML=users.map(u=>{
       const banned=u.banned_until&&new Date(u.banned_until)>new Date();
@@ -1585,21 +1654,36 @@ async function adminLoadUsers(){
       const isMe=u.id===_userId;
       const badge=banned?'<span class="admin-badge banned">Baneado</span>':'<span class="admin-badge active">Activo</span>';
       const confBadge=confirmed?'<span style="color:var(--green);font-size:12px;">✓</span>':'<span style="color:var(--text3);font-size:12px;">✗</span>';
-      const actionBtn=isMe
-        ?'<span style="font-size:11px;color:var(--text3);">Sos vos</span>'
-        :`<button class="admin-action-btn" data-id="${u.id}" data-action="${banned?'unban':'ban'}" style="color:${banned?'var(--green)':'var(--red);'};">${banned?'Desbanear':'Banear'}</button>`;
-      return`<tr><td>${u.email||'—'}</td><td>${fmt(u.created_at)}</td><td>${fmt(u.last_sign_in_at)}</td><td style="text-align:center;">${confBadge}</td><td>${badge}</td><td>${actionBtn}</td></tr>`;
+      const size=adminFmtSize(u.data_bytes);
+      let actions;
+      if(isMe){
+        actions='<span style="font-size:11px;color:var(--text3);">Sos vos</span>';
+      }else{
+        const btns=[];
+        btns.push(`<button class="admin-action-btn" data-id="${u.id}" data-action="${banned?'unban':'ban'}" style="color:${banned?'var(--green)':'var(--red)'};">${banned?'Desbanear':'Banear'}</button>`);
+        if(confirmed){
+          btns.push(`<button class="admin-action-btn" data-id="${u.id}" data-action="reset-password" style="color:var(--blue);">Reset pass</button>`);
+        }else{
+          btns.push(`<button class="admin-action-btn" data-id="${u.id}" data-action="resend-confirmation" style="color:var(--amber);">Reenviar conf.</button>`);
+        }
+        btns.push(`<button class="admin-action-btn" data-id="${u.id}" data-action="delete-data" data-email="${u.email||''}" style="color:var(--red);">Borrar datos</button>`);
+        actions='<div class="admin-row-actions">'+btns.join('')+'</div>';
+      }
+      return`<tr><td>${u.email||'—'}</td><td>${fmt(u.created_at)}</td><td>${fmt(u.last_sign_in_at)}</td><td style="text-align:center;">${confBadge}</td><td style="color:var(--text2);">${size}</td><td>${badge}</td><td>${actions}</td></tr>`;
     }).join('');
     tbody.querySelectorAll('.admin-action-btn').forEach(btn=>{
       btn.addEventListener('click',async()=>{
         const uid=btn.dataset.id,act=btn.dataset.action;
-        btn.disabled=true;btn.textContent='…';
-        const res=await fetch(EDGE_FN_URL,{method:'POST',headers:{'Authorization':'Bearer '+_accessToken,'apikey':SUPABASE_ANON,'Content-Type':'application/json'},body:JSON.stringify({userId:uid,action:act})});
-        if(res.ok){await adminLoadUsers();}else{btn.disabled=false;btn.textContent=act==='ban'?'Banear':'Desbanear';alert('Error al actualizar el usuario.');}
+        if(act==='delete-data'){
+          const email=btn.dataset.email||'este usuario';
+          if(!confirm('¿Borrar los datos financieros de '+email+'?\n\nSe eliminará su registro en finanzas_state. La cuenta NO se elimina. Esta acción no se puede deshacer.'))return;
+        }
+        const failLabel=act==='ban'?'Banear':act==='unban'?'Desbanear':act==='reset-password'?'Reset pass':act==='resend-confirmation'?'Reenviar conf.':'Borrar datos';
+        await adminDoAction(uid,act,btn,failLabel);
       });
     });
   }catch(err){
-    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--red);padding:28px;">Error de conexión.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--red);padding:28px;">Error de conexión.</td></tr>';
   }
 }
 
