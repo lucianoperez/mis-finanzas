@@ -337,6 +337,66 @@
   .pw-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text3); font-size: 18px; padding: 4px; line-height: 1; }
   .pw-toggle:hover { color: var(--text); }
 
+  /* ── LOGIN SPLIT SCREEN ──────────────────────────────── */
+  #login-screen { min-height:100vh; display:flex; }
+
+  .login-split { display:flex; width:100%; min-height:100vh; }
+
+  .login-left {
+    width:52%; background:linear-gradient(145deg,#1a2e1f 0%,#111810 50%,#0e1a0b 100%);
+    display:flex; flex-direction:column; justify-content:center; align-items:flex-start;
+    padding:64px 72px; position:relative; overflow:hidden; flex-shrink:0;
+  }
+  .login-left::before {
+    content:''; position:absolute; top:-120px; right:-120px; width:420px; height:420px;
+    border-radius:50%; background:radial-gradient(circle,rgba(93,202,165,0.10) 0%,transparent 70%); pointer-events:none;
+  }
+  .login-left::after {
+    content:''; position:absolute; bottom:-80px; left:-80px; width:300px; height:300px;
+    border-radius:50%; background:radial-gradient(circle,rgba(239,159,39,0.07) 0%,transparent 70%); pointer-events:none;
+  }
+
+  .login-brand { display:flex; align-items:center; gap:14px; margin-bottom:56px; }
+  .login-brand img { width:48px; height:48px; border-radius:14px; }
+  .login-brand-name { font-size:18px; font-weight:700; color:#f0efe9; letter-spacing:-0.3px; }
+
+  .login-tagline { font-size:36px; font-weight:700; letter-spacing:-0.8px; line-height:1.18; color:#f0efe9; margin-bottom:20px; max-width:380px; }
+  .login-tagline span { color:#5DCAA5; }
+  .login-tagline-sub { font-size:15px; color:#a8a79f; line-height:1.6; max-width:340px; margin-bottom:52px; }
+
+  .login-features { display:flex; flex-direction:column; gap:16px; }
+  .login-feature { display:flex; align-items:center; gap:12px; font-size:14px; color:#a8a79f; }
+  .login-feature-icon {
+    width:32px; height:32px; border-radius:8px;
+    background:rgba(93,202,165,0.10); border:0.5px solid rgba(93,202,165,0.20);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+
+  .login-right {
+    flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:48px 40px; background:var(--bg);
+  }
+  .login-form-box { width:100%; max-width:360px; }
+  .login-form-title { font-size:22px; font-weight:700; letter-spacing:-0.4px; margin-bottom:6px; }
+  .login-form-sub { font-size:13px; color:var(--text2); margin-bottom:28px; }
+
+  .login-forgot { display:block; text-align:right; font-size:12px; color:var(--text3); margin-top:-6px; margin-bottom:20px; background:none; border:none; cursor:pointer; font-family:inherit; padding:0; transition:color 0.15s; }
+  .login-forgot:hover { color:var(--text2); }
+
+  .login-divider { display:flex; align-items:center; gap:12px; margin:16px 0; }
+  .login-divider::before,.login-divider::after { content:''; flex:1; height:0.5px; background:var(--border); }
+  .login-divider span { font-size:11px; color:var(--text3); }
+
+  .login-btn-secondary { width:100%; background:transparent; color:var(--text2); border:0.5px solid var(--border-md); border-radius:var(--radius); padding:10px; font-size:13px; font-weight:500; cursor:pointer; font-family:inherit; transition:background 0.15s; }
+  .login-btn-secondary:hover { background:var(--surface); }
+
+  .login-footer-note { margin-top:28px; font-size:11px; color:var(--text3); text-align:center; line-height:1.7; }
+
+  @media(max-width:700px){
+    .login-left { display:none; }
+    .login-right { padding:32px 24px; }
+  }
+
   /* ── RESUMEN / CHARTS ────────────────────────────────── */
   .resumen-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .resumen-table th { text-align: left; font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; padding: 10px 12px; border-bottom: 0.5px solid var(--border); }
@@ -453,33 +513,75 @@
 <body>
 
 <!-- ── LOGIN ────────────────────────────────────────────── -->
-<div id="login-screen" style="display:none; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1rem;">
-  <div style="background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-xl); padding:2rem; width:360px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,0.15);">
-    <div style="text-align:center; margin-bottom:1.25rem;">
-      <img src="logo.svg" width="68" height="68" alt="Logo" style="border-radius:16px;" />
+<div id="login-screen" style="display:none;">
+  <div class="login-split">
+
+    <!-- ── PANEL IZQUIERDO ── -->
+    <div class="login-left">
+      <div class="login-brand">
+        <img src="logo.svg" alt="Logo" />
+        <span class="login-brand-name">Mis Finanzas</span>
+      </div>
+      <h1 class="login-tagline">Tomá el control<br>de tu <span>dinero</span>.</h1>
+      <p class="login-tagline-sub">Registrá ingresos y egresos, analizá tus hábitos y tomá mejores decisiones financieras.</p>
+      <div class="login-features">
+        <div class="login-feature">
+          <div class="login-feature-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          Gestión mensual de ingresos y egresos
+        </div>
+        <div class="login-feature">
+          <div class="login-feature-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          Resumen anual y análisis histórico
+        </div>
+        <div class="login-feature">
+          <div class="login-feature-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          </div>
+          Distribución visual de gastos por categoría
+        </div>
+      </div>
     </div>
-    <div style="margin-bottom:1.5rem; text-align:center;">
-      <h2 style="font-size:22px; font-weight:700; letter-spacing:-0.3px;">Finanzas personales</h2>
-      <p style="font-size:13px; color:var(--text2); margin-top:4px;" id="login-subtitle">Ingresá con tu cuenta para continuar.</p>
+
+    <!-- ── PANEL DERECHO ── -->
+    <div class="login-right">
+      <div class="login-form-box">
+        <h2 class="login-form-title" id="login-form-title">Bienvenido</h2>
+        <p class="login-form-sub" id="login-subtitle">Ingresá con tu cuenta para continuar.</p>
+
+        <div id="login-error" style="display:none; background:var(--red-bg); color:var(--red); font-size:12px; padding:8px 12px; border-radius:var(--radius); margin-bottom:16px;"></div>
+        <div id="login-success" style="display:none; background:var(--green-bg); color:var(--green); font-size:12px; padding:8px 12px; border-radius:var(--radius); margin-bottom:16px;"></div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="auth-email" placeholder="tu@email.com" autocomplete="email" />
+        </div>
+        <div class="form-group" id="auth-password-group">
+          <label>Contraseña</label>
+          <div class="pw-wrap"><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" /><button type="button" class="pw-toggle" data-target="auth-password">👁</button></div>
+        </div>
+        <div class="form-group" id="auth-password2-group" style="display:none;">
+          <label>Repetir contraseña</label>
+          <div class="pw-wrap"><input type="password" id="auth-password2" placeholder="••••••••" /><button type="button" class="pw-toggle" data-target="auth-password2">👁</button></div>
+        </div>
+
+        <button id="auth-forgot" class="login-forgot">¿Olvidaste tu contraseña?</button>
+
+        <button id="auth-submit" class="btn-save" style="width:100%; padding:11px; font-size:14px;">Ingresar</button>
+
+        <div class="login-divider"><span>o</span></div>
+
+        <button id="auth-toggle" class="login-btn-secondary">¿No tenés cuenta? Registrate</button>
+
+        <div id="auth-loading" style="display:none; text-align:center; margin-top:14px; font-size:12px; color:var(--text3);">Cargando...</div>
+
+        <p class="login-footer-note">Tus datos son privados y están<br>cifrados con Supabase Auth.</p>
+      </div>
     </div>
-    <div id="login-error" style="display:none; background:var(--red-bg); color:var(--red); font-size:12px; padding:8px 12px; border-radius:var(--radius); margin-bottom:14px;"></div>
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="auth-email" placeholder="tu@email.com" autocomplete="email" />
-    </div>
-    <div class="form-group" id="auth-password-group">
-      <label>Contraseña</label>
-      <div class="pw-wrap"><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" /><button type="button" class="pw-toggle" data-target="auth-password">👁</button></div>
-    </div>
-    <div class="form-group" id="auth-password2-group" style="display:none;">
-      <label>Repetir contraseña</label>
-      <div class="pw-wrap"><input type="password" id="auth-password2" placeholder="••••••••" /><button type="button" class="pw-toggle" data-target="auth-password2">👁</button></div>
-    </div>
-    <button id="auth-submit" class="btn-save" style="width:100%; padding:10px; font-size:14px; margin-top:4px;">Ingresar</button>
-    <div style="text-align:center; margin-top:14px;">
-      <button id="auth-toggle" style="background:none; border:none; font-size:12px; color:var(--blue); cursor:pointer;">¿No tenés cuenta? Registrate</button>
-    </div>
-    <div id="auth-loading" style="display:none; text-align:center; margin-top:12px; font-size:12px; color:var(--text3);">Cargando...</div>
+
   </div>
 </div>
 
@@ -995,24 +1097,50 @@ let state=loadLocalState();
 if(!state.recurring)state.recurring=[];
 
 // ── AUTH ─────────────────────────────────────────────────────────────
-let _isRegister=false;
+// _authMode: 'login' | 'register' | 'forgot'
+let _authMode='login';
+function _setAuthMode(mode){
+  _authMode=mode;
+  const isReg=mode==='register',isForgot=mode==='forgot';
+  document.getElementById('login-form-title').textContent=isForgot?'Recuperar contraseña':isReg?'Crear cuenta':'Bienvenido';
+  document.getElementById('login-subtitle').textContent=isForgot?'Te enviamos un email para restablecer tu contraseña.':isReg?'Creá tu cuenta gratuita.':'Ingresá con tu cuenta para continuar.';
+  document.getElementById('auth-submit').textContent=isForgot?'Enviar email de recuperación':isReg?'Crear cuenta':'Ingresar';
+  document.getElementById('auth-password-group').style.display=isForgot?'none':'';
+  document.getElementById('auth-password2-group').style.display=isReg?'':'none';
+  document.getElementById('auth-forgot').style.display=isForgot||isReg?'none':'';
+  document.getElementById('auth-toggle').style.display=isForgot?'none':'';
+  const div=document.querySelector('.login-divider');if(div)div.style.display=isForgot?'none':'';
+  setAuthError('');setAuthSuccess('');
+}
 function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('main-app').style.display='none';toggleDistPanel(false);document.getElementById('dist-toggle-btn').style.display='none';document.getElementById('dist-panel').style.display='none';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display='none';}
 function showApp(email){document.getElementById('login-screen').style.display='none';document.getElementById('main-app').style.display='';document.getElementById('dist-toggle-btn').style.display='';document.getElementById('dist-panel').style.display='';const el=document.getElementById('auth-user-email');if(el)el.textContent=email||'';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display=(email===ADMIN_EMAIL)?'':'none';}
 function setAuthError(m){const el=document.getElementById('login-error');el.textContent=m;el.style.display=m?'':'none';}
+function setAuthSuccess(m){const el=document.getElementById('login-success');el.textContent=m;el.style.display=m?'':'none';}
 function setAuthLoading(on){document.getElementById('auth-loading').style.display=on?'':'none';document.getElementById('auth-submit').disabled=on;}
 document.querySelectorAll('.pw-toggle').forEach(btn=>{btn.addEventListener('click',()=>{const inp=document.getElementById(btn.dataset.target);if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}else{inp.type='password';btn.textContent='👁';}});});
-document.getElementById('auth-toggle').addEventListener('click',()=>{_isRegister=!_isRegister;document.getElementById('auth-toggle').textContent=_isRegister?'¿Ya tenés cuenta? Ingresá':'¿No tenés cuenta? Registrate';document.getElementById('auth-submit').textContent=_isRegister?'Crear cuenta':'Ingresar';document.getElementById('login-subtitle').textContent=_isRegister?'Creá tu cuenta gratuita.':'Ingresá con tu cuenta para continuar.';document.getElementById('auth-password2-group').style.display=_isRegister?'':'none';setAuthError('');});
+document.getElementById('auth-toggle').addEventListener('click',()=>{_setAuthMode(_authMode==='login'?'register':'login');document.getElementById('auth-toggle').textContent=_authMode==='register'?'¿Ya tenés cuenta? Ingresá':'¿No tenés cuenta? Registrate';});
+document.getElementById('auth-forgot').addEventListener('click',()=>_setAuthMode('forgot'));
 document.getElementById('auth-submit').addEventListener('click',async()=>{
   const email=document.getElementById('auth-email').value.trim(),pass=document.getElementById('auth-password').value,pass2=document.getElementById('auth-password2').value;
-  setAuthError('');if(!email||!pass){setAuthError('Completá email y contraseña.');return;}
-  if(_isRegister&&pass!==pass2){setAuthError('Las contraseñas no coinciden.');return;}
+  setAuthError('');setAuthSuccess('');
+  if(_authMode==='forgot'){
+    if(!email){setAuthError('Ingresá tu email.');return;}
+    setAuthLoading(true);
+    const r=await fetch(SUPABASE_URL+'/auth/v1/recover',{method:'POST',headers:sbHeaders(),body:JSON.stringify({email})});
+    setAuthLoading(false);
+    if(r.ok){setAuthSuccess('Email enviado. Revisá tu bandeja de entrada.');_setAuthMode('login');}
+    else{setAuthError('No se pudo enviar el email. Verificá la dirección.');}
+    return;
+  }
+  if(!email||!pass){setAuthError('Completá email y contraseña.');return;}
+  if(_authMode==='register'&&pass!==pass2){setAuthError('Las contraseñas no coinciden.');return;}
   if(pass.length<6){setAuthError('La contraseña debe tener al menos 6 caracteres.');return;}
   setAuthLoading(true);let error;
-  if(_isRegister){const res=await sbSignUp(email,pass);if(!res.error){setAuthError('');alert('Cuenta creada. Revisá tu email para confirmar.');setAuthLoading(false);return;}error=res.error;}
+  if(_authMode==='register'){const res=await sbSignUp(email,pass);if(!res.error){setAuthSuccess('Cuenta creada. Revisá tu email para confirmar.');setAuthLoading(false);_setAuthMode('login');return;}error=res.error;}
   else{const res=await sbSignIn(email,pass);error=res.error;if(!error){await initAppForUser({email:_userEmail});return;}}
   setAuthLoading(false);setAuthError(error?.msg||error?.message||error?.error_description||'Email o contraseña incorrectos.');
 });
-document.getElementById('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-password').focus();});
+document.getElementById('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter'&&_authMode!=='forgot')document.getElementById('auth-password').focus();else if(e.key==='Enter')document.getElementById('auth-submit').click();});
 document.getElementById('auth-password').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-submit').click();});
 document.getElementById('logout-btn').addEventListener('click',async()=>{await sbSignOut();state=emptyState();saveLocalState();showLogin();});
 async function initAppForUser(user){
