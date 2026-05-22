@@ -392,6 +392,35 @@
 
   .login-footer-note { margin-top:28px; font-size:11px; color:var(--text3); text-align:center; line-height:1.7; }
 
+  /* ── LOGIN ANIMATIONS ───────────────────────────────── */
+  @keyframes loginSlideLeft {
+    from { opacity:0; transform:translateX(-40px); }
+    to   { opacity:1; transform:translateX(0); }
+  }
+  @keyframes loginSlideRight {
+    from { opacity:0; transform:translateX(40px); }
+    to   { opacity:1; transform:translateX(0); }
+  }
+  @keyframes loginChartDraw {
+    from { stroke-dashoffset:400; opacity:0; }
+    to   { stroke-dashoffset:0;   opacity:0.15; }
+  }
+  @keyframes loginCoinFloat {
+    0%   { opacity:0; transform:translateY(0); }
+    20%  { opacity:0.55; }
+    80%  { opacity:0.55; }
+    100% { opacity:0; transform:translateY(-40px); }
+  }
+  .login-anim-left  { animation:loginSlideLeft  0.7s cubic-bezier(.22,.68,0,1.2) both; }
+  .login-anim-right { animation:loginSlideRight 0.7s 0.15s cubic-bezier(.22,.68,0,1.2) both; }
+  .login-brand      { animation:loginSlideLeft  0.5s 0.10s cubic-bezier(.22,.68,0,1.2) both; opacity:0; }
+  .login-tagline    { animation:loginSlideLeft  0.7s 0.30s cubic-bezier(.22,.68,0,1.2) both; opacity:0; }
+  .login-tagline-sub{ animation:loginSlideLeft  0.6s 0.45s cubic-bezier(.22,.68,0,1.2) both; opacity:0; }
+  .login-features   { animation:loginSlideLeft  0.6s 0.60s cubic-bezier(.22,.68,0,1.2) both; opacity:0; }
+  #login-chart-bg { position:absolute; bottom:-8px; right:-10px; pointer-events:none; z-index:0; }
+  #login-chart-line { stroke-dasharray:400; stroke-dashoffset:400; animation:loginChartDraw 1.8s 0.4s cubic-bezier(.4,0,.2,1) forwards; }
+  .login-coin { position:absolute; font-size:18px; pointer-events:none; z-index:0; color:#F59E0B; animation:loginCoinFloat ease-in-out infinite; }
+
   @media(max-width:700px){
     #login-screen { min-height:100vh; align-items:flex-start; }
     .login-split { flex-direction:column; min-height:unset; width:100%; }
@@ -523,7 +552,7 @@
   <div class="login-split">
 
     <!-- ── PANEL IZQUIERDO ── -->
-    <div class="login-left">
+    <div class="login-left login-anim-left">
       <div class="login-brand">
         <img src="logo.svg" alt="Logo" />
         <span class="login-brand-name">Vinanzas</span>
@@ -553,7 +582,7 @@
     </div>
 
     <!-- ── PANEL DERECHO ── -->
-    <div class="login-right">
+    <div class="login-right login-anim-right">
       <div class="login-form-box">
         <h2 class="login-form-title" id="login-form-title">Bienvenido</h2>
         <p class="login-form-sub" id="login-subtitle">Ingresá con tu cuenta para continuar.</p>
@@ -1717,6 +1746,28 @@ document.getElementById('save-saving').addEventListener('click',()=>{
   document.getElementById('modal-saving').classList.remove('open');
   renderAll();
 });
+
+// ══════════════════════════════════════════════════════════════════════
+// LOGIN ANIMATION
+// ══════════════════════════════════════════════════════════════════════
+(function(){
+  const panel = document.querySelector('.login-left');
+  if (!panel) return;
+  // Gráfico ascendente de fondo
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('id','login-chart-bg');
+  svg.setAttribute('width','220'); svg.setAttribute('height','80'); svg.setAttribute('viewBox','0 0 220 80');
+  svg.innerHTML='<polyline id="login-chart-line" points="0,70 30,58 60,63 90,42 120,46 150,24 180,28 210,10 220,4" fill="none" stroke="#5DCAA5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="220" cy="4" r="4" fill="#5DCAA5" opacity="0.4"/>';
+  panel.appendChild(svg);
+  // Monedas flotantes
+  [{l:'15%',d:'0s',dur:'3.2s'},{l:'68%',d:'1s',dur:'2.8s'},{l:'42%',d:'2s',dur:'3.5s'},{l:'55%',d:'0.5s',dur:'4s'},{l:'28%',d:'1.8s',dur:'3s'}].forEach(c=>{
+    const el=document.createElement('div');
+    el.className='login-coin';
+    el.textContent='$';
+    el.style.cssText='left:'+c.l+';bottom:2%;animation-delay:'+c.d+';animation-duration:'+c.dur+';';
+    panel.appendChild(el);
+  });
+})();
 
 // ══════════════════════════════════════════════════════════════════════
 // ADMIN
