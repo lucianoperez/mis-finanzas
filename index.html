@@ -68,6 +68,8 @@
 
   /* ── LAYOUT ──────────────────────────────────────────── */
   .layout { display: flex; min-height: 100vh; }
+  body.demo-mode .layout { padding-top: 44px; }
+  body.demo-mode .sidebar { top: 44px; height: calc(100vh - 44px); }
 
   /* ── SIDEBAR ─────────────────────────────────────────── */
   .sidebar {
@@ -621,6 +623,8 @@
 
         <button id="auth-toggle" class="login-btn-secondary">¿No tenés cuenta? Registrate</button>
 
+        <button id="demo-btn" class="login-btn-secondary" style="margin-top:8px; color:var(--green); border-color:var(--green); opacity:0.85;">🔍 Explorar sin registrarse</button>
+
         <div id="auth-loading" style="display:none; text-align:center; margin-top:14px; font-size:12px; color:var(--text3);">Cargando...</div>
 
         <p class="login-footer-note">Tus datos son privados y están<br>cifrados con Supabase Auth.</p>
@@ -631,6 +635,12 @@
 </div>
 
 <!-- ── MAIN APP ──────────────────────────────────────────── -->
+<!-- DEMO BANNER -->
+<div id="demo-banner" style="display:none; position:fixed; top:0; left:0; right:0; z-index:9999; background:linear-gradient(90deg,#1a2e1f,#14261a); border-bottom:1px solid #5DCAA533; padding:10px 20px; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap;">
+  <span style="font-size:13px; color:#e8f5f0;">🔍 <strong>Modo demo</strong> — Los cambios no se guardan.</span>
+  <button onclick="document.getElementById('login-screen').style.display='';document.getElementById('main-app').style.display='none';document.getElementById('demo-banner').style.display='none';document.body.classList.remove('demo-mode');window._previewMode=false;_setAuthMode('register');document.getElementById('auth-toggle').textContent='¿Ya tenés cuenta? Ingresá';" style="background:#5DCAA5; color:#111; border:none; border-radius:8px; padding:5px 14px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;">Registrarse gratis →</button>
+</div>
+
 <div class="layout" id="main-app" style="display:none;">
 
   <!-- SIDEBAR -->
@@ -1166,6 +1176,78 @@ function setAuthLoading(on){document.getElementById('auth-loading').style.displa
 const _SVG_EYE='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 const _SVG_EYE_OFF='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 document.querySelectorAll('.pw-toggle').forEach(btn=>{btn.style.display='flex';btn.style.alignItems='center';btn.style.justifyContent='center';btn.addEventListener('click',()=>{const inp=document.getElementById(btn.dataset.target);if(inp.type==='password'){inp.type='text';btn.innerHTML=_SVG_EYE_OFF;}else{inp.type='password';btn.innerHTML=_SVG_EYE;}});});
+// ── DEMO MODE ────────────────────────────────────────────────────────
+function startDemo(){
+  window._previewMode = true;
+  const y = 2026;
+  state = {
+    cards: ['Visa Galicia', 'Naranja X'],
+    currentYear: y, currentMonth: 4,
+    recurring: [
+      {id:'rd1',desc:'iPhone 15 Pro',monto:95000,tipo:'tarjeta',card:'Visa Galicia',cuotas:12,startYear:2025,startMonth:10},
+      {id:'rd2',desc:'Smart TV Samsung',monto:48000,tipo:'tarjeta',card:'Naranja X',cuotas:6,startYear:2026,startMonth:1},
+      {id:'rd3',desc:'Gym membership',monto:18500,tipo:'débito',cuotas:3,startYear:2026,startMonth:3},
+    ],
+    data:{
+      [y+'-2']:{ // Marzo
+        ingresos:[
+          {desc:'Sueldo',monto:850000,cat:'Trabajo',dia:5},
+          {desc:'Freelance diseño web',monto:130000,cat:'Freelance',dia:18},
+        ],
+        egresos:[
+          {desc:'Alquiler',monto:320000,tipo:'transferencia',dia:1},
+          {desc:'Supermercado Coto',monto:92000,tipo:'débito',dia:6},
+          {desc:'Netflix',monto:4800,tipo:'tarjeta',card:'Visa Galicia',dia:10},
+          {desc:'Spotify',monto:3200,tipo:'tarjeta',card:'Visa Galicia',dia:10},
+          {desc:'Electricidad',monto:21000,tipo:'débito',dia:15},
+          {desc:'Internet Personal',monto:14000,tipo:'débito',dia:20},
+          {desc:'Nafta YPF',monto:24000,tipo:'débito',dia:12},
+          {desc:'Salida restaurante',monto:38000,tipo:'tarjeta',card:'Naranja X',dia:22},
+          {desc:'Farmacia',monto:9500,tipo:'débito',dia:18},
+        ]
+      },
+      [y+'-3']:{ // Abril
+        ingresos:[
+          {desc:'Sueldo',monto:850000,cat:'Trabajo',dia:5},
+        ],
+        egresos:[
+          {desc:'Alquiler',monto:320000,tipo:'transferencia',dia:1},
+          {desc:'Supermercado Disco',monto:105000,tipo:'débito',dia:4},
+          {desc:'Netflix',monto:4800,tipo:'tarjeta',card:'Visa Galicia',dia:10},
+          {desc:'Spotify',monto:3200,tipo:'tarjeta',card:'Visa Galicia',dia:10},
+          {desc:'Gas Natural',monto:25000,tipo:'débito',dia:14},
+          {desc:'Internet Personal',monto:14000,tipo:'débito',dia:20},
+          {desc:'Cine + cena',monto:31000,tipo:'tarjeta',card:'Naranja X',dia:19},
+          {desc:'Ropa Zara',monto:78000,tipo:'tarjeta',card:'Naranja X',dia:25},
+          {desc:'Nafta YPF',monto:26000,tipo:'débito',dia:11},
+          {desc:'Médico clínica',monto:15000,tipo:'débito',dia:8,pendiente:true},
+        ]
+      },
+      [y+'-4']:{ // Mayo
+        ingresos:[
+          {desc:'Sueldo',monto:850000,cat:'Trabajo',dia:5},
+          {desc:'Venta Mercado Libre',monto:48000,cat:'Extra',dia:12},
+        ],
+        egresos:[
+          {desc:'Alquiler',monto:320000,tipo:'transferencia',dia:1},
+          {desc:'Supermercado Carrefour',monto:88000,tipo:'débito',dia:7},
+          {desc:'Netflix',monto:4800,tipo:'tarjeta',card:'Visa Galicia',dia:10},
+          {desc:'Spotify',monto:3200,tipo:'tarjeta',card:'Visa Galicia',dia:10},
+          {desc:'Internet Personal',monto:14000,tipo:'débito',dia:20},
+          {desc:'Nafta YPF',monto:28000,tipo:'débito',dia:14},
+          {desc:'Cumpleaños amigo',monto:44000,tipo:'tarjeta',card:'Naranja X',dia:17},
+          {desc:'Peluquería',monto:10000,tipo:'débito',dia:16,pendiente:true},
+        ]
+      }
+    }
+  };
+  document.body.classList.add('demo-mode');
+  document.getElementById('demo-banner').style.display='flex';
+  showApp('demo');
+  renderAll();
+}
+document.getElementById('demo-btn').addEventListener('click', startDemo);
+
 document.getElementById('auth-toggle').addEventListener('click',()=>{_setAuthMode(_authMode==='login'?'register':'login');document.getElementById('auth-toggle').textContent=_authMode==='register'?'¿Ya tenés cuenta? Ingresá':'¿No tenés cuenta? Registrate';});
 document.getElementById('auth-forgot').addEventListener('click',()=>_setAuthMode('forgot'));
 document.getElementById('auth-back').addEventListener('click',()=>{_setAuthMode('login');document.getElementById('auth-toggle').textContent='¿No tenés cuenta? Registrate';});
@@ -1995,7 +2077,7 @@ document.getElementById('save-rename-card').addEventListener('click',()=>{
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/mis-finanzas/sw.js')
+    navigator.serviceWorker.register('/sw.js')
       .catch(() => {}); // silently ignore if offline install fails
   });
 }
