@@ -1,10 +1,10 @@
 const CACHE = 'vinanzas-v1';
 const ASSETS = [
-  '/mis-finanzas/',
-  '/mis-finanzas/index.html',
-  '/mis-finanzas/logo.svg',
-  '/mis-finanzas/icons/icon-192.png',
-  '/mis-finanzas/icons/icon-512.png'
+  '/',
+  '/index.html',
+  '/logo.svg',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png'
 ];
 
 self.addEventListener('install', e => {
