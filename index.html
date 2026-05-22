@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Finanzas Personales</title>
+<title>Vinanzas</title>
 <link rel="icon" type="image/svg+xml" href="logo.svg" />
 
 <style>
@@ -526,10 +526,10 @@
     <div class="login-left">
       <div class="login-brand">
         <img src="logo.svg" alt="Logo" />
-        <span class="login-brand-name">Mis Finanzas</span>
+        <span class="login-brand-name">Vinanzas</span>
       </div>
       <h1 class="login-tagline">Tomá el control<br>de tu <span>dinero</span>.</h1>
-      <p class="login-tagline-sub">Registrá ingresos y egresos, analizá tus hábitos y tomá mejores decisiones financieras.</p>
+      <p class="login-tagline-sub">Registrá ingresos y egresos, analizá tus hábitos y tomá mejores decisiones financieras con Vinanzas.</p>
       <div class="login-features">
         <div class="login-feature">
           <div class="login-feature-icon">
@@ -623,8 +623,8 @@
         </svg>
       </div>
       <div class="sidebar-brand-text">
-        <div class="sidebar-brand-title">Finanzas</div>
-        <div class="sidebar-brand-sub">personales</div>
+        <div class="sidebar-brand-title">Vinanzas</div>
+        <div class="sidebar-brand-sub">by Viru</div>
       </div>
     </div>
 
@@ -1671,7 +1671,7 @@ document.getElementById('export-excel').addEventListener('click',()=>{
   md.egresos.forEach(e=>lines.push(csvRow(['Egreso',e.desc,+e.monto,e.dia&&e.mes?(e.dia+'/'+e.mes):'',(e.tags||[]).join('; '),e.tipo==='tarjeta'?e.card:e.tipo])));
   getRecurringForMonth(state.currentYear,state.currentMonth).forEach(r=>lines.push(csvRow(['Egreso cuota '+r.cuotaNum+'/'+r.cuotas,r.desc,+r.monto,r.dia&&r.mes?(r.dia+'/'+r.mes):'',(r.tags||[]).join('; '),r.tipo==='tarjeta'?r.card:r.tipo])));
   md.ingresos.forEach(i=>lines.push(csvRow(['Ingreso',i.desc,+i.monto,i.dia&&i.mes?(i.dia+'/'+i.mes):'',(i.tags||[]).join('; '),i.cat||''])));
-  const blob=new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='finanzas_'+state.currentYear+'.csv';a.click();URL.revokeObjectURL(a.href);
+  const blob=new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vinanzas_'+state.currentYear+'.csv';a.click();URL.revokeObjectURL(a.href);
 });
 document.getElementById('export-pdf').addEventListener('click',()=>{
   const month=MONTHS[state.currentMonth]+' '+state.currentYear,md=getMonthData(state.currentYear,state.currentMonth);
@@ -1679,7 +1679,7 @@ document.getElementById('export-pdf').addEventListener('click',()=>{
   const tRows=rows=>rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('');
   const egR=[];md.egresos.forEach(e=>egR.push([e.desc,e.tipo==='tarjeta'?e.card:e.tipo,(e.tags||[]).join(', '),'$'+Math.round(+e.monto).toLocaleString('es-AR')]));getRecurringForMonth(state.currentYear,state.currentMonth).forEach(r=>egR.push([r.desc+' ('+r.cuotaNum+'/'+r.cuotas+')',r.tipo==='tarjeta'?r.card:r.tipo,(r.tags||[]).join(', '),'$'+Math.round(+r.monto).toLocaleString('es-AR')]));
   const ingR=md.ingresos.map(i=>[i.desc,i.cat||'',(i.tags||[]).join(', '),'$'+Math.round(+i.monto).toLocaleString('es-AR')]);
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Finanzas ${month}</title><style>body{font-family:system-ui,sans-serif;font-size:12px;color:#1a1917;padding:20px;}h1{font-size:18px;margin-bottom:4px;}.sub{color:#6b6a65;font-size:11px;margin-bottom:20px;}.summary{display:flex;gap:16px;margin-bottom:24px;}.metric{background:#f5f4f0;border-radius:8px;padding:12px 16px;min-width:120px;}.metric-label{font-size:10px;text-transform:uppercase;color:#9e9d99;font-weight:600;margin-bottom:4px;}.metric-value{font-size:20px;font-weight:700;}.pos{color:#0F6E56;}.neg{color:#993C1D;}table{width:100%;border-collapse:collapse;margin-bottom:20px;}th{background:#1a1917;color:#fff;text-align:left;padding:7px 10px;font-size:11px;}td{padding:6px 10px;border-bottom:0.5px solid #e0dfd9;font-size:11px;}h2{font-size:13px;font-weight:700;margin:20px 0 8px;text-transform:uppercase;letter-spacing:0.5px;color:#6b6a65;}</style></head><body><h1>Finanzas — ${month}</h1><div class="sub">Generado el ${new Date().toLocaleDateString('es-AR')}</div><div class="summary"><div class="metric"><div class="metric-label">Ingresos</div><div class="metric-value pos">$${ingT.toLocaleString('es-AR')}</div></div><div class="metric"><div class="metric-label">Egresos</div><div class="metric-value neg">$${egT.toLocaleString('es-AR')}</div></div><div class="metric"><div class="metric-label">Diferencia</div><div class="metric-value ${dif>=0?'pos':'neg'}">${dif>=0?'+':''}$${Math.abs(dif).toLocaleString('es-AR')}</div></div></div>${egR.length?`<h2>Egresos</h2><table><thead><tr><th>Descripción</th><th>Tipo</th><th>Etiquetas</th><th>Monto</th></tr></thead><tbody>${tRows(egR)}</tbody></table>`:''}${ingR.length?`<h2>Ingresos</h2><table><thead><tr><th>Descripción</th><th>Categoría</th><th>Etiquetas</th><th>Monto</th></tr></thead><tbody>${tRows(ingR)}</tbody></table>`:''}<script>window.onload=()=>window.print();<\/script></body></html>`;
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Vinanzas — ${month}</title><style>body{font-family:system-ui,sans-serif;font-size:12px;color:#1a1917;padding:20px;}h1{font-size:18px;margin-bottom:4px;}.sub{color:#6b6a65;font-size:11px;margin-bottom:20px;}.summary{display:flex;gap:16px;margin-bottom:24px;}.metric{background:#f5f4f0;border-radius:8px;padding:12px 16px;min-width:120px;}.metric-label{font-size:10px;text-transform:uppercase;color:#9e9d99;font-weight:600;margin-bottom:4px;}.metric-value{font-size:20px;font-weight:700;}.pos{color:#0F6E56;}.neg{color:#993C1D;}table{width:100%;border-collapse:collapse;margin-bottom:20px;}th{background:#1a1917;color:#fff;text-align:left;padding:7px 10px;font-size:11px;}td{padding:6px 10px;border-bottom:0.5px solid #e0dfd9;font-size:11px;}h2{font-size:13px;font-weight:700;margin:20px 0 8px;text-transform:uppercase;letter-spacing:0.5px;color:#6b6a65;}</style></head><body><h1>Vinanzas — ${month}</h1><div class="sub">Generado el ${new Date().toLocaleDateString('es-AR')}</div><div class="summary"><div class="metric"><div class="metric-label">Ingresos</div><div class="metric-value pos">$${ingT.toLocaleString('es-AR')}</div></div><div class="metric"><div class="metric-label">Egresos</div><div class="metric-value neg">$${egT.toLocaleString('es-AR')}</div></div><div class="metric"><div class="metric-label">Diferencia</div><div class="metric-value ${dif>=0?'pos':'neg'}">${dif>=0?'+':''}$${Math.abs(dif).toLocaleString('es-AR')}</div></div></div>${egR.length?`<h2>Egresos</h2><table><thead><tr><th>Descripción</th><th>Tipo</th><th>Etiquetas</th><th>Monto</th></tr></thead><tbody>${tRows(egR)}</tbody></table>`:''}${ingR.length?`<h2>Ingresos</h2><table><thead><tr><th>Descripción</th><th>Categoría</th><th>Etiquetas</th><th>Monto</th></tr></thead><tbody>${tRows(ingR)}</tbody></table>`:''}<script>window.onload=()=>window.print();<\/script></body></html>`;
   const w=window.open('','_blank');w.document.write(html);w.document.close();
 });
 
