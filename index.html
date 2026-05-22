@@ -419,12 +419,14 @@
   .login-features   { animation:loginSlideLeft  0.6s 0.60s cubic-bezier(.22,.68,0,1.2) both; opacity:0; }
   #login-chart-bg { position:absolute; bottom:-8px; right:-10px; pointer-events:none; z-index:0; }
   #login-chart-line { stroke-dasharray:400; stroke-dashoffset:400; animation:loginChartDraw 1.8s 0.4s cubic-bezier(.4,0,.2,1) forwards; }
-  .login-coin { position:absolute; font-size:18px; pointer-events:none; z-index:0; color:#F59E0B; animation:loginCoinFloat ease-in-out infinite; }
+  .login-coin { position:absolute; bottom:2%; font-size:18px; pointer-events:none; z-index:0; color:#F59E0B; animation:loginCoinFloat ease-in-out infinite; }
 
   @media(max-width:700px){
     #login-screen { min-height:100vh; align-items:flex-start; }
     .login-split { flex-direction:column; min-height:unset; width:100%; }
     .login-left { width:100%; padding:36px 28px 32px; background:linear-gradient(160deg,#1a2e1f 0%,#111810 60%,var(--bg) 100%); }
+    #login-chart-bg { display:none; }
+    .login-coin { display:none; }
     .login-brand { margin-bottom:24px; }
     .login-tagline { font-size:26px; margin-bottom:12px; }
     .login-tagline-sub { font-size:13px; margin-bottom:0; }
@@ -1764,7 +1766,9 @@ document.getElementById('save-saving').addEventListener('click',()=>{
     const el=document.createElement('div');
     el.className='login-coin';
     el.textContent='$';
-    el.style.cssText='left:'+c.l+';bottom:2%;animation-delay:'+c.d+';animation-duration:'+c.dur+';';
+    el.style.left=c.l;
+    el.style.animationDelay=c.d;
+    el.style.animationDuration=c.dur;
     panel.appendChild(el);
   });
 })();
