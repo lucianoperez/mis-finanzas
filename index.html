@@ -70,6 +70,13 @@
   .layout { display: flex; min-height: 100vh; }
   body.demo-mode .layout { padding-top: 44px; }
   body.demo-mode .sidebar { top: 44px; height: calc(100vh - 44px); }
+  /* demo-mode en mobile: el sidebar está abajo, no debe tener top; el contenido necesita padding extra arriba */
+  @media (max-width: 720px) {
+    body.demo-mode .sidebar { top: auto; height: 58px; }
+    body.demo-mode .main-content { padding-top: calc(1.25rem + 44px); }
+    #demo-banner { flex-wrap: nowrap; padding: 8px 12px; gap: 10px; }
+    #demo-banner span { font-size: 12px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  }
 
   /* ── SIDEBAR ─────────────────────────────────────────── */
   .sidebar {
