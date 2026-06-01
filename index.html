@@ -263,6 +263,7 @@
   .badge-ingreso    { background: var(--green-bg); color: var(--green); }
   .badge-cuota      { background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border-md); }
   .badge-cuota-last { background: var(--green-bg); color: var(--green); border: 0.5px solid var(--green); }
+  .badge-recurrente { background: var(--blue-bg, #EFF6FF); color: var(--blue, #3B82F6); border: 0.5px solid rgba(59,130,246,0.3); }
   .item-last-cuota .item-name { text-decoration: line-through; text-decoration-color: var(--green); }
   .item-last-cuota { opacity: 0.7; }
   .item-pendiente { background: #FFFBEB !important; border-left-color: #F59E0B !important; }
@@ -1019,6 +1020,7 @@
     <div class="cuota-fields" id="eg-cuota-fields">
       <div class="form-group"><label>Cantidad de cuotas</label><input type="number" id="eg-cuotas" placeholder="Ej: 6" min="2" max="120" step="1" /><div class="form-hint">El monto ingresado es el valor de cada cuota.</div></div>
     </div>
+    <label class="cuota-toggle"><input type="checkbox" id="eg-recurrente" /><span>Gasto recurrente mensual <span style="font-size:11px;color:var(--text3);">↻ Se repite indefinidamente</span></span></label>
     <label class="cuota-toggle"><input type="checkbox" id="eg-pendiente" /><span>Marcar como pendiente de pago</span></label>
     <div class="modal-actions"><button class="btn-cancel" id="cancel-egreso">Cancelar</button><button class="btn-save" id="save-egreso">Guardar egreso</button></div>
   </div>
@@ -1145,7 +1147,7 @@ async function sbLoadState(){if(!_userId)return null;const r=await fetch(SUPABAS
 async function sbSaveState(payload){if(!_userId||window._previewMode)return;await fetch(SUPABASE_URL+'/rest/v1/finanzas_state',{method:'POST',headers:sbHeaders({'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({user_id:_userId,state:payload})});}
 
 // ── STATE ────────────────────────────────────────────────────────────
-function emptyState(){return{cards:[],data:{},recurring:[],currentYear:new Date().getFullYear(),currentMonth:new Date().getMonth()};}
+function emptyState(){return{cards:[],data:{},recurring:[],recurrentes:[],currentYear:new Date().getFullYear(),currentMonth:new Date().getMonth()};}
 function loadLocalState(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)return JSON.parse(r);}catch(e){}return emptyState();}
 function saveLocalState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}}
 let _syncTimeout=null;
@@ -1155,13 +1157,14 @@ async function saveState(){
   if(_syncTimeout)clearTimeout(_syncTimeout);
   _syncTimeout=setTimeout(async()=>{
     if(!_userId)return;setSyncStatus('Guardando…');
-    try{await sbSaveState({cards:state.cards,data:state.data,recurring:state.recurring});setSyncStatus('✓ Guardado');}
+    try{await sbSaveState({cards:state.cards,data:state.data,recurring:state.recurring,recurrentes:state.recurrentes});setSyncStatus('✓ Guardado');}
     catch(e){setSyncStatus('⚠ Error al guardar');}
     setTimeout(()=>setSyncStatus(''),2000);
   },800);
 }
 let state=loadLocalState();
 if(!state.recurring)state.recurring=[];
+if(!state.recurrentes)state.recurrentes=[];
 
 // ── AUTH ─────────────────────────────────────────────────────────────
 // _authMode: 'login' | 'register' | 'forgot'
@@ -1288,7 +1291,7 @@ document.getElementById('auth-password').addEventListener('keydown',e=>{if(e.key
 document.getElementById('logout-btn').addEventListener('click',async()=>{await sbSignOut();state=emptyState();saveLocalState();showLogin();});
 async function initAppForUser(user){
   setSyncStatus('Cargando datos…');const remote=await sbLoadState();
-  if(remote){state={...emptyState(),...remote};if(!state.recurring)state.recurring=[];const local=loadLocalState();state.currentYear=local.currentYear||state.currentYear;state.currentMonth=local.currentMonth||state.currentMonth;saveLocalState();}
+  if(remote){state={...emptyState(),...remote};if(!state.recurring)state.recurring=[];if(!state.recurrentes)state.recurrentes=[];const local=loadLocalState();state.currentYear=local.currentYear||state.currentYear;state.currentMonth=local.currentMonth||state.currentMonth;saveLocalState();}
   setSyncStatus('');showApp(user.email);setAuthLoading(false);renderAll();
 }
 (async()=>{showLogin();const user=await sbGetUser();if(user){await initAppForUser(user);}else{const ok=await sbRefreshSession();if(ok)await initAppForUser({email:_userEmail});}})();
@@ -1301,6 +1304,23 @@ function getRecurringForMonth(year,month){
   const result=[];
   state.recurring.forEach(r=>{const s=r.startYear*12+r.startMonth,t=year*12+month,o=t-s;if(o>=0&&o<r.cuotas)result.push({...r,cuotaNum:o+1,isLast:o+1===r.cuotas});});
   return result;
+}
+
+function getMontoRecurrente(r,year,month){
+  const targetKey=year*12+month;
+  // Find the latest amount entry whose key <= targetKey
+  let monto=r.amounts[0]?r.amounts[0].monto:0;
+  r.amounts.forEach(a=>{const k=a.year*12+a.month;if(k<=targetKey)monto=a.monto;});
+  return monto;
+}
+
+function getRecurrentesForMonth(year,month){
+  const cur=year*12+month;
+  return (state.recurrentes||[]).filter(r=>{
+    const start=r.startYear*12+r.startMonth;
+    const end=r.endYear!==undefined?r.endYear*12+r.endMonth:Infinity;
+    return cur>=start&&cur<=end;
+  }).map(r=>({...r,monto:getMontoRecurrente(r,year,month),isRecurrente:true}));
 }
 
 // ── AHORROS USD ──────────────────────────────────────────────────────
@@ -1420,7 +1440,8 @@ const DIST_COLORS=['#5DCAA5','#F59E0B','#818CF8','#F0997B','#34D399','#FB923C','
 function renderDistPanel(){
   const md=getMonthData(state.currentYear,state.currentMonth);
   const recItems=getRecurringForMonth(state.currentYear,state.currentMonth);
-  const allEgresos=[...md.egresos,...recItems];
+  const recMensuales=getRecurrentesForMonth(state.currentYear,state.currentMonth);
+  const allEgresos=[...md.egresos,...recItems,...recMensuales];
   const grupos={};
   allEgresos.forEach(e=>{
     const key=e.tipo==='tarjeta'?(e.card||'Tarjeta'):e.tipo==='fijo'?'Gastos fijos':'Efectivo';
@@ -1498,36 +1519,53 @@ function itemHTML(item,cc,idx,isRec){
   const fecha=fmtFecha(item),fechaHtml=fecha?'<span class="item-fecha">'+fecha+'</span>':'';
   let cuotaBadge='';
   if(item.cuotaNum!==undefined){const cls=item.isLast?'badge badge-cuota-last':'badge badge-cuota';cuotaBadge='<span class="'+cls+'">'+item.cuotaNum+'/'+item.cuotas+(item.isLast?' ✓':'')+'</span>';}
+  const recBadge=item.isRecurrente?'<span class="badge badge-recurrente">↻</span>':'';
   const tagsHtml=(item.tags||[]).map(t=>tagChipHTML(t)).join('');
   const lastCls=item.isLast?' item-last-cuota':'',ccCls=cc?' item-colored '+cc:'',pendingCls=item.pendiente?' item-pendiente':'';
   const pendingBadge=item.pendiente?'<span class="badge-pendiente">⏳ Pendiente</span>':'';
   const pagarBtn=(item.pendiente&&!isRec)?'<button class="pagar-btn pagar-eg" data-idx="'+idx+'">✓ Pagar</button>':'';
-  const delBtn=isRec?'<button class="del-btn del-rec" data-rid="'+item.id+'" title="Eliminar todas las cuotas">×</button>':'<button class="del-btn del-normal" data-idx="'+idx+'" title="Eliminar">×</button>';
-  const editBtn=isRec?'<button class="edit-btn edit-rec" data-rid="'+item.id+'" title="Editar cuotas">✎</button>':'<button class="edit-btn edit-eg" data-idx="'+idx+'" title="Editar">✎</button>';
-  return '<div class="item'+ccCls+lastCls+pendingCls+'">'+'<div class="item-left"><span class="item-name">'+item.desc+fechaHtml+cuotaBadge+pendingBadge+'</span>'+(tagsHtml?'<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;">'+tagsHtml+'</div>':'')+'</div><div class="item-right"><span class="item-amount egreso">−'+fmt(item.monto)+'</span>'+pagarBtn+editBtn+delBtn+'</div></div>';
+  let delBtn,editBtn;
+  if(item.isRecurrente){
+    delBtn='<button class="del-btn del-rec-mensual" data-rid="'+item.id+'" title="Eliminar desde este mes">×</button>';
+    editBtn='<button class="edit-btn edit-rec-mensual" data-rid="'+item.id+'" title="Editar desde este mes">✎</button>';
+  } else if(isRec){
+    delBtn='<button class="del-btn del-rec" data-rid="'+item.id+'" title="Eliminar todas las cuotas">×</button>';
+    editBtn='<button class="edit-btn edit-rec" data-rid="'+item.id+'" title="Editar cuotas">✎</button>';
+  } else {
+    delBtn='<button class="del-btn del-normal" data-idx="'+idx+'" title="Eliminar">×</button>';
+    editBtn='<button class="edit-btn edit-eg" data-idx="'+idx+'" title="Editar">✎</button>';
+  }
+  return '<div class="item'+ccCls+lastCls+pendingCls+'">'+'<div class="item-left"><span class="item-name">'+item.desc+fechaHtml+cuotaBadge+recBadge+pendingBadge+'</span>'+(tagsHtml?'<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;">'+tagsHtml+'</div>':'')+'</div><div class="item-right"><span class="item-amount egreso">−'+fmt(item.monto)+'</span>'+pagarBtn+editBtn+delBtn+'</div></div>';
 }
 
 function renderLists(){
   const md=getMonthData(state.currentYear,state.currentMonth);
   const eList=document.getElementById('egreso-list'),iList=document.getElementById('ingreso-list');
   const recItems=getRecurringForMonth(state.currentYear,state.currentMonth);
+  const recMensuales=getRecurrentesForMonth(state.currentYear,state.currentMonth);
   const fijos=md.egresos.filter(e=>e.tipo==='fijo'),efectivo=md.egresos.filter(e=>e.tipo==='efectivo');
   const tarjetas={};state.cards.forEach(c=>{const it=md.egresos.filter(e=>e.tipo==='tarjeta'&&e.card===c);if(it.length)tarjetas[c]=it;});
   const tarjetasRec={};state.cards.forEach(c=>{const it=recItems.filter(r=>r.tipo==='tarjeta'&&r.card===c);if(it.length)tarjetasRec[c]=(tarjetasRec[c]||[]).concat(it);});
   state.cards.forEach(c=>{if(tarjetasRec[c])tarjetas[c]=(tarjetas[c]||[]).concat(tarjetasRec[c]);});
-  const allFijos=fijos.concat(recItems.filter(r=>r.tipo==='fijo')),allEfec=efectivo.concat(recItems.filter(r=>r.tipo==='efectivo'));
+  // Also add recurrentes mensuales into their groups
+  const tarjetasRM={};state.cards.forEach(c=>{const it=recMensuales.filter(r=>r.tipo==='tarjeta'&&r.card===c);if(it.length)tarjetasRM[c]=(tarjetasRM[c]||[]).concat(it);});
+  state.cards.forEach(c=>{if(tarjetasRM[c])tarjetas[c]=(tarjetas[c]||[]).concat(tarjetasRM[c]);});
+  const allFijos=fijos.concat(recItems.filter(r=>r.tipo==='fijo')).concat(recMensuales.filter(r=>r.tipo==='fijo'));
+  const allEfec=efectivo.concat(recItems.filter(r=>r.tipo==='efectivo')).concat(recMensuales.filter(r=>r.tipo==='efectivo'));
   const hasAny=allFijos.length||allEfec.length||Object.keys(tarjetas).some(k=>tarjetas[k].length);
   if(!hasAny){eList.innerHTML='<div class="empty-state">Sin egresos este mes</div>';}
   else{
     let html='';
-    if(allFijos.length){html+='<div class="group-header cc-fijo"><span class="gname">Gastos fijos</span><span class="gtotal">'+fmt(allFijos.reduce((a,x)=>a+ +x.monto,0))+'</span></div>';allFijos.forEach(e=>{const ir=!!e.id;html+=itemHTML(e,'cc-fijo',ir?-1:md.egresos.indexOf(e),ir);});}
-    Object.keys(tarjetas).forEach(card=>{if(!tarjetas[card].length)return;const cc=cardColorClass(card);html+='<div class="group-header '+cc+'"><span class="gname">Tarjeta '+card+'</span><span class="gtotal">'+fmt(tarjetas[card].reduce((a,x)=>a+ +x.monto,0))+'</span></div>';tarjetas[card].forEach(e=>{const ir=!!e.id;html+=itemHTML(e,cc,ir?-1:md.egresos.indexOf(e),ir);});});
-    if(allEfec.length){html+='<div class="group-header cc-efec"><span class="gname">Efectivo</span><span class="gtotal">'+fmt(allEfec.reduce((a,x)=>a+ +x.monto,0))+'</span></div>';allEfec.forEach(e=>{const ir=!!e.id;html+=itemHTML(e,'cc-efec',ir?-1:md.egresos.indexOf(e),ir);});}
+    if(allFijos.length){html+='<div class="group-header cc-fijo"><span class="gname">Gastos fijos</span><span class="gtotal">'+fmt(allFijos.reduce((a,x)=>a+ +x.monto,0))+'</span></div>';allFijos.forEach(e=>{const ir=e.isRecurrente?false:!!e.id;html+=itemHTML(e,'cc-fijo',ir?-1:md.egresos.indexOf(e),ir);});}
+    Object.keys(tarjetas).forEach(card=>{if(!tarjetas[card].length)return;const cc=cardColorClass(card);html+='<div class="group-header '+cc+'"><span class="gname">Tarjeta '+card+'</span><span class="gtotal">'+fmt(tarjetas[card].reduce((a,x)=>a+ +x.monto,0))+'</span></div>';tarjetas[card].forEach(e=>{const ir=e.isRecurrente?false:!!e.id;html+=itemHTML(e,cc,ir?-1:md.egresos.indexOf(e),ir);});});
+    if(allEfec.length){html+='<div class="group-header cc-efec"><span class="gname">Efectivo</span><span class="gtotal">'+fmt(allEfec.reduce((a,x)=>a+ +x.monto,0))+'</span></div>';allEfec.forEach(e=>{const ir=e.isRecurrente?false:!!e.id;html+=itemHTML(e,'cc-efec',ir?-1:md.egresos.indexOf(e),ir);});}
     eList.innerHTML=html;
     eList.querySelectorAll('.del-normal').forEach(b=>{b.addEventListener('click',()=>{const idx=+b.dataset.idx;pushUndo({type:'del-eg',y:state.currentYear,m:state.currentMonth,idx,item:{...md.egresos[idx]}},'Egreso eliminado');md.egresos.splice(idx,1);renderAll();});});
     eList.querySelectorAll('.del-rec').forEach(b=>{b.addEventListener('click',()=>{if(confirm('¿Eliminar TODAS las cuotas de este gasto?')){const rec=state.recurring.find(r=>r.id===b.dataset.rid);if(rec)pushUndo({type:'del-rec',item:{...rec}},'Cuotas eliminadas');state.recurring=state.recurring.filter(r=>r.id!==b.dataset.rid);renderAll();}});});
+    eList.querySelectorAll('.del-rec-mensual').forEach(b=>{b.addEventListener('click',()=>{deleteRecurrenteFromMonth(b.dataset.rid,state.currentYear,state.currentMonth);});});
     eList.querySelectorAll('.edit-eg').forEach(b=>{b.addEventListener('click',()=>openEditEgreso(state.currentYear,state.currentMonth,+b.dataset.idx));});
     eList.querySelectorAll('.edit-rec').forEach(b=>{b.addEventListener('click',()=>openEditRecurring(b.dataset.rid));});
+    eList.querySelectorAll('.edit-rec-mensual').forEach(b=>{b.addEventListener('click',()=>openEditRecurrenteMensual(b.dataset.rid,state.currentYear,state.currentMonth));});
     eList.querySelectorAll('.pagar-eg').forEach(b=>{b.addEventListener('click',()=>{md.egresos[+b.dataset.idx].pendiente=false;renderAll();});});
   }
   if(!md.ingresos.length){iList.innerHTML='<div class="empty-state">Sin ingresos este mes</div>';}
@@ -1541,12 +1579,12 @@ function renderLists(){
     iList.querySelectorAll('.del-btn').forEach(b=>{b.addEventListener('click',()=>{const idx=+b.dataset.idx;pushUndo({type:'del-ing',y:state.currentYear,m:state.currentMonth,idx,item:{...md.ingresos[idx]}},'Ingreso eliminado');md.ingresos.splice(idx,1);renderAll();});});
     iList.querySelectorAll('.edit-ing').forEach(b=>{b.addEventListener('click',()=>openEditIngreso(state.currentYear,state.currentMonth,+b.dataset.idx));});
   }
-  const recT=recItems.reduce((a,x)=>a+ +x.monto,0),egT=md.egresos.reduce((a,x)=>a+ +x.monto,0)+recT,ingT=md.ingresos.reduce((a,x)=>a+ +x.monto,0);
+  const recMT=recMensuales.reduce((a,x)=>a+ +x.monto,0),recT=recItems.reduce((a,x)=>a+ +x.monto,0),egT=md.egresos.reduce((a,x)=>a+ +x.monto,0)+recT+recMT,ingT=md.ingresos.reduce((a,x)=>a+ +x.monto,0);
   document.getElementById('total-egresos').textContent=egT>0?fmt(egT):'';
   document.getElementById('total-ingresos').textContent=ingT>0?fmt(ingT):'';
 }
 
-function getMonthEgresosTotal(y,m){const md=getMonthData(y,m);return md.egresos.reduce((a,x)=>a+ +x.monto,0)+getRecurringForMonth(y,m).reduce((a,x)=>a+ +x.monto,0);}
+function getMonthEgresosTotal(y,m){const md=getMonthData(y,m);return md.egresos.reduce((a,x)=>a+ +x.monto,0)+getRecurringForMonth(y,m).reduce((a,x)=>a+ +x.monto,0)+getRecurrentesForMonth(y,m).reduce((a,x)=>a+ +x.monto,0);}
 
 function renderSummary(){
   let acum=0;
@@ -1574,16 +1612,16 @@ function renderComparativo(){
   const cy=state.currentYear,cm=state.currentMonth,months=[];
   for(let i=count-1;i>=0;i--){let m=cm-i,y=cy;if(m<0){m+=12;y--;}months.push({y,m});}
   const allCatKeys=new Set(),allGrpKeys=new Set();
-  months.forEach(({y,m})=>{const md=getMonthData(y,m);md.ingresos.forEach(i=>allCatKeys.add(i.cat||'Ingreso'));md.egresos.forEach(e=>{if(e.tipo==='fijo')allGrpKeys.add('fijo');else if(e.tipo==='efectivo')allGrpKeys.add('efec');else if(e.tipo==='tarjeta')allGrpKeys.add('card:'+e.card);});getRecurringForMonth(y,m).forEach(r=>{if(r.tipo==='fijo')allGrpKeys.add('fijo');else if(r.tipo==='efectivo')allGrpKeys.add('efec');else if(r.tipo==='tarjeta')allGrpKeys.add('card:'+r.card);});});
+  months.forEach(({y,m})=>{const md=getMonthData(y,m);md.ingresos.forEach(i=>allCatKeys.add(i.cat||'Ingreso'));md.egresos.forEach(e=>{if(e.tipo==='fijo')allGrpKeys.add('fijo');else if(e.tipo==='efectivo')allGrpKeys.add('efec');else if(e.tipo==='tarjeta')allGrpKeys.add('card:'+e.card);});getRecurringForMonth(y,m).forEach(r=>{if(r.tipo==='fijo')allGrpKeys.add('fijo');else if(r.tipo==='efectivo')allGrpKeys.add('efec');else if(r.tipo==='tarjeta')allGrpKeys.add('card:'+r.card);});getRecurrentesForMonth(y,m).forEach(r=>{if(r.tipo==='fijo')allGrpKeys.add('fijo');else if(r.tipo==='efectivo')allGrpKeys.add('efec');else if(r.tipo==='tarjeta')allGrpKeys.add('card:'+r.card);});});
   const grpLabel=k=>k==='fijo'?'Gastos fijos':k==='efec'?'Efectivo':k.replace('card:','');
   const getIngByCat=(y,m,cat)=>getMonthData(y,m).ingresos.filter(i=>(i.cat||'Ingreso')===cat).reduce((a,x)=>a+ +x.monto,0);
-  const getEgByGrp=(y,m,k)=>{const md=getMonthData(y,m),rec=getRecurringForMonth(y,m);let t=0;if(k==='fijo'){t+=md.egresos.filter(e=>e.tipo==='fijo').reduce((a,x)=>a+ +x.monto,0)+rec.filter(r=>r.tipo==='fijo').reduce((a,x)=>a+ +x.monto,0);}else if(k==='efec'){t+=md.egresos.filter(e=>e.tipo==='efectivo').reduce((a,x)=>a+ +x.monto,0)+rec.filter(r=>r.tipo==='efectivo').reduce((a,x)=>a+ +x.monto,0);}else{const c=k.replace('card:','');t+=md.egresos.filter(e=>e.tipo==='tarjeta'&&e.card===c).reduce((a,x)=>a+ +x.monto,0)+rec.filter(r=>r.tipo==='tarjeta'&&r.card===c).reduce((a,x)=>a+ +x.monto,0);}return t;};
+  const getEgByGrp=(y,m,k)=>{const md=getMonthData(y,m),rec=getRecurringForMonth(y,m),recM=getRecurrentesForMonth(y,m);let t=0;if(k==='fijo'){t+=md.egresos.filter(e=>e.tipo==='fijo').reduce((a,x)=>a+ +x.monto,0)+rec.filter(r=>r.tipo==='fijo').reduce((a,x)=>a+ +x.monto,0)+recM.filter(r=>r.tipo==='fijo').reduce((a,x)=>a+ +x.monto,0);}else if(k==='efec'){t+=md.egresos.filter(e=>e.tipo==='efectivo').reduce((a,x)=>a+ +x.monto,0)+rec.filter(r=>r.tipo==='efectivo').reduce((a,x)=>a+ +x.monto,0)+recM.filter(r=>r.tipo==='efectivo').reduce((a,x)=>a+ +x.monto,0);}else{const c=k.replace('card:','');t+=md.egresos.filter(e=>e.tipo==='tarjeta'&&e.card===c).reduce((a,x)=>a+ +x.monto,0)+rec.filter(r=>r.tipo==='tarjeta'&&r.card===c).reduce((a,x)=>a+ +x.monto,0)+recM.filter(r=>r.tipo==='tarjeta'&&r.card===c).reduce((a,x)=>a+ +x.monto,0);}return t;};
   const vCell=(n,ic)=>'<td class="'+(ic?'current':'')+' '+(n>0?'val-pos':n<0?'val-neg':'val-zero')+'">'+(n===0?'—':fmt(n))+'</td>';
   let html='<table class="comp-table"><thead><tr><th class="col-label">Concepto</th>';months.forEach(({y,m})=>{const ic=y===cy&&m===cm;html+='<th class="col-month'+(ic?' current':'')+'">'+MONTHS[m].slice(0,3)+' '+y+'</th>';});html+='</tr></thead><tbody>';
   const allIngC=new Set(),allEgC=new Set();
-  months.forEach(({y,m})=>{getMonthData(y,m).ingresos.forEach(i=>allIngC.add(i.desc+'|||'+(i.cat||'Ingreso')));const md=getMonthData(y,m);md.egresos.forEach(e=>allEgC.add(e.desc+'|||'+e.tipo+'|||'+(e.card||'')));getRecurringForMonth(y,m).forEach(r=>allEgC.add(r.desc+'|||'+r.tipo+'|||'+(r.card||'')+'|||rec'));});
+  months.forEach(({y,m})=>{getMonthData(y,m).ingresos.forEach(i=>allIngC.add(i.desc+'|||'+(i.cat||'Ingreso')));const md=getMonthData(y,m);md.egresos.forEach(e=>allEgC.add(e.desc+'|||'+e.tipo+'|||'+(e.card||'')));getRecurringForMonth(y,m).forEach(r=>allEgC.add(r.desc+'|||'+r.tipo+'|||'+(r.card||'')+'|||rec'));getRecurrentesForMonth(y,m).forEach(r=>allEgC.add(r.desc+'|||'+r.tipo+'|||'+(r.card||'')+'|||rcm'));});
   const getIngCT=(y,m,k)=>{const[d,c]=k.split('|||');return getMonthData(y,m).ingresos.filter(i=>i.desc===d&&(i.cat||'Ingreso')===c).reduce((a,x)=>a+ +x.monto,0);};
-  const getEgCT=(y,m,k)=>{const[d,tp,ca,ir]=k.split('|||');const md=getMonthData(y,m),rec=getRecurringForMonth(y,m);return ir==='rec'?rec.filter(r=>r.desc===d&&r.tipo===tp&&(r.card||'')===ca).reduce((a,x)=>a+ +x.monto,0):md.egresos.filter(e=>e.desc===d&&e.tipo===tp&&(e.card||'')===ca).reduce((a,x)=>a+ +x.monto,0);};
+  const getEgCT=(y,m,k)=>{const[d,tp,ca,ir]=k.split('|||');const md=getMonthData(y,m),rec=getRecurringForMonth(y,m),recM=getRecurrentesForMonth(y,m);if(ir==='rec')return rec.filter(r=>r.desc===d&&r.tipo===tp&&(r.card||'')===ca).reduce((a,x)=>a+ +x.monto,0);if(ir==='rcm')return recM.filter(r=>r.desc===d&&r.tipo===tp&&(r.card||'')===ca).reduce((a,x)=>a+ +x.monto,0);return md.egresos.filter(e=>e.desc===d&&e.tipo===tp&&(e.card||'')===ca).reduce((a,x)=>a+ +x.monto,0);};
   const cGrpKey=k=>{const[,tp,ca]=k.split('|||');if(tp==='fijo')return'fijo';if(tp==='efectivo')return'efec';return'card:'+ca;};
   html+='<tr class="section-row"><td class="col-label" colspan="'+(months.length+1)+'">Ingresos</td></tr>';
   allCatKeys.forEach(cat=>{html+='<tr class="subgroup-row"><td class="col-label indent">'+cat+'</td>';months.forEach(({y,m})=>html+=vCell(getIngByCat(y,m,cat),y===cy&&m===cm));html+='</tr>';[...allIngC].filter(k=>k.split('|||')[1]===cat).forEach(k=>{html+='<tr class="concept-row"><td class="col-label concept">'+k.split('|||')[0]+'</td>';months.forEach(({y,m})=>html+=vCell(getIngCT(y,m,k),y===cy&&m===cm));html+='</tr>';});});
@@ -1596,10 +1634,58 @@ function renderComparativo(){
   document.getElementById('comp-container').innerHTML=html;
 }
 
+// ── RECURRENTES: delete & edit helpers ──────────────────────────────
+function deleteRecurrenteFromMonth(rid,year,month){
+  const idx=state.recurrentes.findIndex(r=>r.id===rid);
+  if(idx<0)return;
+  const r=state.recurrentes[idx];
+  const curKey=year*12+month,startKey=r.startYear*12+r.startMonth;
+  if(curKey<=startKey){
+    // Eliminar completamente
+    if(confirm('¿Eliminar este gasto recurrente por completo?')){
+      state.recurrentes.splice(idx,1);
+      renderAll();
+    }
+  } else {
+    // Terminar antes de este mes: endYear/endMonth = mes anterior
+    if(confirm('¿Eliminar este gasto recurrente desde este mes en adelante?\n(Los meses anteriores se mantienen)')){
+      let prevM=month-1,prevY=year;
+      if(prevM<0){prevM=11;prevY--;}
+      r.endYear=prevY;r.endMonth=prevM;
+      renderAll();
+    }
+  }
+}
+
+let _editEgRecId=null,_editEgRecYear=null,_editEgRecMonth=null;
+function openEditRecurrenteMensual(rid,year,month){
+  const r=state.recurrentes.find(x=>x.id===rid);
+  if(!r)return;
+  _editEgRecId=rid;_editEgRecYear=year;_editEgRecMonth=month;
+  // Reuse the edit modal: populate with current month's monto
+  _editEgRid=null;_editEgY=null;_editEgM=null;_editEgIdx=null;
+  const currentMonto=getMontoRecurrente(r,year,month);
+  document.getElementById('edit-eg-title').textContent='Editar gasto recurrente ↻';
+  document.getElementById('edit-eg-desc').value=r.desc||'';
+  document.getElementById('edit-eg-monto').value=currentMonto||'';
+  document.getElementById('edit-eg-monto-hint').textContent='El cambio aplica a este mes y a todos los meses siguientes.';
+  document.getElementById('edit-eg-monto-hint').style.display='';
+  const ts=document.getElementById('edit-eg-tipo'),opts=['<option value="efectivo">Efectivo</option>','<option value="fijo">Gasto fijo</option>'];if(state.cards.length)opts.push('<option value="tarjeta">Tarjeta de crédito</option>');ts.innerHTML=opts.join('');ts.value=r.tipo||'efectivo';
+  document.getElementById('edit-eg-tipo-group').style.display='none';
+  const cs=document.getElementById('edit-eg-card');cs.innerHTML=state.cards.map(c=>'<option>'+c+'</option>').join('');if(r.card)cs.value=r.card;
+  document.getElementById('edit-eg-card-group').style.display='none';
+  document.getElementById('edit-eg-cuotas-group').style.display='none';
+  document.getElementById('edit-eg-fecha').value='';
+  document.getElementById('edit-eg-pendiente').checked=false;
+  _editEgTags=[...(r.tags||[])];setTimeout(()=>initTagInput('edit-eg-tags-wrap','edit-eg-tag-input',()=>_editEgTags,v=>{_editEgTags=v;}),50);
+  document.getElementById('modal-edit-egreso').classList.add('open');
+  setTimeout(()=>document.getElementById('edit-eg-desc').focus(),80);
+}
+
 // ── EDIT ─────────────────────────────────────────────────────────────
 let _editEgY,_editEgM,_editEgIdx,_editEgRid;
-function openEditEgreso(y,m,idx){_editEgY=y;_editEgM=m;_editEgIdx=idx;_editEgRid=null;const e=getMonthData(y,m).egresos[idx];if(!e)return;_popEditEg(e,false);}
-function openEditRecurring(rid){_editEgRid=rid;_editEgY=null;_editEgM=null;_editEgIdx=null;const r=state.recurring.find(x=>x.id===rid);if(!r)return;_popEditEg(r,true);}
+function openEditEgreso(y,m,idx){_editEgY=y;_editEgM=m;_editEgIdx=idx;_editEgRid=null;_editEgRecId=null;const e=getMonthData(y,m).egresos[idx];if(!e)return;_popEditEg(e,false);}
+function openEditRecurring(rid){_editEgRid=rid;_editEgY=null;_editEgM=null;_editEgIdx=null;_editEgRecId=null;const r=state.recurring.find(x=>x.id===rid);if(!r)return;_popEditEg(r,true);}
 function _popEditEg(e,isRec){
   document.getElementById('edit-eg-title').textContent=isRec?'Editar cuotas':'Editar egreso';
   document.getElementById('edit-eg-desc').value=e.desc||'';document.getElementById('edit-eg-monto').value=e.monto||'';document.getElementById('edit-eg-monto-hint').style.display=isRec?'':'none';
@@ -1641,16 +1727,32 @@ document.querySelectorAll('#resumen-tabs .nav-tab').forEach(tab=>{
 document.getElementById('add-card-btn').addEventListener('click',()=>{const inp=document.getElementById('new-card-input'),name=inp.value.trim();if(name&&!state.cards.includes(name)){state.cards.push(name);inp.value='';renderAll();renderCardConfig();}});
 document.getElementById('new-card-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('add-card-btn').click();});
 document.getElementById('eg-tipo').addEventListener('change',function(){document.getElementById('eg-card-group').style.display=this.value==='tarjeta'?'':'none';});
-document.getElementById('eg-cuota-check').addEventListener('change',function(){document.getElementById('eg-cuota-fields').classList.toggle('show',this.checked);});
+document.getElementById('eg-cuota-check').addEventListener('change',function(){
+  document.getElementById('eg-cuota-fields').classList.toggle('show',this.checked);
+  if(this.checked)document.getElementById('eg-recurrente').checked=false;
+});
+document.getElementById('eg-recurrente').addEventListener('change',function(){
+  if(this.checked){document.getElementById('eg-cuota-check').checked=false;document.getElementById('eg-cuota-fields').classList.remove('show');}
+});
 
-document.getElementById('open-egreso').addEventListener('click',()=>{document.getElementById('eg-desc').value='';document.getElementById('eg-monto').value='';document.getElementById('eg-cuotas').value='';document.getElementById('eg-cuota-check').checked=false;document.getElementById('eg-cuota-fields').classList.remove('show');document.getElementById('eg-fecha').value='';document.getElementById('eg-pendiente').checked=false;renderCards();document.getElementById('modal-egreso').classList.add('open');setTimeout(()=>document.getElementById('eg-desc').focus(),80);});
+document.getElementById('open-egreso').addEventListener('click',()=>{document.getElementById('eg-desc').value='';document.getElementById('eg-monto').value='';document.getElementById('eg-cuotas').value='';document.getElementById('eg-cuota-check').checked=false;document.getElementById('eg-cuota-fields').classList.remove('show');document.getElementById('eg-recurrente').checked=false;document.getElementById('eg-fecha').value='';document.getElementById('eg-pendiente').checked=false;renderCards();document.getElementById('modal-egreso').classList.add('open');setTimeout(()=>document.getElementById('eg-desc').focus(),80);});
 document.getElementById('cancel-egreso').addEventListener('click',()=>document.getElementById('modal-egreso').classList.remove('open'));
 document.getElementById('save-egreso').addEventListener('click',()=>{
   const desc=document.getElementById('eg-desc').value.trim(),monto=parseFloat(document.getElementById('eg-monto').value),tipo=document.getElementById('eg-tipo').value;
   const {dia:esDia,mes:esMes}=parseDateInput(document.getElementById('eg-fecha').value);
   if(!desc||isNaN(monto)||monto<=0){document.getElementById('eg-desc').focus();return;}
   const isCuota=document.getElementById('eg-cuota-check').checked,cuotas=isCuota?parseInt(document.getElementById('eg-cuotas').value):0;
+  const isRecurrente=document.getElementById('eg-recurrente').checked;
   if(isCuota){if(!cuotas||cuotas<2){document.getElementById('eg-cuotas').focus();return;}const id='r'+Date.now()+Math.random().toString(36).slice(2,6);const entry={id,desc,monto,tipo,cuotas,startYear:state.currentYear,startMonth:state.currentMonth};if(tipo==='tarjeta')entry.card=document.getElementById('eg-card').value;if(esDia)entry.dia=esDia;if(esMes)entry.mes=esMes;state.recurring.push(entry);}
+  else if(isRecurrente){
+    const id='rc'+Date.now()+Math.random().toString(36).slice(2,6);
+    const entry={id,desc,monto,tipo,startYear:state.currentYear,startMonth:state.currentMonth,amounts:[{year:state.currentYear,month:state.currentMonth,monto}]};
+    if(tipo==='tarjeta')entry.card=document.getElementById('eg-card').value;
+    if(esDia)entry.dia=esDia;
+    entry.tags=[..._egTags];
+    if(!state.recurrentes)state.recurrentes=[];
+    state.recurrentes.push(entry);
+  }
   else{const isPendiente=document.getElementById('eg-pendiente').checked;const entry={desc,monto,tipo};if(tipo==='tarjeta')entry.card=document.getElementById('eg-card').value;if(esDia)entry.dia=esDia;if(esMes)entry.mes=esMes;if(isPendiente)entry.pendiente=true;if(window._pendingEgTags&&window._pendingEgTags.length){entry.tags=window._pendingEgTags;window._pendingEgTags=[];}getMonthData(state.currentYear,state.currentMonth).egresos.push(entry);}
   document.getElementById('modal-egreso').classList.remove('open');renderAll();
 });
@@ -1671,7 +1773,19 @@ document.getElementById('save-edit-egreso').addEventListener('click',()=>{
   const desc=document.getElementById('edit-eg-desc').value.trim(),monto=parseFloat(document.getElementById('edit-eg-monto').value);if(!desc||isNaN(monto)||monto<=0)return;
   const {dia,mes}=parseDateInput(document.getElementById('edit-eg-fecha').value);
   const isPendiente=document.getElementById('edit-eg-pendiente').checked;
-  if(_editEgRid){const ri=state.recurring.findIndex(r=>r.id===_editEgRid);if(ri>=0){const cuotas=parseInt(document.getElementById('edit-eg-cuotas').value);if(!cuotas||cuotas<2){document.getElementById('edit-eg-cuotas').focus();return;}pushUndo({type:'del-rec',item:{...state.recurring[ri]}},'Edición de cuotas');state.recurring[ri]={...state.recurring[ri],desc,monto,cuotas};if(dia)state.recurring[ri].dia=dia;else delete state.recurring[ri].dia;if(mes)state.recurring[ri].mes=mes;else delete state.recurring[ri].mes;state.recurring[ri].tags=[..._editEgTags];}}
+  if(_editEgRecId){
+    // Edit recurrente mensual from this month forward
+    const r=state.recurrentes.find(x=>x.id===_editEgRecId);
+    if(r){
+      const curKey=_editEgRecYear*12+_editEgRecMonth;
+      // Remove all amount entries >= curKey
+      r.amounts=r.amounts.filter(a=>a.year*12+a.month<curKey);
+      r.amounts.push({year:_editEgRecYear,month:_editEgRecMonth,monto});
+      r.desc=desc;
+      r.tags=[..._editEgTags];
+    }
+    _editEgRecId=null;
+  } else if(_editEgRid){const ri=state.recurring.findIndex(r=>r.id===_editEgRid);if(ri>=0){const cuotas=parseInt(document.getElementById('edit-eg-cuotas').value);if(!cuotas||cuotas<2){document.getElementById('edit-eg-cuotas').focus();return;}pushUndo({type:'del-rec',item:{...state.recurring[ri]}},'Edición de cuotas');state.recurring[ri]={...state.recurring[ri],desc,monto,cuotas};if(dia)state.recurring[ri].dia=dia;else delete state.recurring[ri].dia;if(mes)state.recurring[ri].mes=mes;else delete state.recurring[ri].mes;state.recurring[ri].tags=[..._editEgTags];}}
   else{const prev={...getMonthData(_editEgY,_editEgM).egresos[_editEgIdx]};pushUndo({type:'edit-eg',y:_editEgY,m:_editEgM,idx:_editEgIdx,prev},'Egreso editado');const tipo=document.getElementById('edit-eg-tipo').value,entry={desc,monto,tipo};if(tipo==='tarjeta')entry.card=document.getElementById('edit-eg-card').value;if(dia)entry.dia=dia;if(mes)entry.mes=mes;if(isPendiente)entry.pendiente=true;else delete entry.pendiente;entry.tags=[..._editEgTags];getMonthData(_editEgY,_editEgM).egresos[_editEgIdx]=entry;}
   document.getElementById('modal-edit-egreso').classList.remove('open');renderAll();
 });
@@ -1757,7 +1871,7 @@ document.getElementById('modal-egreso').addEventListener('click',e=>{if(e.target
 function getAllItems(){
   const res=[];Object.entries(state.data).forEach(([key,md])=>{const[y,m]=key.split('-').map(Number);md.egresos.forEach((e,i)=>res.push({...e,_y:y,_m:m,_type:'egreso',_idx:i}));md.ingresos.forEach((e,i)=>res.push({...e,_y:y,_m:m,_type:'ingreso',_idx:i}));});
   const years=new Set([state.currentYear]);Object.keys(state.data).forEach(k=>years.add(+k.split('-')[0]));
-  years.forEach(y=>{for(let m=0;m<12;m++)getRecurringForMonth(y,m).forEach(r=>res.push({...r,_y:y,_m:m,_type:'egreso',_isRec:true}));});
+  years.forEach(y=>{for(let m=0;m<12;m++){getRecurringForMonth(y,m).forEach(r=>res.push({...r,_y:y,_m:m,_type:'egreso',_isRec:true}));getRecurrentesForMonth(y,m).forEach(r=>res.push({...r,_y:y,_m:m,_type:'egreso',_isRec:true}));}});
   return res;
 }
 function highlight(text,q){if(!q)return text;const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return text.replace(re,'<span class="search-highlight">$1</span>');}
@@ -1783,12 +1897,12 @@ function renderAnalisis(){
   const years=new Set([state.currentYear]);Object.keys(state.data).forEach(k=>years.add(+k.split('-')[0]));
   yearSel.innerHTML=[...years].sort((a,b)=>b-a).map(y=>`<option value="${y}"${y===year?' selected':''}>${y}</option>`).join('');
   const pd={fijo:0,efectivo:0};state.cards.forEach(c=>pd[c]=0);
-  for(let m=0;m<12;m++){const md=getMonthData(year,m);md.egresos.forEach(e=>{if(e.tipo==='fijo')pd.fijo+= +e.monto;else if(e.tipo==='efectivo')pd.efectivo+= +e.monto;else if(e.tipo==='tarjeta'){if(pd[e.card]===undefined)pd[e.card]=0;pd[e.card]+= +e.monto;}});getRecurringForMonth(year,m).forEach(r=>{if(r.tipo==='fijo')pd.fijo+= +r.monto;else if(r.tipo==='efectivo')pd.efectivo+= +r.monto;else if(r.tipo==='tarjeta'){if(pd[r.card]===undefined)pd[r.card]=0;pd[r.card]+= +r.monto;}});}
+  for(let m=0;m<12;m++){const md=getMonthData(year,m);md.egresos.forEach(e=>{if(e.tipo==='fijo')pd.fijo+= +e.monto;else if(e.tipo==='efectivo')pd.efectivo+= +e.monto;else if(e.tipo==='tarjeta'){if(pd[e.card]===undefined)pd[e.card]=0;pd[e.card]+= +e.monto;}});getRecurringForMonth(year,m).forEach(r=>{if(r.tipo==='fijo')pd.fijo+= +r.monto;else if(r.tipo==='efectivo')pd.efectivo+= +r.monto;else if(r.tipo==='tarjeta'){if(pd[r.card]===undefined)pd[r.card]=0;pd[r.card]+= +r.monto;}});getRecurrentesForMonth(year,m).forEach(r=>{if(r.tipo==='fijo')pd.fijo+= +r.monto;else if(r.tipo==='efectivo')pd.efectivo+= +r.monto;else if(r.tipo==='tarjeta'){if(pd[r.card]===undefined)pd[r.card]=0;pd[r.card]+= +r.monto;}});}
   const pL=[],pV=[],pC=[],cm={fijo:'#888780',efectivo:'#1D9E75'},cc=['#378ADD','#7F77DD','#D4537E','#639922','#BA7517','#D85A30'];state.cards.forEach((c,i)=>cm[c]=cc[i%cc.length]);
   Object.entries(pd).forEach(([k,v])=>{if(v>0){pL.push(k==='fijo'?'Gastos fijos':k==='efectivo'?'Efectivo':k);pV.push(Math.round(v));pC.push(cm[k]||'#999');}});
   if(pV.length)NativeChart.doughnut('chartPie',pL,pV,pC);
   const lL=[],lD=[];let acum=0;for(let m=0;m<12;m++){const md=getMonthData(year,m);acum+=md.ingresos.reduce((a,x)=>a+ +x.monto,0)-getMonthEgresosTotal(year,m);lL.push(MONTHS[m].slice(0,3));lD.push(Math.round(acum));}NativeChart.line('chartLine',lL,lD);
-  const tt={};for(let m=0;m<12;m++){const md=getMonthData(year,m);[...md.egresos,...getRecurringForMonth(year,m)].forEach(item=>(item.tags||[]).forEach(tag=>{if(!tt[tag])tt[tag]={eg:0,ing:0};tt[tag].eg+= +item.monto;}));md.ingresos.forEach(item=>(item.tags||[]).forEach(tag=>{if(!tt[tag])tt[tag]={eg:0,ing:0};tt[tag].ing+= +item.monto;}));}
+  const tt={};for(let m=0;m<12;m++){const md=getMonthData(year,m);[...md.egresos,...getRecurringForMonth(year,m),...getRecurrentesForMonth(year,m)].forEach(item=>(item.tags||[]).forEach(tag=>{if(!tt[tag])tt[tag]={eg:0,ing:0};tt[tag].eg+= +item.monto;}));md.ingresos.forEach(item=>(item.tags||[]).forEach(tag=>{if(!tt[tag])tt[tag]={eg:0,ing:0};tt[tag].ing+= +item.monto;}));}
   const tagsEl=document.getElementById('tags-analisis');if(!Object.keys(tt).length){tagsEl.innerHTML='<p style="font-size:13px;color:var(--text3);">No hay etiquetas cargadas este año.</p>';}
   else{tagsEl.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:10px;">'+Object.entries(tt).sort((a,b)=>(b[1].eg+b[1].ing)-(a[1].eg+a[1].ing)).map(([tag,tot])=>{const{bg,text}=tagColor(tag);return`<div style="background:${bg};border-radius:var(--radius-lg);padding:10px 14px;min-width:140px;"><div style="font-size:11px;font-weight:700;color:${text};text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">${tag}</div>${tot.eg?`<div style="font-size:13px;font-weight:600;color:var(--red);">−${fmt(tot.eg)}</div>`:''} ${tot.ing?`<div style="font-size:13px;font-weight:600;color:var(--green);">+${fmt(tot.ing)}</div>`:''}</div>`;}).join('')+'</div>';}
 }
@@ -1803,6 +1917,7 @@ document.getElementById('export-excel').addEventListener('click',()=>{
   const md=getMonthData(state.currentYear,state.currentMonth);
   md.egresos.forEach(e=>lines.push(csvRow(['Egreso',e.desc,+e.monto,e.dia&&e.mes?(e.dia+'/'+e.mes):'',(e.tags||[]).join('; '),e.tipo==='tarjeta'?e.card:e.tipo])));
   getRecurringForMonth(state.currentYear,state.currentMonth).forEach(r=>lines.push(csvRow(['Egreso cuota '+r.cuotaNum+'/'+r.cuotas,r.desc,+r.monto,r.dia&&r.mes?(r.dia+'/'+r.mes):'',(r.tags||[]).join('; '),r.tipo==='tarjeta'?r.card:r.tipo])));
+  getRecurrentesForMonth(state.currentYear,state.currentMonth).forEach(r=>lines.push(csvRow(['Egreso recurrente ↻',r.desc,+r.monto,r.dia?(r.dia+'/'+((state.currentMonth+1))):'',(r.tags||[]).join('; '),r.tipo==='tarjeta'?r.card:r.tipo])));
   md.ingresos.forEach(i=>lines.push(csvRow(['Ingreso',i.desc,+i.monto,i.dia&&i.mes?(i.dia+'/'+i.mes):'',(i.tags||[]).join('; '),i.cat||''])));
   const blob=new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='vinanzas_'+state.currentYear+'.csv';a.click();URL.revokeObjectURL(a.href);
 });
@@ -1810,7 +1925,7 @@ document.getElementById('export-pdf').addEventListener('click',()=>{
   const month=MONTHS[state.currentMonth]+' '+state.currentYear,md=getMonthData(state.currentYear,state.currentMonth);
   const ingT=md.ingresos.reduce((a,x)=>a+ +x.monto,0),egT=getMonthEgresosTotal(state.currentYear,state.currentMonth),dif=ingT-egT;
   const tRows=rows=>rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('');
-  const egR=[];md.egresos.forEach(e=>egR.push([e.desc,e.tipo==='tarjeta'?e.card:e.tipo,(e.tags||[]).join(', '),'$'+Math.round(+e.monto).toLocaleString('es-AR')]));getRecurringForMonth(state.currentYear,state.currentMonth).forEach(r=>egR.push([r.desc+' ('+r.cuotaNum+'/'+r.cuotas+')',r.tipo==='tarjeta'?r.card:r.tipo,(r.tags||[]).join(', '),'$'+Math.round(+r.monto).toLocaleString('es-AR')]));
+  const egR=[];md.egresos.forEach(e=>egR.push([e.desc,e.tipo==='tarjeta'?e.card:e.tipo,(e.tags||[]).join(', '),'$'+Math.round(+e.monto).toLocaleString('es-AR')]));getRecurringForMonth(state.currentYear,state.currentMonth).forEach(r=>egR.push([r.desc+' ('+r.cuotaNum+'/'+r.cuotas+')',r.tipo==='tarjeta'?r.card:r.tipo,(r.tags||[]).join(', '),'$'+Math.round(+r.monto).toLocaleString('es-AR')]));getRecurrentesForMonth(state.currentYear,state.currentMonth).forEach(r=>egR.push([r.desc+' ↻',r.tipo==='tarjeta'?r.card:r.tipo,(r.tags||[]).join(', '),'$'+Math.round(+r.monto).toLocaleString('es-AR')]));
   const ingR=md.ingresos.map(i=>[i.desc,i.cat||'',(i.tags||[]).join(', '),'$'+Math.round(+i.monto).toLocaleString('es-AR')]);
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Vinanzas — ${month}</title><style>body{font-family:system-ui,sans-serif;font-size:12px;color:#1a1917;padding:20px;}h1{font-size:18px;margin-bottom:4px;}.sub{color:#6b6a65;font-size:11px;margin-bottom:20px;}.summary{display:flex;gap:16px;margin-bottom:24px;}.metric{background:#f5f4f0;border-radius:8px;padding:12px 16px;min-width:120px;}.metric-label{font-size:10px;text-transform:uppercase;color:#9e9d99;font-weight:600;margin-bottom:4px;}.metric-value{font-size:20px;font-weight:700;}.pos{color:#0F6E56;}.neg{color:#993C1D;}table{width:100%;border-collapse:collapse;margin-bottom:20px;}th{background:#1a1917;color:#fff;text-align:left;padding:7px 10px;font-size:11px;}td{padding:6px 10px;border-bottom:0.5px solid #e0dfd9;font-size:11px;}h2{font-size:13px;font-weight:700;margin:20px 0 8px;text-transform:uppercase;letter-spacing:0.5px;color:#6b6a65;}</style></head><body><h1>Vinanzas — ${month}</h1><div class="sub">Generado el ${new Date().toLocaleDateString('es-AR')}</div><div class="summary"><div class="metric"><div class="metric-label">Ingresos</div><div class="metric-value pos">$${ingT.toLocaleString('es-AR')}</div></div><div class="metric"><div class="metric-label">Egresos</div><div class="metric-value neg">$${egT.toLocaleString('es-AR')}</div></div><div class="metric"><div class="metric-label">Diferencia</div><div class="metric-value ${dif>=0?'pos':'neg'}">${dif>=0?'+':''}$${Math.abs(dif).toLocaleString('es-AR')}</div></div></div>${egR.length?`<h2>Egresos</h2><table><thead><tr><th>Descripción</th><th>Tipo</th><th>Etiquetas</th><th>Monto</th></tr></thead><tbody>${tRows(egR)}</tbody></table>`:''}${ingR.length?`<h2>Ingresos</h2><table><thead><tr><th>Descripción</th><th>Categoría</th><th>Etiquetas</th><th>Monto</th></tr></thead><tbody>${tRows(ingR)}</tbody></table>`:''}<script>window.onload=()=>window.print();<\/script></body></html>`;
   const w=window.open('','_blank');w.document.write(html);w.document.close();
