@@ -273,9 +273,12 @@
   .empty-state { text-align: center; padding: 2rem 1rem; color: var(--text3); font-size: 13px; }
 
   /* ── COLOR GROUPS ────────────────────────────────────── */
-  .group-header { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px 5px; border-radius: var(--radius); margin-top: 8px; margin-bottom: 2px; }
+  .group-header { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px 5px; border-radius: var(--radius); margin-top: 8px; margin-bottom: 2px; cursor: pointer; user-select: none; }
   .group-header .gname  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; }
   .group-header .gtotal { font-size: 11px; font-weight: 700; }
+  .group-chevron { display: inline-flex; align-items: center; margin-right: 6px; opacity: 0.85; transition: transform 0.18s cubic-bezier(.4,0,.2,1); }
+  .group-header.collapsed .group-chevron { transform: rotate(-90deg); }
+  .group-items.collapsed { display: none; }
   .cc-0    { --cc-bg:#E6F1FB; --cc-text:#185FA5; --cc-border:#378ADD; --cc-item-bg:rgba(55,138,221,0.06); }
   .cc-1    { --cc-bg:#EEEDFE; --cc-text:#534AB7; --cc-border:#7F77DD; --cc-item-bg:rgba(127,119,221,0.06); }
   .cc-2    { --cc-bg:#FBEAF0; --cc-text:#993556; --cc-border:#D4537E; --cc-item-bg:rgba(212,83,126,0.06); }
@@ -1481,6 +1484,7 @@ function renderDistPanel(){
   });
 }
 let _distOpen=false;
+let _collapsedGroups={};
 function toggleDistPanel(force){
   _distOpen=force!==undefined?force:!_distOpen;
   document.getElementById('dist-panel').classList.toggle('open',_distOpen);
@@ -1556,9 +1560,10 @@ function renderLists(){
   if(!hasAny){eList.innerHTML='<div class="empty-state">Sin egresos este mes</div>';}
   else{
     let html='';
-    if(allFijos.length){html+='<div class="group-header cc-fijo"><span class="gname">Gastos fijos</span><span class="gtotal">'+fmt(allFijos.reduce((a,x)=>a+ +x.monto,0))+'</span></div>';allFijos.forEach(e=>{const ir=e.isRecurrente?false:!!e.id;html+=itemHTML(e,'cc-fijo',ir?-1:md.egresos.indexOf(e),ir);});}
-    Object.keys(tarjetas).forEach(card=>{if(!tarjetas[card].length)return;const cc=cardColorClass(card);html+='<div class="group-header '+cc+'"><span class="gname">Tarjeta '+card+'</span><span class="gtotal">'+fmt(tarjetas[card].reduce((a,x)=>a+ +x.monto,0))+'</span></div>';tarjetas[card].forEach(e=>{const ir=e.isRecurrente?false:!!e.id;html+=itemHTML(e,cc,ir?-1:md.egresos.indexOf(e),ir);});});
-    if(allEfec.length){html+='<div class="group-header cc-efec"><span class="gname">Efectivo</span><span class="gtotal">'+fmt(allEfec.reduce((a,x)=>a+ +x.monto,0))+'</span></div>';allEfec.forEach(e=>{const ir=e.isRecurrente?false:!!e.id;html+=itemHTML(e,'cc-efec',ir?-1:md.egresos.indexOf(e),ir);});}
+    const _gh=(key,cls,label,total,items)=>{const c=_collapsedGroups[key]?' collapsed':'';let h='<div class="group-header '+cls+c+'" data-group="'+key+'"><div style="display:flex;align-items:center;"><span class="group-chevron"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span><span class="gname">'+label+'</span></div><span class="gtotal">'+fmt(total)+'</span></div><div class="group-items'+c+'" data-group="'+key+'">';items.forEach(x=>h+=x);return h+'</div>';};
+    if(allFijos.length){let its=[];allFijos.forEach(e=>{const ir=e.isRecurrente?false:!!e.id;its.push(itemHTML(e,'cc-fijo',ir?-1:md.egresos.indexOf(e),ir));});html+=_gh('fijo','cc-fijo','Gastos fijos',allFijos.reduce((a,x)=>a+ +x.monto,0),its);}
+    Object.keys(tarjetas).forEach(card=>{if(!tarjetas[card].length)return;const cc=cardColorClass(card);let its=[];tarjetas[card].forEach(e=>{const ir=e.isRecurrente?false:!!e.id;its.push(itemHTML(e,cc,ir?-1:md.egresos.indexOf(e),ir));});html+=_gh('card:'+card,cc,'Tarjeta '+card,tarjetas[card].reduce((a,x)=>a+ +x.monto,0),its);});
+    if(allEfec.length){let its=[];allEfec.forEach(e=>{const ir=e.isRecurrente?false:!!e.id;its.push(itemHTML(e,'cc-efec',ir?-1:md.egresos.indexOf(e),ir));});html+=_gh('efec','cc-efec','Efectivo',allEfec.reduce((a,x)=>a+ +x.monto,0),its);}
     eList.innerHTML=html;
     eList.querySelectorAll('.del-normal').forEach(b=>{b.addEventListener('click',()=>{const idx=+b.dataset.idx;pushUndo({type:'del-eg',y:state.currentYear,m:state.currentMonth,idx,item:{...md.egresos[idx]}},'Egreso eliminado');md.egresos.splice(idx,1);renderAll();});});
     eList.querySelectorAll('.del-rec').forEach(b=>{b.addEventListener('click',()=>{if(confirm('¿Eliminar TODAS las cuotas de este gasto?')){const rec=state.recurring.find(r=>r.id===b.dataset.rid);if(rec)pushUndo({type:'del-rec',item:{...rec}},'Cuotas eliminadas');state.recurring=state.recurring.filter(r=>r.id!==b.dataset.rid);renderAll();}});});
@@ -1567,6 +1572,7 @@ function renderLists(){
     eList.querySelectorAll('.edit-rec').forEach(b=>{b.addEventListener('click',()=>openEditRecurring(b.dataset.rid));});
     eList.querySelectorAll('.edit-rec-mensual').forEach(b=>{b.addEventListener('click',()=>openEditRecurrenteMensual(b.dataset.rid,state.currentYear,state.currentMonth));});
     eList.querySelectorAll('.pagar-eg').forEach(b=>{b.addEventListener('click',()=>{md.egresos[+b.dataset.idx].pendiente=false;renderAll();});});
+    eList.querySelectorAll('.group-header[data-group]').forEach(h=>{h.addEventListener('click',e=>{if(e.target.closest('.del-btn,.edit-btn,.pagar-eg'))return;const key=h.dataset.group;_collapsedGroups[key]=!_collapsedGroups[key];h.classList.toggle('collapsed',!!_collapsedGroups[key]);const items=h.nextElementSibling;if(items&&items.classList.contains('group-items'))items.classList.toggle('collapsed',!!_collapsedGroups[key]);});});
   }
   if(!md.ingresos.length){iList.innerHTML='<div class="empty-state">Sin ingresos este mes</div>';}
   else{
