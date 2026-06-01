@@ -734,6 +734,7 @@
           <p class="section-sub">Seguimiento de ingresos y egresos</p>
         </div>
         <div class="section-header-right">
+          <button id="today-btn" style="display:none;font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;border:1.5px solid var(--green);background:var(--green-bg);color:var(--green);cursor:pointer;font-family:inherit;transition:opacity 0.15s;">Hoy</button>
           <div class="month-nav">
             <button class="month-btn" id="prev-month">&#8249;</button>
             <span class="month-label" id="month-label"></span>
@@ -1500,7 +1501,13 @@ function renderAll(){
   }
   saveState();
 }
-function renderMonthLabel(){document.getElementById('month-label').textContent=MONTHS[state.currentMonth]+' '+state.currentYear;}
+function renderMonthLabel(){
+  document.getElementById('month-label').textContent=MONTHS[state.currentMonth]+' '+state.currentYear;
+  const n=new Date();
+  const isToday=state.currentYear===n.getFullYear()&&state.currentMonth===n.getMonth();
+  const btn=document.getElementById('today-btn');
+  if(btn) btn.style.display=isToday?'none':'inline-block';
+}
 
 const CARD_COLORS=['cc-0','cc-1','cc-2','cc-3','cc-4','cc-5'];
 function cardColorClass(c){const i=state.cards.indexOf(c);return i>=0?CARD_COLORS[i%CARD_COLORS.length]:'cc-0';}
@@ -1717,6 +1724,7 @@ function openEditIngreso(y,m,idx){
 // ── EVENT LISTENERS ──────────────────────────────────────────────────
 document.getElementById('prev-month').addEventListener('click',()=>{state.currentMonth--;if(state.currentMonth<0){state.currentMonth=11;state.currentYear--;}renderAll();});
 document.getElementById('next-month').addEventListener('click',()=>{state.currentMonth++;if(state.currentMonth>11){state.currentMonth=0;state.currentYear++;}renderAll();});
+document.getElementById('today-btn').addEventListener('click',()=>{const n=new Date();state.currentYear=n.getFullYear();state.currentMonth=n.getMonth();renderAll();});
 
 // Tabs Resumen
 document.querySelectorAll('#resumen-tabs .nav-tab').forEach(tab=>{
