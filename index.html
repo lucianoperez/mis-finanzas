@@ -571,6 +571,8 @@
     .sidebar-item.active { color: var(--text); }
     .sidebar-item svg { width: 20px; height: 20px; }
     .sidebar-label { display: block !important; }
+    .sidebar-label[data-short] { font-size: 0; }
+    .sidebar-label[data-short]::after { font-size: 10px; content: attr(data-short); }
     .main-content { padding: 1.25rem 1rem 80px; margin-left: 0 !important; transition: none; }
     .section-header { flex-direction: column; align-items: flex-start; }
     .section-header-right { width: 100%; }
@@ -707,11 +709,11 @@
       </button>
       <button class="sidebar-item active" data-section="mensual" title="Gestión mensual">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <span class="sidebar-label">Gestión mensual</span>
+        <span class="sidebar-label" data-short="Gestión">Gestión mensual</span>
       </button>
       <button class="sidebar-item" data-section="resumen" title="Resumen anual">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        <span class="sidebar-label">Resumen anual</span>
+        <span class="sidebar-label" data-short="Resumen">Resumen anual</span>
       </button>
       <button class="sidebar-item" data-section="tarjetas" title="Tarjetas">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
