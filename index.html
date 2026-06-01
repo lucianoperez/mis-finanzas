@@ -165,6 +165,7 @@
   .section-title { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
   .section-sub   { font-size: 13px; color: var(--text2); margin-top: 2px; }
   .section-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .month-nav-group { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center; }
 
   /* ── MONTH NAV ───────────────────────────────────────── */
   .month-nav { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 6px 10px; position: relative; }
@@ -237,7 +238,7 @@
   /* ── BUTTONS ─────────────────────────────────────────── */
   .add-btn { font-size: 12px; font-weight: 600; padding: 6px 14px; border: 0.5px solid var(--border-md); background: var(--surface2); border-radius: var(--radius); cursor: pointer; color: var(--text); transition: background 0.12s; font-family: inherit; }
   .add-btn:hover { background: var(--border); }
-  .export-dropdown { position: relative; margin-left: auto; }
+  .export-dropdown { position: relative; }
   .export-trigger { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 7px 14px; border: 0.5px solid var(--border-md); background: var(--surface); border-radius: var(--radius); cursor: pointer; color: var(--text); transition: background 0.12s; font-family: inherit; }
   .export-trigger:hover { background: var(--surface2); }
   .export-trigger svg { flex-shrink: 0; }
@@ -572,6 +573,8 @@
     .main-content { padding: 1.25rem 1rem 80px; margin-left: 0 !important; transition: none; }
     .section-header { flex-direction: column; align-items: flex-start; }
     .section-header-right { width: 100%; }
+    .month-nav-group { flex: 1; justify-content: flex-start; }
+    .export-dropdown { display: none; }
   }
 </style>
 </head>
@@ -740,20 +743,22 @@
           <p class="section-sub">Seguimiento de ingresos y egresos</p>
         </div>
         <div class="section-header-right">
-          <div class="month-nav">
-            <button class="month-btn" id="prev-month">&#8249;</button>
-            <span class="month-label" id="month-label"></span>
-            <button class="month-btn" id="next-month">&#8250;</button>
-            <div class="month-picker-popup" id="month-picker">
-              <div class="mp-header">
-                <button id="mp-prev-year">&#8249;</button>
-                <span id="mp-year"></span>
-                <button id="mp-next-year">&#8250;</button>
+          <div class="month-nav-group">
+            <div class="month-nav">
+              <button class="month-btn" id="prev-month">&#8249;</button>
+              <span class="month-label" id="month-label"></span>
+              <button class="month-btn" id="next-month">&#8250;</button>
+              <div class="month-picker-popup" id="month-picker">
+                <div class="mp-header">
+                  <button id="mp-prev-year">&#8249;</button>
+                  <span id="mp-year"></span>
+                  <button id="mp-next-year">&#8250;</button>
+                </div>
+                <div class="mp-grid" id="mp-grid"></div>
               </div>
-              <div class="mp-grid" id="mp-grid"></div>
             </div>
+            <button id="today-btn" style="visibility:hidden;font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;border:1.5px solid var(--green);background:var(--green-bg);color:var(--green);cursor:pointer;font-family:inherit;transition:opacity 0.15s;">Hoy</button>
           </div>
-          <button id="today-btn" style="display:none;font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;border:1.5px solid var(--green);background:var(--green-bg);color:var(--green);cursor:pointer;font-family:inherit;transition:opacity 0.15s;">Hoy</button>
           <div class="export-dropdown">
             <button class="export-trigger" id="export-trigger">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1519,7 +1524,7 @@ function renderMonthLabel(){
   const n=new Date();
   const isToday=state.currentYear===n.getFullYear()&&state.currentMonth===n.getMonth();
   const btn=document.getElementById('today-btn');
-  if(btn) btn.style.display=isToday?'none':'inline-block';
+  if(btn) btn.style.visibility=isToday?'hidden':'visible';
 }
 
 const CARD_COLORS=['cc-0','cc-1','cc-2','cc-3','cc-4','cc-5'];
