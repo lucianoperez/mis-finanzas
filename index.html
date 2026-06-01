@@ -1419,8 +1419,10 @@ document.addEventListener('click',e=>{
 const DIST_COLORS=['#5DCAA5','#F59E0B','#818CF8','#F0997B','#34D399','#FB923C','#60A5FA','#A78BFA'];
 function renderDistPanel(){
   const md=getMonthData(state.currentYear,state.currentMonth);
+  const recItems=getRecurringForMonth(state.currentYear,state.currentMonth);
+  const allEgresos=[...md.egresos,...recItems];
   const grupos={};
-  md.egresos.forEach(e=>{
+  allEgresos.forEach(e=>{
     const key=e.tipo==='tarjeta'?(e.card||'Tarjeta'):e.tipo==='fijo'?'Gastos fijos':'Efectivo';
     grupos[key]=(grupos[key]||0)+Number(e.monto);
   });
