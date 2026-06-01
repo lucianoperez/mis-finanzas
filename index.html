@@ -140,6 +140,7 @@
   }
   .sidebar-collapse-btn:hover { color: var(--text); }
   .sidebar-collapse-btn svg { flex-shrink: 0; }
+  #logout-btn-mobile { display: none; }
 
   .sidebar-footer { padding: 12px; border-top: 0.5px solid var(--border); flex-shrink: 0; overflow: hidden; }
   .sidebar-footer-email { font-size: 11px; color: var(--text3); margin-bottom: 8px; word-break: break-all; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -575,6 +576,7 @@
     .section-header-right { width: 100%; }
     .month-nav-group { flex: 1; justify-content: flex-start; }
     .export-dropdown { display: none; }
+    #logout-btn-mobile { display: flex; }
   }
 </style>
 </head>
@@ -718,6 +720,10 @@
       <button class="sidebar-item" id="admin-nav-btn" data-section="admin" title="Admin" style="display:none;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <span class="sidebar-label">Admin</span>
+      </button>
+      <button class="sidebar-item" id="logout-btn-mobile" title="Salir">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span class="sidebar-label">Salir</span>
       </button>
     </div>
 
@@ -1311,6 +1317,7 @@ document.getElementById('auth-submit').addEventListener('click',async()=>{
 document.getElementById('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter'&&_authMode!=='forgot')document.getElementById('auth-password').focus();else if(e.key==='Enter')document.getElementById('auth-submit').click();});
 document.getElementById('auth-password').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-submit').click();});
 document.getElementById('logout-btn').addEventListener('click',async()=>{await sbSignOut();state=emptyState();saveLocalState();showLogin();});
+document.getElementById('logout-btn-mobile').addEventListener('click',async()=>{await sbSignOut();state=emptyState();saveLocalState();showLogin();});
 async function initAppForUser(user){
   setSyncStatus('Cargando datos…');const remote=await sbLoadState();
   if(remote){state={...emptyState(),...remote};if(!state.recurring)state.recurring=[];if(!state.recurrentes)state.recurrentes=[];const local=loadLocalState();state.currentYear=local.currentYear||state.currentYear;state.currentMonth=local.currentMonth||state.currentMonth;saveLocalState();}
