@@ -626,8 +626,8 @@
     <!-- ── PANEL DERECHO ── -->
     <div class="login-right login-anim-right">
       <div class="login-form-box">
-        <h2 class="login-form-title" id="login-form-title">Bienvenido</h2>
-        <p class="login-form-sub" id="login-subtitle">Ingresá con tu cuenta para continuar.</p>
+        <h2 class="login-form-title" id="login-form-title">Bienvenido de vuelta</h2>
+        <p class="login-form-sub" id="login-subtitle">Tu resumen financiero te espera.</p>
 
         <div id="login-error" style="display:none; background:var(--red-bg); color:var(--red); font-size:12px; padding:8px 12px; border-radius:var(--radius); margin-bottom:16px;"></div>
         <div id="login-success" style="display:none; background:var(--green-bg); color:var(--green); font-size:12px; padding:8px 12px; border-radius:var(--radius); margin-bottom:16px;"></div>
@@ -659,7 +659,7 @@
 
         <div id="auth-loading" style="display:none; text-align:center; margin-top:14px; font-size:12px; color:var(--text3);">Cargando...</div>
 
-        <p class="login-footer-note">Tus datos son privados y están<br>cifrados con Supabase Auth.</p>
+        <p class="login-footer-note">Tus datos son 100% privados y seguros.</p>
       </div>
     </div>
 
@@ -1207,9 +1207,9 @@ let _authMode='login';
 function _setAuthMode(mode){
   _authMode=mode;
   const isReg=mode==='register',isForgot=mode==='forgot';
-  document.getElementById('login-form-title').textContent=isForgot?'Recuperar contraseña':isReg?'Crear cuenta':'Bienvenido';
-  document.getElementById('login-subtitle').textContent=isForgot?'Te enviamos un email para restablecer tu contraseña.':isReg?'Creá tu cuenta gratuita.':'Ingresá con tu cuenta para continuar.';
-  document.getElementById('auth-submit').textContent=isForgot?'Enviar email de recuperación':isReg?'Crear cuenta':'Ingresar';
+  document.getElementById('login-form-title').textContent=isForgot?'Recuperar contraseña':isReg?'Creá tu cuenta':'Bienvenido de vuelta';
+  document.getElementById('login-subtitle').textContent=isForgot?'Te enviamos un email para restablecer tu contraseña.':isReg?'Creá tu cuenta gratuita.':'Tu resumen financiero te espera.';
+  document.getElementById('auth-submit').textContent=isForgot?'Enviar email de recuperación':isReg?'Creá tu cuenta':'Ingresar';
   document.getElementById('auth-password-group').style.display=isForgot?'none':'';
   const p2=document.getElementById('auth-password2-group');
   const p2WasHidden=p2.style.display==='none';
