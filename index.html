@@ -1066,9 +1066,9 @@
 </div>
 
 <!-- ── MODAL: Nuevo egreso ───────────────────────────────── -->
-<div class="modal-overlay" id="modal-egreso">
+<div class="modal-overlay" id="modal-egreso" role="dialog" aria-modal="true" aria-labelledby="modal-egreso-title">
   <div class="modal">
-    <h3>Nuevo egreso</h3>
+    <h3 id="modal-egreso-title">Nuevo egreso</h3>
     <div class="form-group"><label for="eg-desc">Descripción</label><input type="text" id="eg-desc" placeholder="Ej: Supermercado, Alquiler..." /></div>
     <div class="form-group"><label for="eg-monto">Monto ($)</label><input type="number" id="eg-monto" placeholder="0.00" min="0" step="0.01" /></div>
     <div class="form-group">
@@ -1092,9 +1092,9 @@
 </div>
 
 <!-- ── MODAL: Nuevo ingreso ──────────────────────────────── -->
-<div class="modal-overlay" id="modal-ingreso">
+<div class="modal-overlay" id="modal-ingreso" role="dialog" aria-modal="true" aria-labelledby="modal-ingreso-title">
   <div class="modal">
-    <h3>Nuevo ingreso</h3>
+    <h3 id="modal-ingreso-title">Nuevo ingreso</h3>
     <div class="form-group"><label for="ing-desc">Descripción</label><input type="text" id="ing-desc" placeholder="Ej: Sueldo, Freelance..." /></div>
     <div class="form-group"><label for="ing-monto">Monto ($)</label><input type="number" id="ing-monto" placeholder="0.00" min="0" step="0.01" /></div>
     <div class="form-group"><label for="ing-cat">Categoría</label><input type="text" id="ing-cat" placeholder="Ej: Sueldo, Freelance, Dividendos..." /></div>
@@ -1108,7 +1108,7 @@
 </div>
 
 <!-- ── MODAL: Editar egreso ──────────────────────────────── -->
-<div class="modal-overlay" id="modal-edit-egreso">
+<div class="modal-overlay" id="modal-edit-egreso" role="dialog" aria-modal="true" aria-labelledby="edit-eg-title">
   <div class="modal">
     <h3 id="edit-eg-title">Editar egreso</h3>
     <div class="form-group"><label for="edit-eg-desc">Descripción</label><input type="text" id="edit-eg-desc" /></div>
@@ -1127,9 +1127,9 @@
 </div>
 
 <!-- ── MODAL: Editar ingreso ─────────────────────────────── -->
-<div class="modal-overlay" id="modal-edit-ingreso">
+<div class="modal-overlay" id="modal-edit-ingreso" role="dialog" aria-modal="true" aria-labelledby="modal-edit-ingreso-title">
   <div class="modal">
-    <h3>Editar ingreso</h3>
+    <h3 id="modal-edit-ingreso-title">Editar ingreso</h3>
     <div class="form-group"><label for="edit-ing-desc">Descripción</label><input type="text" id="edit-ing-desc" /></div>
     <div class="form-group"><label for="edit-ing-monto">Monto ($)</label><input type="number" id="edit-ing-monto" min="0" step="0.01" /></div>
     <div class="form-group"><label for="edit-ing-cat">Categoría</label><input type="text" id="edit-ing-cat" /></div>
@@ -1143,7 +1143,7 @@
 </div>
 
 <!-- ── MODAL: Detalle ahorros ────────────────────────────── -->
-<div class="modal-overlay" id="modal-savings-detail">
+<div class="modal-overlay" id="modal-savings-detail" role="dialog" aria-modal="true" aria-labelledby="savings-detail-title">
   <div class="modal">
     <h3 id="savings-detail-title">Ahorros en USD</h3>
     <div id="savings-detail-list" style="margin-bottom:1rem;"></div>
@@ -1155,9 +1155,9 @@
 </div>
 
 <!-- ── MODAL: Nuevo ahorro ───────────────────────────────── -->
-<div class="modal-overlay" id="modal-saving">
+<div class="modal-overlay" id="modal-saving" role="dialog" aria-modal="true" aria-labelledby="modal-saving-title">
   <div class="modal">
-    <h3>Registrar ahorro en USD</h3>
+    <h3 id="modal-saving-title">Registrar ahorro en USD</h3>
     <div class="form-group">
       <label for="saving-tipo">Tipo</label>
       <select id="saving-tipo">
@@ -1181,9 +1181,9 @@
 </div>
 
 <!-- ── MODAL: Renombrar tarjeta ──────────────────────────── -->
-<div class="modal-overlay" id="modal-rename-card">
+<div class="modal-overlay" id="modal-rename-card" role="dialog" aria-modal="true" aria-labelledby="modal-rename-card-title">
   <div class="modal">
-    <h3>Renombrar tarjeta</h3>
+    <h3 id="modal-rename-card-title">Renombrar tarjeta</h3>
     <div class="form-group">
       <label for="rename-card-input">Nuevo nombre</label>
       <input type="text" id="rename-card-input" placeholder="Nombre de la tarjeta" />
@@ -2295,6 +2295,39 @@ document.getElementById('save-rename-card').addEventListener('click',()=>{
     const nowCollapsed=!sidebar.classList.contains('collapsed');
     localStorage.setItem(COLLAPSED_KEY, nowCollapsed?'1':'0');
     applyCollapsed(nowCollapsed);
+  });
+})();
+
+// ── FOCUS TRAP para modales ────────────────────────────────────────────────
+(function(){
+  const FOCUSABLE='a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  let _lastFocus=null;
+
+  function trapFocus(modal){
+    _lastFocus=document.activeElement;
+    const els=[...modal.querySelectorAll(FOCUSABLE)];
+    if(els.length) els[0].focus();
+    modal._trapHandler=function(e){
+      if(e.key!=='Tab')return;
+      const all=[...modal.querySelectorAll(FOCUSABLE)];
+      if(!all.length)return;
+      const first=all[0],last=all[all.length-1];
+      if(e.shiftKey){if(document.activeElement===first){e.preventDefault();last.focus();}}
+      else{if(document.activeElement===last){e.preventDefault();first.focus();}}
+    };
+    modal.addEventListener('keydown',modal._trapHandler);
+  }
+
+  function untrapFocus(modal){
+    if(modal._trapHandler){modal.removeEventListener('keydown',modal._trapHandler);modal._trapHandler=null;}
+    if(_lastFocus&&_lastFocus.focus){try{_lastFocus.focus();}catch(e){}_lastFocus=null;}
+  }
+
+  document.querySelectorAll('.modal-overlay[role="dialog"]').forEach(modal=>{
+    new MutationObserver(()=>{
+      if(modal.classList.contains('open'))trapFocus(modal);
+      else untrapFocus(modal);
+    }).observe(modal,{attributes:true,attributeFilter:['class']});
   });
 })();
 </script>
