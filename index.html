@@ -605,6 +605,14 @@
     .export-dropdown { display: none; }
     #logout-btn-mobile { display: flex; }
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .login-coin { animation: none; opacity: 0.3; }
+    .login-anim-left, .login-anim-right,
+    .login-brand, .login-tagline,
+    .login-tagline-sub, .login-features { animation: none; opacity: 1; }
+    #login-chart-line { animation: none; stroke-dashoffset: 0; opacity: 0.15; }
+  }
 </style>
 </head>
 <body>
