@@ -429,6 +429,8 @@
     to   { opacity: 1; transform: translateY(0); }
   }
   .auth-fade { animation: authFadeIn 0.2s ease; }
+  @keyframes authSpin { to { transform: rotate(360deg); } }
+  .auth-spinner { animation: authSpin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 7px; }
   @keyframes loginSlideLeft {
     from { opacity:0; transform:translateX(-40px); }
     to   { opacity:1; transform:translateX(0); }
@@ -659,8 +661,6 @@
         <button id="auth-toggle" class="login-btn-secondary">¿No tenés cuenta? Registrate</button>
 
         <button id="demo-btn" class="login-btn-secondary" style="margin-top:8px; color:var(--green); border-color:var(--green); opacity:0.85;">🔍 Explorar sin registrarse</button>
-
-        <div id="auth-loading" style="display:none; text-align:center; margin-top:14px; font-size:12px; color:var(--text3);">Cargando...</div>
 
         <p class="login-footer-note">Tus datos son 100% privados y seguros.</p>
       </div>
@@ -1234,7 +1234,18 @@ function showLogin(){document.getElementById('login-screen').style.display='flex
 function showApp(email){document.getElementById('login-screen').style.display='none';document.getElementById('main-app').style.display='';document.getElementById('dist-toggle-btn').style.display='';document.getElementById('dist-panel').style.display='';const el=document.getElementById('auth-user-email');if(el)el.textContent=email||'';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display=(email===ADMIN_EMAIL)?'':'none';}
 function setAuthError(m){const el=document.getElementById('login-error');el.textContent=m;el.style.display=m?'':'none';}
 function setAuthSuccess(m){const el=document.getElementById('login-success');el.textContent=m;el.style.display=m?'':'none';}
-function setAuthLoading(on){document.getElementById('auth-loading').style.display=on?'':'none';document.getElementById('auth-submit').disabled=on;}
+function setAuthLoading(on){
+  const btn=document.getElementById('auth-submit');
+  btn.disabled=on;
+  if(on){
+    const labels={login:'Ingresando...',register:'Creando cuenta...',forgot:'Enviando...'};
+    const txt=labels[_authMode]||'Cargando...';
+    btn.innerHTML='<svg class="auth-spinner" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="2" stroke-dasharray="26" stroke-dashoffset="10" stroke-linecap="round"/></svg>'+txt;
+  } else {
+    const labels={login:'Ingresar',register:'Creá tu cuenta',forgot:'Enviar email de recuperación'};
+    btn.textContent=labels[_authMode]||'Ingresar';
+  }
+}
 const _SVG_EYE='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 const _SVG_EYE_OFF='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
 document.querySelectorAll('.pw-toggle').forEach(btn=>{btn.style.display='flex';btn.style.alignItems='center';btn.style.justifyContent='center';btn.addEventListener('click',()=>{const inp=document.getElementById(btn.dataset.target);if(inp.type==='password'){inp.type='text';btn.innerHTML=_SVG_EYE_OFF;btn.setAttribute('aria-pressed','true');btn.setAttribute('aria-label','Ocultar contraseña');}else{inp.type='password';btn.innerHTML=_SVG_EYE;btn.setAttribute('aria-pressed','false');btn.setAttribute('aria-label','Mostrar contraseña');}});});
