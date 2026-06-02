@@ -1213,7 +1213,7 @@ function _setAuthMode(mode){
   const div=document.querySelector('.login-divider');if(div)div.style.display=isForgot?'none':'';
   setAuthError('');setAuthSuccess('');
 }
-function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('main-app').style.display='none';toggleDistPanel(false);document.getElementById('dist-toggle-btn').style.display='none';document.getElementById('dist-panel').style.display='none';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display='none';}
+function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('main-app').style.display='none';toggleDistPanel(false);document.getElementById('dist-toggle-btn').style.display='none';document.getElementById('dist-panel').style.display='none';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display='none';document.body.classList.remove('demo-mode');document.getElementById('demo-banner').style.display='none';window._previewMode=false;}
 function showApp(email){document.getElementById('login-screen').style.display='none';document.getElementById('main-app').style.display='';document.getElementById('dist-toggle-btn').style.display='';document.getElementById('dist-panel').style.display='';const el=document.getElementById('auth-user-email');if(el)el.textContent=email||'';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display=(email===ADMIN_EMAIL)?'':'none';}
 function setAuthError(m){const el=document.getElementById('login-error');el.textContent=m;el.style.display=m?'':'none';}
 function setAuthSuccess(m){const el=document.getElementById('login-success');el.textContent=m;el.style.display=m?'':'none';}
