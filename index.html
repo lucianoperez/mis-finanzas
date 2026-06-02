@@ -836,7 +836,12 @@
       <div class="panel savings-panel">
         <div class="panel-header">
           <span class="panel-title">Ahorros en USD</span>
-          <div style="display:flex;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="savings-eye-btn" id="savings-eye-toggle" title="Mostrar / ocultar valores">
+              <svg id="savings-eye-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
             <button class="add-btn" id="open-saving-detail">Ver detalle</button>
             <button class="add-btn" id="open-saving">+ Agregar</button>
           </div>
@@ -846,17 +851,12 @@
             <span class="savings-balance-label">Saldo acumulado</span>
             <div class="savings-balance-row">
               <span class="savings-balance-val neutral" id="savings-balance">••••••</span>
-              <button class="savings-eye-btn" id="savings-eye-toggle" title="Mostrar / ocultar saldo">
-                <svg id="savings-eye-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                </svg>
-              </button>
             </div>
           </div>
           <div class="savings-summary-divider"></div>
           <div class="savings-summary-item">
             <span class="savings-balance-label">Neto este mes</span>
-            <span class="savings-balance-val neutral" id="savings-mes-neto">USD 0.00</span>
+            <span class="savings-balance-val neutral" id="savings-mes-neto">••••••</span>
           </div>
           <div class="savings-summary-divider"></div>
           <div class="savings-summary-item">
@@ -1363,20 +1363,24 @@ function getSavingsBalance(upToYear,upToMonth){
 }
 
 let _savingsVisible=false;
+let _savingsNeto=0;
 const SVG_EYE_OPEN=`<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
 const SVG_EYE_OFF=`<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
 
 function _applySavingsVisibility(balance){
   const balEl=document.getElementById('savings-balance');
+  const netoEl=document.getElementById('savings-mes-neto');
   const iconEl=document.getElementById('savings-eye-icon');
   if(!balEl||!iconEl)return;
   if(_savingsVisible){
     balEl.textContent=fmtUSD(balance);
     balEl.className='savings-balance-val '+(balance>0?'pos':balance<0?'neg':'neutral');
+    if(netoEl){netoEl.textContent=(_savingsNeto>=0?'+':'')+fmtUSD(_savingsNeto);netoEl.className='savings-balance-val '+(_savingsNeto>0?'pos':_savingsNeto<0?'neg':'neutral');}
     iconEl.innerHTML=SVG_EYE_OFF;
   } else {
     balEl.textContent='••••••';
     balEl.className='savings-balance-val neutral';
+    if(netoEl){netoEl.textContent='••••••';netoEl.className='savings-balance-val neutral';}
     iconEl.innerHTML=SVG_EYE_OPEN;
   }
 }
@@ -1385,9 +1389,8 @@ function renderSavings(){
   const md=getMonthData(state.currentYear,state.currentMonth);
   const balance=getSavingsBalance(state.currentYear,state.currentMonth);
   const neto=md.ahorros.reduce((s,a)=>s+(a.tipo==='deposito'?+a.monto:-(+a.monto)),0);
+  _savingsNeto=neto;
   _applySavingsVisibility(balance);
-  const netoEl=document.getElementById('savings-mes-neto');
-  if(netoEl){netoEl.textContent=(neto>=0?'+':'')+fmtUSD(neto);netoEl.className='savings-balance-val '+(neto>0?'pos':neto<0?'neg':'neutral');}
   const countEl=document.getElementById('savings-mes-count');
   if(countEl){countEl.textContent=md.ahorros.length;countEl.className='savings-balance-val '+(md.ahorros.length>0?'pos':'neutral');countEl.style.fontSize='16px';}
   renderSavingsDetail();
