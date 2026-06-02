@@ -350,6 +350,8 @@
   .form-group label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; margin-bottom: 5px; }
   .form-group input, .form-group select { width: 100%; padding: 9px 12px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--surface2); color: var(--text); font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.12s; }
   .form-group input:focus, .form-group select:focus { border-color: var(--blue); }
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 3px; }
+  :focus:not(:focus-visible) { outline: none; }
   .form-row { display: flex; gap: 8px; }
   .form-row .form-group { flex: 1; margin-bottom: 0; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.5rem; }
@@ -780,7 +782,7 @@
     <section id="section-mensual" class="app-section active">
       <div class="section-header">
         <div>
-          <h1 class="section-title">Gestión mensual</h1>
+          <h2 class="section-title">Gestión mensual</h2>
           <p class="section-sub">Seguimiento de ingresos y egresos</p>
         </div>
         <div class="section-header-right">
@@ -836,7 +838,7 @@
       <div class="search-bar search-bar-styled">
         <span class="search-icon">🔍</span>
         <input type="text" id="search-input" placeholder="Buscar en todos los meses... (descripción o etiqueta)" />
-        <button class="search-clear" id="search-clear">×</button>
+        <button class="search-clear" id="search-clear" aria-label="Limpiar búsqueda">×</button>
       </div>
       <div id="search-results-wrap" style="display:none;"></div>
 
@@ -904,7 +906,7 @@
     <section id="section-resumen" class="app-section">
       <div class="section-header">
         <div>
-          <h1 class="section-title">Resumen anual <span id="resumen-year" style="color:var(--text2);font-weight:400;font-size:18px;"></span></h1>
+          <h2 class="section-title">Resumen anual <span id="resumen-year" style="color:var(--text2);font-weight:400;font-size:18px;"></span></h2>
         </div>
       </div>
 
@@ -990,7 +992,7 @@
     <section id="section-tarjetas" class="app-section">
       <div class="section-header">
         <div>
-          <h1 class="section-title">Configuración de tarjetas</h1>
+          <h2 class="section-title">Configuración de tarjetas</h2>
           <p class="section-sub">Administrá tus tarjetas de crédito y débito</p>
         </div>
       </div>
@@ -1019,7 +1021,7 @@
     <section id="section-admin" class="app-section">
       <div class="section-header">
         <div>
-          <h1 class="section-title">Panel de administración</h1>
+          <h2 class="section-title">Panel de administración</h2>
           <p class="section-sub">Usuarios registrados en la plataforma</p>
         </div>
         <div class="section-header-right">
@@ -1456,7 +1458,7 @@ function renderSavingsDetail(){
   if(!md.ahorros.length){list.innerHTML='<div class="empty-state" style="padding:1.5rem 0;">Sin movimientos este mes</div>';return;}
   list.innerHTML=md.ahorros.map((a,i)=>{
     const isD=a.tipo==='deposito',sign=isD?'+':'−',cls=isD?'ingreso':'egreso',badge=isD?'saving-deposito':'saving-retiro',label=isD?'Depósito':'Retiro';
-    return`<div class="item"><div class="item-left"><span class="item-name"><span class="saving-tipo-badge ${badge}">${label}</span>${a.desc?' '+a.desc:''}</span></div><div class="item-right"><span class="item-amount ${cls}">${sign}${fmtUSD(+a.monto)}</span><button class="del-btn del-saving-detail" data-idx="${i}">×</button></div></div>`;
+    return`<div class="item"><div class="item-left"><span class="item-name"><span class="saving-tipo-badge ${badge}">${label}</span>${a.desc?' '+a.desc:''}</span></div><div class="item-right"><span class="item-amount ${cls}">${sign}${fmtUSD(+a.monto)}</span><button class="del-btn del-saving-detail" data-idx="${i}" aria-label="Eliminar">×</button></div></div>`;
   }).join('');
   list.querySelectorAll('.del-saving-detail').forEach(b=>b.addEventListener('click',()=>{md.ahorros.splice(+b.dataset.idx,1);renderAll();renderSavingsDetail();}));
 }
@@ -1620,14 +1622,14 @@ function itemHTML(item,cc,idx,isRec){
   const pagarBtn=(item.pendiente&&!isRec)?'<button class="pagar-btn pagar-eg" data-idx="'+idx+'">✓ Pagar</button>':'';
   let delBtn,editBtn;
   if(item.isRecurrente){
-    delBtn='<button class="del-btn del-rec-mensual" data-rid="'+item.id+'" title="Eliminar desde este mes">×</button>';
-    editBtn='<button class="edit-btn edit-rec-mensual" data-rid="'+item.id+'" title="Editar desde este mes">✎</button>';
+    delBtn='<button class="del-btn del-rec-mensual" data-rid="'+item.id+'" title="Eliminar desde este mes" aria-label="Eliminar desde este mes">×</button>';
+    editBtn='<button class="edit-btn edit-rec-mensual" data-rid="'+item.id+'" title="Editar desde este mes" aria-label="Editar desde este mes">✎</button>';
   } else if(isRec){
-    delBtn='<button class="del-btn del-rec" data-rid="'+item.id+'" title="Eliminar todas las cuotas">×</button>';
-    editBtn='<button class="edit-btn edit-rec" data-rid="'+item.id+'" title="Editar cuotas">✎</button>';
+    delBtn='<button class="del-btn del-rec" data-rid="'+item.id+'" title="Eliminar todas las cuotas" aria-label="Eliminar todas las cuotas">×</button>';
+    editBtn='<button class="edit-btn edit-rec" data-rid="'+item.id+'" title="Editar cuotas" aria-label="Editar cuotas">✎</button>';
   } else {
-    delBtn='<button class="del-btn del-normal" data-idx="'+idx+'" title="Eliminar">×</button>';
-    editBtn='<button class="edit-btn edit-eg" data-idx="'+idx+'" title="Editar">✎</button>';
+    delBtn='<button class="del-btn del-normal" data-idx="'+idx+'" title="Eliminar" aria-label="Eliminar">×</button>';
+    editBtn='<button class="edit-btn edit-eg" data-idx="'+idx+'" title="Editar" aria-label="Editar">✎</button>';
   }
   return '<div class="item'+ccCls+lastCls+pendingCls+'">'+'<div class="item-left"><span class="item-name">'+item.desc+fechaHtml+cuotaBadge+recBadge+pendingBadge+'</span>'+(tagsHtml?'<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;">'+tagsHtml+'</div>':'')+'</div><div class="item-right"><span class="item-amount egreso">−'+fmt(item.monto)+'</span>'+pagarBtn+editBtn+delBtn+'</div></div>';
 }
@@ -1670,7 +1672,7 @@ function renderLists(){
       const fecha=fmtFecha(ing),fechaHtml=fecha?'<span class="item-fecha">'+fecha+'</span>':'';
       const badge='<span class="badge badge-ingreso">'+(ing.cat||'Ingreso')+'</span>';
       const tagsHtml=(ing.tags||[]).map(t=>tagChipHTML(t)).join('');
-      return'<div class="item"><div class="item-left"><span class="item-name">'+ing.desc+fechaHtml+'</span><span>'+badge+'</span>'+(tagsHtml?'<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;">'+tagsHtml+'</div>':'')+'</div><div class="item-right"><span class="item-amount ingreso">+'+fmt(ing.monto)+'</span><button class="edit-btn edit-ing" data-idx="'+idx+'">✎</button><button class="del-btn" data-idx="'+idx+'">×</button></div></div>';
+      return'<div class="item"><div class="item-left"><span class="item-name">'+ing.desc+fechaHtml+'</span><span>'+badge+'</span>'+(tagsHtml?'<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;">'+tagsHtml+'</div>':'')+'</div><div class="item-right"><span class="item-amount ingreso">+'+fmt(ing.monto)+'</span><button class="edit-btn edit-ing" data-idx="'+idx+'" aria-label="Editar">✎</button><button class="del-btn" data-idx="'+idx+'" aria-label="Eliminar">×</button></div></div>';
     }).join('');
     iList.querySelectorAll('.del-btn').forEach(b=>{b.addEventListener('click',()=>{const idx=+b.dataset.idx;pushUndo({type:'del-ing',y:state.currentYear,m:state.currentMonth,idx,item:{...md.ingresos[idx]}},'Ingreso eliminado');md.ingresos.splice(idx,1);renderAll();});});
     iList.querySelectorAll('.edit-ing').forEach(b=>{b.addEventListener('click',()=>openEditIngreso(state.currentYear,state.currentMonth,+b.dataset.idx));});
@@ -1953,7 +1955,7 @@ function tagColor(tag){if(!_tagCC[tag]){let h=0;for(let i=0;i<tag.length;i++)h=(
 function tagChipHTML(tag){const{bg,text}=tagColor(tag);return`<span class="tag" style="background:${bg};color:${text};border-color:${text}20;">${tag}</span>`;}
 function initTagInput(wrapId,inputId,getTags,setTags){
   const wrap=document.getElementById(wrapId),inp=document.getElementById(inputId);if(!wrap||!inp)return;
-  function render(){wrap.querySelectorAll('.tag').forEach(el=>el.remove());getTags().forEach(tag=>{const chip=document.createElement('span');chip.className='tag';const{bg,text}=tagColor(tag);chip.style.cssText=`background:${bg};color:${text};border-color:${text}20;`;chip.innerHTML=tag+`<button class="tag-remove" style="color:${text}">×</button>`;chip.querySelector('.tag-remove').addEventListener('click',()=>{setTags(getTags().filter(t=>t!==tag));render();});wrap.insertBefore(chip,inp);});}
+  function render(){wrap.querySelectorAll('.tag').forEach(el=>el.remove());getTags().forEach(tag=>{const chip=document.createElement('span');chip.className='tag';const{bg,text}=tagColor(tag);chip.style.cssText=`background:${bg};color:${text};border-color:${text}20;`;chip.innerHTML=tag+`<button class="tag-remove" aria-label="Quitar etiqueta ${tag}" style="color:${text}">×</button>`;chip.querySelector('.tag-remove').addEventListener('click',()=>{setTags(getTags().filter(t=>t!==tag));render();});wrap.insertBefore(chip,inp);});}
   inp.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===',')&&inp.value.trim()){e.preventDefault();const tag=inp.value.trim().replace(/,/g,'');if(tag&&!getTags().includes(tag))setTags([...getTags(),tag]);inp.value='';render();}else if(e.key==='Backspace'&&!inp.value){const tags=getTags();if(tags.length){setTags(tags.slice(0,-1));render();}}});
   wrap.addEventListener('click',()=>inp.focus());render();return render;
 }
@@ -2240,7 +2242,7 @@ function renderCardConfig(){
   const el=document.getElementById('card-list-config'),countEl=document.getElementById('card-count-label');if(!el)return;
   const n=state.cards.length;if(countEl)countEl.textContent=n===0?'':n+' tarjeta'+(n!==1?'s':'');
   if(!n){el.innerHTML='<div class="empty-state">No hay tarjetas configuradas.<br>Agregá tu primera tarjeta arriba.</div>';return;}
-  el.innerHTML=state.cards.map((c,i)=>{const cc=CARD_COLORS[i%CARD_COLORS.length];return`<div class="card-config-item ${cc}"><div class="card-config-left"><div class="card-color-swatch"></div><span class="card-config-name">${c}</span></div><div class="card-config-actions"><button class="edit-btn rename-card-btn" data-i="${i}" title="Renombrar">✎</button><button class="del-btn del-card-btn" data-i="${i}" title="Eliminar">×</button></div></div>`;}).join('');
+  el.innerHTML=state.cards.map((c,i)=>{const cc=CARD_COLORS[i%CARD_COLORS.length];return`<div class="card-config-item ${cc}"><div class="card-config-left"><div class="card-color-swatch"></div><span class="card-config-name">${c}</span></div><div class="card-config-actions"><button class="edit-btn rename-card-btn" data-i="${i}" title="Renombrar" aria-label="Renombrar tarjeta">✎</button><button class="del-btn del-card-btn" data-i="${i}" title="Eliminar" aria-label="Eliminar tarjeta">×</button></div></div>`;}).join('');
   el.querySelectorAll('.del-card-btn').forEach(b=>{b.addEventListener('click',()=>{const idx=+b.dataset.i,name=state.cards[idx];if(confirm('¿Eliminar la tarjeta "'+name+'"?\nLos egresos asociados quedarán sin tarjeta asignada.')){state.cards.splice(idx,1);renderAll();renderCardConfig();}});});
   el.querySelectorAll('.rename-card-btn').forEach(b=>{b.addEventListener('click',()=>{_renameCardIdx=+b.dataset.i;document.getElementById('rename-card-input').value=state.cards[_renameCardIdx];document.getElementById('rename-card-hint').style.display='none';document.getElementById('modal-rename-card').classList.add('open');setTimeout(()=>{const inp=document.getElementById('rename-card-input');inp.focus();inp.select();},80);});});
 }
@@ -2300,7 +2302,7 @@ document.getElementById('save-rename-card').addEventListener('click',()=>{
 <div class="dist-panel" id="dist-panel" style="display:none;">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
     <span id="dist-panel-title" style="font-size:12px;font-weight:600;color:var(--text2);letter-spacing:0.4px;text-transform:uppercase;">Distribución</span>
-    <button id="dist-panel-close" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;padding:2px 4px;">×</button>
+    <button id="dist-panel-close" aria-label="Cerrar panel" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;padding:2px 4px;">×</button>
   </div>
   <div id="dist-chart" style="width:100%;height:200px;"></div>
   <div id="dist-legend" style="display:flex;flex-direction:column;gap:10px;margin-top:18px;"></div>
@@ -2319,7 +2321,7 @@ document.getElementById('save-rename-card').addEventListener('click',()=>{
   <div class="dist-color-bar" id="dist-color-bar"></div>
 </button>
 
-<div class="undo-toast" id="undo-toast">
+<div class="undo-toast" id="undo-toast" role="status" aria-live="polite" aria-atomic="true">
   <span class="undo-toast-msg" id="undo-toast-msg">Eliminado</span>
   <button class="undo-action-btn" id="undo-btn">↩ Deshacer</button>
 </div>
