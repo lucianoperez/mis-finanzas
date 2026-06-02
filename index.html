@@ -429,8 +429,25 @@
     to   { opacity: 1; transform: translateY(0); }
   }
   .auth-fade { animation: authFadeIn 0.2s ease; }
-  @keyframes authSpin { to { transform: rotate(360deg); } }
-  .auth-spinner { animation: authSpin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 7px; }
+  @keyframes coinStack1 {
+    0%,5%    { opacity:0; transform:translateY(2px); }
+    20%,70%  { opacity:1; transform:translateY(0); }
+    85%,100% { opacity:0; transform:translateY(0); }
+  }
+  @keyframes coinStack2 {
+    0%,25%   { opacity:0; transform:translateY(2px); }
+    40%,70%  { opacity:1; transform:translateY(0); }
+    85%,100% { opacity:0; transform:translateY(0); }
+  }
+  @keyframes coinStack3 {
+    0%,45%   { opacity:0; transform:translateY(2px); }
+    60%,70%  { opacity:1; transform:translateY(0); }
+    85%,100% { opacity:0; transform:translateY(0); }
+  }
+  .coin-anim { display:inline-block; vertical-align:middle; margin-right:7px; }
+  .coin-anim .c1 { animation: coinStack1 1.8s ease-in-out infinite; }
+  .coin-anim .c2 { animation: coinStack2 1.8s ease-in-out infinite; }
+  .coin-anim .c3 { animation: coinStack3 1.8s ease-in-out infinite; }
   @keyframes loginSlideLeft {
     from { opacity:0; transform:translateX(-40px); }
     to   { opacity:1; transform:translateX(0); }
@@ -1240,7 +1257,7 @@ function setAuthLoading(on){
   if(on){
     const labels={login:'Ingresando...',register:'Creando cuenta...',forgot:'Enviando...'};
     const txt=labels[_authMode]||'Cargando...';
-    btn.innerHTML='<svg class="auth-spinner" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="2" stroke-dasharray="26" stroke-dashoffset="10" stroke-linecap="round"/></svg>'+txt;
+    btn.innerHTML='<svg class="coin-anim" width="24" height="19" viewBox="0 0 24 19" aria-hidden="true"><ellipse class="c1" cx="12" cy="15.5" rx="10" ry="3" fill="#b8860b"/><ellipse class="c2" cx="12" cy="10" rx="10" ry="3" fill="#daa520"/><ellipse class="c3" cx="12" cy="4.5" rx="10" ry="3" fill="#ffd700"/></svg>'+txt;
   } else {
     const labels={login:'Ingresar',register:'Creá tu cuenta',forgot:'Enviar email de recuperación'};
     btn.textContent=labels[_authMode]||'Ingresar';
