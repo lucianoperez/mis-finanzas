@@ -423,6 +423,11 @@
   .login-footer-note { margin-top:28px; font-size:11px; color:var(--text3); text-align:center; line-height:1.7; }
 
   /* ── LOGIN ANIMATIONS ───────────────────────────────── */
+  @keyframes authFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .auth-fade { animation: authFadeIn 0.2s ease; }
   @keyframes loginSlideLeft {
     from { opacity:0; transform:translateX(-40px); }
     to   { opacity:1; transform:translateX(0); }
@@ -633,11 +638,11 @@
         </div>
         <div class="form-group" id="auth-password-group">
           <label for="auth-password">Contraseña</label>
-          <div class="pw-wrap"><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" /><button type="button" class="pw-toggle" data-target="auth-password"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+          <div class="pw-wrap"><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" /><button type="button" class="pw-toggle" aria-label="Mostrar contraseña" aria-pressed="false" data-target="auth-password"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
         </div>
         <div class="form-group" id="auth-password2-group" style="display:none;">
           <label for="auth-password2">Repetir contraseña</label>
-          <div class="pw-wrap"><input type="password" id="auth-password2" placeholder="••••••••" /><button type="button" class="pw-toggle" data-target="auth-password2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+          <div class="pw-wrap"><input type="password" id="auth-password2" placeholder="••••••••" /><button type="button" class="pw-toggle" aria-label="Mostrar contraseña" aria-pressed="false" data-target="auth-password2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
         </div>
 
         <button id="auth-forgot" class="login-forgot">¿Olvidaste tu contraseña?</button>
@@ -1206,11 +1211,19 @@ function _setAuthMode(mode){
   document.getElementById('login-subtitle').textContent=isForgot?'Te enviamos un email para restablecer tu contraseña.':isReg?'Creá tu cuenta gratuita.':'Ingresá con tu cuenta para continuar.';
   document.getElementById('auth-submit').textContent=isForgot?'Enviar email de recuperación':isReg?'Crear cuenta':'Ingresar';
   document.getElementById('auth-password-group').style.display=isForgot?'none':'';
-  document.getElementById('auth-password2-group').style.display=isReg?'':'none';
+  const p2=document.getElementById('auth-password2-group');
+  const p2WasHidden=p2.style.display==='none';
+  p2.style.display=isReg?'':'none';
+  if(isReg&&p2WasHidden){p2.classList.remove('auth-fade');void p2.offsetWidth;p2.classList.add('auth-fade');}
   document.getElementById('auth-forgot').style.display=isForgot||isReg?'none':'';
   document.getElementById('auth-back').style.display=isForgot?'':'none';
   document.getElementById('auth-toggle').style.display=isForgot?'none':'';
   const div=document.querySelector('.login-divider');if(div)div.style.display=isForgot?'none':'';
+  // Fix autocomplete según el modo
+  const passInp=document.getElementById('auth-password');
+  if(passInp)passInp.autocomplete=isReg?'new-password':'current-password';
+  const pass2Inp=document.getElementById('auth-password2');
+  if(pass2Inp)pass2Inp.autocomplete=isReg?'new-password':'';
   setAuthError('');setAuthSuccess('');
 }
 function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('main-app').style.display='none';toggleDistPanel(false);document.getElementById('dist-toggle-btn').style.display='none';document.getElementById('dist-panel').style.display='none';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display='none';document.body.classList.remove('demo-mode');document.getElementById('demo-banner').style.display='none';window._previewMode=false;}
@@ -1220,7 +1233,7 @@ function setAuthSuccess(m){const el=document.getElementById('login-success');el.
 function setAuthLoading(on){document.getElementById('auth-loading').style.display=on?'':'none';document.getElementById('auth-submit').disabled=on;}
 const _SVG_EYE='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
 const _SVG_EYE_OFF='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
-document.querySelectorAll('.pw-toggle').forEach(btn=>{btn.style.display='flex';btn.style.alignItems='center';btn.style.justifyContent='center';btn.addEventListener('click',()=>{const inp=document.getElementById(btn.dataset.target);if(inp.type==='password'){inp.type='text';btn.innerHTML=_SVG_EYE_OFF;}else{inp.type='password';btn.innerHTML=_SVG_EYE;}});});
+document.querySelectorAll('.pw-toggle').forEach(btn=>{btn.style.display='flex';btn.style.alignItems='center';btn.style.justifyContent='center';btn.addEventListener('click',()=>{const inp=document.getElementById(btn.dataset.target);if(inp.type==='password'){inp.type='text';btn.innerHTML=_SVG_EYE_OFF;btn.setAttribute('aria-pressed','true');btn.setAttribute('aria-label','Ocultar contraseña');}else{inp.type='password';btn.innerHTML=_SVG_EYE;btn.setAttribute('aria-pressed','false');btn.setAttribute('aria-label','Mostrar contraseña');}});});
 // ── DEMO MODE ────────────────────────────────────────────────────────
 function startDemo(){
   window._previewMode = true;
