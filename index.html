@@ -550,23 +550,50 @@
   .search-highlight { background: #FFF3B0; color: #5C4000; border-radius: 2px; padding: 0 1px; }
   @media (prefers-color-scheme: dark) { .search-highlight { background: #4A3800; color: #FFD966; } }
 
-  /* ── AHORROS USD ────────────────────────────────────── */
+  /* ── AHORROS (multi-moneda) ─────────────────────────── */
   .savings-panel { margin-top: 14px; }
-  .savings-balance-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; margin-bottom: 4px; }
-  .savings-balance-val { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; }
-  .savings-balance-val.pos { color: var(--green); }
-  .savings-balance-val.neg { color: var(--red); }
-  .savings-balance-val.neutral { color: var(--text); }
-  .savings-summary { display: flex; align-items: center; padding: 14px 18px; gap: 0; flex-wrap: wrap; }
-  .savings-summary-item { display: flex; flex-direction: column; padding: 0 24px 0 0; }
-  .savings-summary-divider { width: 0.5px; height: 36px; background: var(--border-md); margin-right: 24px; flex-shrink: 0; }
-  @media (max-width: 600px) { .savings-summary-divider { display: none; } .savings-summary-item { padding: 8px 0; } }
-  .savings-balance-row { display: flex; align-items: center; gap: 6px; }
-  .savings-eye-btn { background: none; border: none; cursor: pointer; color: var(--text3); padding: 2px; display: flex; align-items: center; line-height: 1; transition: color 0.12s; flex-shrink: 0; }
-  .savings-eye-btn:hover { color: var(--text2); }
+  /* badges usados en el modal de detalle */
   .saving-tipo-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
   .saving-deposito { background: var(--green-bg); color: var(--green); }
   .saving-retiro   { background: var(--red-bg);   color: var(--red); }
+  /* header del panel */
+  .savings-mc-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; }
+  .savings-mc-title { font-size: 14px; font-weight: 600; color: var(--text1); letter-spacing:.02em; }
+  .savings-mc-actions { display: flex; align-items: center; gap: 6px; }
+  .savings-mc-eye { background: none; border: none; cursor: pointer; color: var(--text3); padding: 4px 6px; border-radius: 6px; display: flex; align-items: center; line-height:1; }
+  .savings-mc-eye:hover { color: var(--text1); }
+  .savings-mc-add-btn { font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-bg); border: 1px solid var(--green); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+  /* cards por moneda */
+  .savings-mc-cards { display: flex; flex-direction: column; }
+  .savings-currency-card { border-top: 1px solid var(--border); padding: 12px 16px 14px; cursor: pointer; transition: background .15s; }
+  .savings-currency-card:hover, .savings-currency-card:focus-visible { background: var(--surface2); outline: none; }
+  .scc-top { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .scc-flag { font-size: 15px; line-height: 1; }
+  .scc-code { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing:.06em; }
+  .scc-chevron { margin-left: auto; color: var(--text3); font-size: 16px; opacity:.5; }
+  .scc-balance { font-size: 22px; font-weight: 700; letter-spacing:-.01em; margin-bottom: 5px; }
+  .scc-balance.pos { color: var(--green); }
+  .scc-balance.neg { color: var(--red); }
+  .scc-balance.neutral { color: var(--text); }
+  .scc-meta { display: flex; align-items: center; font-size: 11px; color: var(--text3); }
+  .scc-neto { font-weight: 600; margin-left: 4px; }
+  .scc-neto.pos { color: var(--green); }
+  .scc-neto.neg { color: var(--red); }
+  .scc-mov { margin-left: auto; font-size: 11px; color: var(--text3); }
+  .savings-empty { text-align: center; color: var(--text3); font-size: 13px; padding: 24px 16px; }
+  /* pills de moneda y tipo en el modal de nuevo ahorro */
+  .saving-currency-pills { display: flex; gap: 7px; flex-wrap: wrap; }
+  .saving-currency-pill { display: flex; align-items: center; gap: 4px; border: 1.5px solid var(--border); border-radius: 20px; padding: 5px 11px; font-size: 12px; font-weight: 600; color: var(--text2); cursor: pointer; background: none; transition: border-color .15s, color .15s, background .15s; white-space: nowrap; }
+  .saving-currency-pill.active { border-color: var(--green); color: var(--green); background: var(--green-bg); }
+  .saving-currency-pill.otras { border-style: dashed; color: var(--text3); }
+  .saving-otras-list { display: none; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+  .saving-otras-list.open { display: flex; }
+  .saving-tipo-pills { display: flex; gap: 8px; }
+  .saving-tipo-pill { flex: 1; padding: 8px 0; text-align: center; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text2); background: none; transition: all .15s; }
+  .saving-tipo-pill.dep.active { border-color: var(--green); color: var(--green); background: var(--green-bg); }
+  .saving-tipo-pill.ext.active { border-color: var(--red); color: var(--red); background: var(--red-bg); }
+  .saving-monto-hint { font-size: 11px; color: var(--text3); margin-top: 6px; display: none; align-items: flex-start; gap: 5px; line-height: 1.5; }
+  .saving-monto-hint.visible { display: flex; }
 
   /* ── TARJETAS CONFIG ─────────────────────────────────── */
   .card-config-item {
@@ -867,38 +894,20 @@
         </div>
       </div>
 
-      <!-- Panel Ahorros USD — resumen compacto -->
+      <!-- Panel Ahorros — multi-moneda -->
       <div class="panel savings-panel">
-        <div class="panel-header">
-          <span class="panel-title">Ahorros en USD</span>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <button class="savings-eye-btn" id="savings-eye-toggle" title="Mostrar / ocultar valores">
-              <svg id="savings-eye-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="savings-mc-header">
+          <span class="savings-mc-title">Ahorros</span>
+          <div class="savings-mc-actions">
+            <button class="savings-mc-eye" id="savings-eye-toggle" aria-label="Mostrar / ocultar saldos" title="Mostrar / ocultar saldos">
+              <svg id="savings-eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
               </svg>
             </button>
-            <button class="add-btn" id="open-saving-detail">Ver detalle</button>
-            <button class="add-btn" id="open-saving">+ Agregar</button>
+            <button class="savings-mc-add-btn" id="open-saving">+ Agregar</button>
           </div>
         </div>
-        <div class="savings-summary">
-          <div class="savings-summary-item">
-            <span class="savings-balance-label">Saldo acumulado</span>
-            <div class="savings-balance-row">
-              <span class="savings-balance-val neutral" id="savings-balance">••••••</span>
-            </div>
-          </div>
-          <div class="savings-summary-divider"></div>
-          <div class="savings-summary-item">
-            <span class="savings-balance-label">Neto este mes</span>
-            <span class="savings-balance-val neutral" id="savings-mes-neto">••••••</span>
-          </div>
-          <div class="savings-summary-divider"></div>
-          <div class="savings-summary-item">
-            <span class="savings-balance-label">Movimientos</span>
-            <span class="savings-balance-val neutral" id="savings-mes-count" style="font-size:16px;">0</span>
-          </div>
-        </div>
+        <div class="savings-mc-cards" id="savings-cards"></div>
       </div>
     </section>
 
@@ -1145,7 +1154,7 @@
 <!-- ── MODAL: Detalle ahorros ────────────────────────────── -->
 <div class="modal-overlay" id="modal-savings-detail" role="dialog" aria-modal="true" aria-labelledby="savings-detail-title">
   <div class="modal">
-    <h3 id="savings-detail-title">Ahorros en USD</h3>
+    <h3 id="savings-detail-title">Movimientos</h3>
     <div id="savings-detail-list" style="margin-bottom:1rem;"></div>
     <div class="modal-actions">
       <button class="btn-cancel" id="close-savings-detail">Cerrar</button>
@@ -1157,22 +1166,38 @@
 <!-- ── MODAL: Nuevo ahorro ───────────────────────────────── -->
 <div class="modal-overlay" id="modal-saving" role="dialog" aria-modal="true" aria-labelledby="modal-saving-title">
   <div class="modal">
-    <h3 id="modal-saving-title">Registrar ahorro en USD</h3>
+    <h3 id="modal-saving-title">Registrar ahorro</h3>
+    <!-- selector de moneda -->
     <div class="form-group">
-      <label for="saving-tipo">Tipo</label>
-      <select id="saving-tipo">
-        <option value="deposito">↑ Depósito (entrada)</option>
-        <option value="retiro">↓ Retiro (salida)</option>
-      </select>
+      <label>Moneda</label>
+      <div class="saving-currency-pills" id="saving-currency-pills"></div>
+      <div class="saving-otras-list" id="saving-otras-list"></div>
     </div>
+    <!-- tipo: pills en lugar de select -->
     <div class="form-group">
-      <label for="saving-monto">Monto (USD)</label>
+      <label>Tipo</label>
+      <div class="saving-tipo-pills">
+        <button type="button" class="saving-tipo-pill dep active" data-tipo="deposito">Depósito</button>
+        <button type="button" class="saving-tipo-pill ext" data-tipo="retiro">Extracción</button>
+      </div>
+    </div>
+    <!-- monto -->
+    <div class="form-group">
+      <label for="saving-monto" id="saving-monto-label">Monto</label>
       <input type="number" id="saving-monto" placeholder="0.00" min="0" step="0.01" />
+      <div class="saving-monto-hint" id="saving-monto-hint">
+        <span>ℹ️</span>
+        <span>Siempre ingresá un número positivo. Si es una extracción, el sistema resta automáticamente.</span>
+      </div>
     </div>
     <div class="form-group">
       <label for="saving-desc">Descripción (opcional)</label>
       <input type="text" id="saving-desc" placeholder="Ej: Ahorro mensual, Gastos viaje..." />
     </div>
+    <!-- campo oculto para tipo (mantiene compatibilidad con el handler) -->
+    <input type="hidden" id="saving-tipo" value="deposito" />
+    <!-- campo oculto para moneda -->
+    <input type="hidden" id="saving-moneda" value="USD" />
     <div class="modal-actions">
       <button class="btn-cancel" id="cancel-saving">Cancelar</button>
       <button class="btn-save" id="save-saving">Guardar</button>
@@ -1409,73 +1434,134 @@ function getRecurrentesForMonth(year,month){
   }).map(r=>({...r,monto:getMontoRecurrente(r,year,month),isRecurrente:true}));
 }
 
-// ── AHORROS USD ──────────────────────────────────────────────────────
-function fmtUSD(n){const abs=Math.abs(n);return(n<0?'-':'')+' USD '+abs.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function getSavingsBalance(upToYear,upToMonth){
+// ── AHORROS (multi-moneda) ───────────────────────────────────────────
+// Catálogo de monedas/activos soportados
+const CURRENCIES = {
+  USD: {label:'USD', flag:'🇺🇸', symbol:'$', decimals:2},
+  ARS: {label:'ARS', flag:'🇦🇷', symbol:'$', decimals:0},
+  EUR: {label:'EUR', flag:'🇪🇺', symbol:'€', decimals:2},
+  GBP: {label:'GBP', flag:'🇬🇧', symbol:'£', decimals:2},
+  BTC: {label:'BTC', flag:'🪙', symbol:'₿', decimals:6},
+  ETH: {label:'ETH', flag:'🔷', symbol:'Ξ', decimals:4},
+  XAU: {label:'Oro', flag:'🥇', symbol:'g', decimals:2},
+};
+const CURRENCIES_ORDER = ['USD','ARS','EUR','GBP','BTC','ETH','XAU'];
+
+// Formatea un monto según la moneda (backward compat: sin moneda = USD)
+function fmtCurrency(n, moneda='USD'){
+  const c=CURRENCIES[moneda]||CURRENCIES.USD;
+  const abs=Math.abs(n);
+  const fmt=abs.toLocaleString('en-US',{minimumFractionDigits:c.decimals,maximumFractionDigits:c.decimals});
+  const sign=n<0?'− ':'';
+  return moneda==='XAU'?sign+fmt+' g':sign+c.symbol+' '+fmt;
+}
+// Mantener fmtUSD por compatibilidad con otras partes del código
+function fmtUSD(n){return fmtCurrency(n,'USD');}
+
+// Retorna las monedas que tienen al menos un movimiento en el historial
+function getSavingsCurrencies(){
+  const seen=new Set();
+  Object.values(state.data).forEach(md=>{(md.ahorros||[]).forEach(a=>seen.add(a.moneda||'USD'));});
+  return CURRENCIES_ORDER.filter(c=>seen.has(c));
+}
+
+// Retorna la primera moneda con movimientos en el mes actual, o la primera del historial, o 'USD'
+function getDefaultSavingsCurrency(){
+  const md=getMonthData(state.currentYear,state.currentMonth);
+  const thisMonth=(md.ahorros||[]).find(a=>a.moneda||'USD');
+  if(thisMonth)return thisMonth.moneda||'USD';
+  const all=getSavingsCurrencies();
+  return all[0]||'USD';
+}
+
+function getSavingsBalance(upToYear,upToMonth,moneda='USD'){
   let total=0;const limit=upToYear*12+upToMonth;
-  Object.entries(state.data).forEach(([k,md])=>{const[y,m]=k.split('-').map(Number);if(y*12+m<=limit)(md.ahorros||[]).forEach(a=>{total+=a.tipo==='deposito'?+a.monto:-(+a.monto);});});
+  Object.entries(state.data).forEach(([k,md])=>{
+    const[y,m]=k.split('-').map(Number);
+    if(y*12+m<=limit)(md.ahorros||[]).forEach(a=>{
+      if((a.moneda||'USD')===moneda)total+=a.tipo==='deposito'?+a.monto:-(+a.monto);
+    });
+  });
   return total;
 }
 
 let _savingsVisible=false;
-let _savingsNeto=0;
 const SVG_EYE_OPEN=`<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
 const SVG_EYE_OFF=`<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
 
-function _applySavingsVisibility(balance){
-  const balEl=document.getElementById('savings-balance');
-  const netoEl=document.getElementById('savings-mes-neto');
+function renderSavings(){
   const iconEl=document.getElementById('savings-eye-icon');
-  if(!balEl||!iconEl)return;
-  if(_savingsVisible){
-    balEl.textContent=fmtUSD(balance);
-    balEl.className='savings-balance-val '+(balance>0?'pos':balance<0?'neg':'neutral');
-    if(netoEl){netoEl.textContent=(_savingsNeto>=0?'+':'')+fmtUSD(_savingsNeto);netoEl.className='savings-balance-val '+(_savingsNeto>0?'pos':_savingsNeto<0?'neg':'neutral');}
-    iconEl.innerHTML=SVG_EYE_OFF;
-  } else {
-    balEl.textContent='••••••';
-    balEl.className='savings-balance-val neutral';
-    if(netoEl){netoEl.textContent='••••••';netoEl.className='savings-balance-val neutral';}
-    iconEl.innerHTML=SVG_EYE_OPEN;
+  if(iconEl)iconEl.innerHTML=_savingsVisible?SVG_EYE_OFF:SVG_EYE_OPEN;
+  const container=document.getElementById('savings-cards');
+  if(!container)return;
+  const currencies=getSavingsCurrencies();
+  if(!currencies.length){
+    container.innerHTML='<div class="savings-empty">Sin movimientos. Tocá "+ Agregar" para empezar.</div>';
+    return;
   }
+  const md=getMonthData(state.currentYear,state.currentMonth);
+  container.innerHTML=currencies.map(mon=>{
+    const c=CURRENCIES[mon];
+    const balance=getSavingsBalance(state.currentYear,state.currentMonth,mon);
+    const monthMov=(md.ahorros||[]).filter(a=>(a.moneda||'USD')===mon);
+    const neto=monthMov.reduce((s,a)=>s+(a.tipo==='deposito'?+a.monto:-(+a.monto)),0);
+    const count=monthMov.length;
+    const balDisp=_savingsVisible?fmtCurrency(balance,mon):'••••••';
+    const balCls=balance>0?'pos':balance<0?'neg':'neutral';
+    const netoDisp=_savingsVisible?(neto>=0?'+ ':'')+fmtCurrency(Math.abs(neto),mon):'••••••';
+    const netoCls=neto>0?'pos':neto<0?'neg':'neutral';
+    return`<div class="savings-currency-card" data-moneda="${mon}" role="button" tabindex="0" aria-label="Ver movimientos ${c.label}">
+      <div class="scc-top"><span class="scc-flag">${c.flag}</span><span class="scc-code">${c.label}</span><span class="scc-chevron">›</span></div>
+      <div class="scc-balance ${balCls}">${balDisp}</div>
+      <div class="scc-meta"><span>Neto este mes:</span><span class="scc-neto ${netoCls}">&nbsp;${netoDisp}</span><span class="scc-mov">${count} movimiento${count!==1?'s':''}</span></div>
+    </div>`;
+  }).join('');
+  container.querySelectorAll('.savings-currency-card').forEach(card=>{
+    const mon=card.dataset.moneda;
+    card.addEventListener('click',()=>openSavingsDetail(mon));
+    card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')openSavingsDetail(mon);});
+  });
 }
 
-function renderSavings(){
-  const md=getMonthData(state.currentYear,state.currentMonth);
-  const balance=getSavingsBalance(state.currentYear,state.currentMonth);
-  const neto=md.ahorros.reduce((s,a)=>s+(a.tipo==='deposito'?+a.monto:-(+a.monto)),0);
-  _savingsNeto=neto;
-  _applySavingsVisibility(balance);
-  const countEl=document.getElementById('savings-mes-count');
-  if(countEl){countEl.textContent=md.ahorros.length;countEl.className='savings-balance-val '+(md.ahorros.length>0?'pos':'neutral');countEl.style.fontSize='16px';}
+// Modal de detalle: guarda la moneda activa para el detalle
+let _detailMoneda='USD';
+function openSavingsDetail(moneda){
+  _detailMoneda=moneda;
   renderSavingsDetail();
+  document.getElementById('modal-savings-detail').classList.add('open');
 }
 function renderSavingsDetail(){
+  const mon=_detailMoneda;
+  const c=CURRENCIES[mon]||CURRENCIES.USD;
   const md=getMonthData(state.currentYear,state.currentMonth);
   const titleEl=document.getElementById('savings-detail-title');
-  if(titleEl)titleEl.textContent='Ahorros — '+MONTHS[state.currentMonth]+' '+state.currentYear;
+  if(titleEl)titleEl.textContent=c.flag+' '+c.label+' — '+MONTHS[state.currentMonth]+' '+state.currentYear;
   const list=document.getElementById('savings-detail-list');if(!list)return;
-  if(!md.ahorros.length){list.innerHTML='<div class="empty-state" style="padding:1.5rem 0;">Sin movimientos este mes</div>';return;}
-  list.innerHTML=md.ahorros.map((a,i)=>{
+  // filtrar por moneda, manteniendo índice original para poder eliminar
+  const items=(md.ahorros||[]).map((a,i)=>({...a,_idx:i})).filter(a=>(a.moneda||'USD')===mon);
+  if(!items.length){list.innerHTML='<div class="empty-state" style="padding:1.5rem 0;">Sin movimientos este mes</div>';return;}
+  list.innerHTML=items.map(a=>{
     const isD=a.tipo==='deposito',sign=isD?'+':'−',cls=isD?'ingreso':'egreso',badge=isD?'saving-deposito':'saving-retiro',label=isD?'Depósito':'Retiro';
-    return`<div class="item"><div class="item-left"><span class="item-name"><span class="saving-tipo-badge ${badge}">${label}</span>${a.desc?' '+a.desc:''}</span></div><div class="item-right"><span class="item-amount ${cls}">${sign}${fmtUSD(+a.monto)}</span><button class="del-btn del-saving-detail" data-idx="${i}" aria-label="Eliminar">×</button></div></div>`;
+    return`<div class="item"><div class="item-left"><span class="item-name"><span class="saving-tipo-badge ${badge}">${label}</span>${a.desc?' '+a.desc:''}</span></div><div class="item-right"><span class="item-amount ${cls}">${sign}${fmtCurrency(+a.monto,mon)}</span><button class="del-btn del-saving-detail" data-idx="${a._idx}" aria-label="Eliminar">×</button></div></div>`;
   }).join('');
   list.querySelectorAll('.del-saving-detail').forEach(b=>b.addEventListener('click',()=>{md.ahorros.splice(+b.dataset.idx,1);renderAll();renderSavingsDetail();}));
 }
 function renderSavingsResumen(){
   const tbody=document.getElementById('savings-resumen-body');if(!tbody)return;
   const yrEl=document.getElementById('savings-resumen-year');if(yrEl)yrEl.textContent=state.currentYear;
+  // Resumen anual muestra USD (primera moneda del historial) por ahora
+  const mon=getSavingsCurrencies()[0]||'USD';
   let prevBal=0;
-  Object.entries(state.data).forEach(([k,md])=>{const[y]=k.split('-').map(Number);if(y<state.currentYear)(md.ahorros||[]).forEach(a=>{prevBal+=a.tipo==='deposito'?+a.monto:-(+a.monto);});});
+  Object.entries(state.data).forEach(([k,md])=>{const[y]=k.split('-').map(Number);if(y<state.currentYear)(md.ahorros||[]).filter(a=>(a.moneda||'USD')===mon).forEach(a=>{prevBal+=a.tipo==='deposito'?+a.monto:-(+a.monto);});});
   let bal=prevBal,html='';
   for(let m=0;m<12;m++){
-    const md=getMonthData(state.currentYear,m),ahs=md.ahorros||[];
+    const md=getMonthData(state.currentYear,m),ahs=(md.ahorros||[]).filter(a=>(a.moneda||'USD')===mon);
     const dep=ahs.filter(a=>a.tipo==='deposito').reduce((s,a)=>s+ +a.monto,0);
-    const ret=ahs.filter(a=>a.tipo==='retiro').reduce((s,a)=>s+ +a.monto,0);
+    const ret=ahs.filter(a=>a.tipo!=='deposito').reduce((s,a)=>s+ +a.monto,0);
     const neto=dep-ret;bal+=neto;
     const cur=m===state.currentMonth?' class="current-month"':'';
     const nc=neto>0?'pos':neto<0?'neg':'',bc=bal>0?'pos':bal<0?'neg':'';
-    html+=`<tr${cur}><td>${MONTHS[m]}</td><td class="pos">${dep>0?fmtUSD(dep):'—'}</td><td class="neg">${ret>0?fmtUSD(ret):'—'}</td><td class="${nc}">${neto!==0?(neto>0?'+':'')+fmtUSD(Math.abs(neto)):'—'}</td><td class="${bc}">${fmtUSD(bal)}</td></tr>`;
+    html+=`<tr${cur}><td>${MONTHS[m]}</td><td class="pos">${dep>0?fmtCurrency(dep,mon):'—'}</td><td class="neg">${ret>0?fmtCurrency(ret,mon):'—'}</td><td class="${nc}">${neto!==0?(neto>0?'+':'')+fmtCurrency(Math.abs(neto),mon):'—'}</td><td class="${bc}">${fmtCurrency(bal,mon)}</td></tr>`;
   }
   tbody.innerHTML=html;
 }
@@ -2050,36 +2136,100 @@ document.getElementById('export-pdf').addEventListener('click',()=>{
 // ── AHORROS: EVENT LISTENERS ─────────────────────────────────────────
 document.getElementById('savings-eye-toggle').addEventListener('click',()=>{
   _savingsVisible=!_savingsVisible;
-  _applySavingsVisibility(getSavingsBalance(state.currentYear,state.currentMonth));
+  renderSavings();
 });
-function openSavingModal(){
+
+// Construye las pills de moneda en el modal de nuevo ahorro
+function _buildCurrencyPills(selectedMoneda){
+  const used=getSavingsCurrencies();
+  // Si la moneda seleccionada no está en "usadas", la incluimos igual
+  if(selectedMoneda&&!used.includes(selectedMoneda))used.push(selectedMoneda);
+  const otras=CURRENCIES_ORDER.filter(c=>!used.includes(c));
+  const pillsEl=document.getElementById('saving-currency-pills');
+  const otrasEl=document.getElementById('saving-otras-list');
+  if(!pillsEl||!otrasEl)return;
+
+  pillsEl.innerHTML=used.map(c=>{
+    const cur=CURRENCIES[c];
+    return`<button type="button" class="saving-currency-pill${c===selectedMoneda?' active':''}" data-moneda="${c}">${cur.flag} ${cur.label}</button>`;
+  }).join('')+(otras.length?`<button type="button" class="saving-currency-pill otras" id="otras-toggle-btn">Otras ▾</button>`:'');
+
+  otrasEl.className='saving-otras-list';
+  otrasEl.innerHTML=otras.map(c=>{
+    const cur=CURRENCIES[c];
+    return`<button type="button" class="saving-currency-pill" data-moneda="${c}">${cur.flag} ${cur.label}</button>`;
+  }).join('');
+
+  // Interactividad pills usadas + otras
+  document.querySelectorAll('#saving-currency-pills .saving-currency-pill[data-moneda], #saving-otras-list .saving-currency-pill[data-moneda]').forEach(p=>{
+    p.addEventListener('click',()=>{
+      document.querySelectorAll('#saving-currency-pills .saving-currency-pill[data-moneda], #saving-otras-list .saving-currency-pill[data-moneda]').forEach(x=>x.classList.remove('active'));
+      p.classList.add('active');
+      const mon=p.dataset.moneda;
+      document.getElementById('saving-moneda').value=mon;
+      const c=CURRENCIES[mon]||CURRENCIES.USD;
+      document.getElementById('saving-monto-label').textContent=`Monto (${c.label})`;
+      // cerrar otras si se eligió ahí
+      otrasEl.classList.remove('open');
+      const ot=document.getElementById('otras-toggle-btn');if(ot)ot.textContent='Otras ▾';
+    });
+  });
+  const otBtn=document.getElementById('otras-toggle-btn');
+  if(otBtn)otBtn.addEventListener('click',()=>{
+    const open=otrasEl.classList.toggle('open');
+    otBtn.textContent=open?'Otras ▴':'Otras ▾';
+  });
+}
+
+function openSavingModal(defaultMoneda){
+  const mon=defaultMoneda||getDefaultSavingsCurrency();
+  document.getElementById('saving-moneda').value=mon;
+  const c=CURRENCIES[mon]||CURRENCIES.USD;
+  document.getElementById('saving-monto-label').textContent=`Monto (${c.label})`;
+  _buildCurrencyPills(mon);
+  // reset tipo pills
+  document.querySelectorAll('.saving-tipo-pill').forEach(p=>p.classList.remove('active'));
+  document.querySelector('.saving-tipo-pill[data-tipo="deposito"]')?.classList.add('active');
   document.getElementById('saving-tipo').value='deposito';
+  document.getElementById('saving-monto-hint').classList.remove('visible');
   document.getElementById('saving-monto').value='';
   document.getElementById('saving-desc').value='';
   document.getElementById('modal-saving').classList.add('open');
   setTimeout(()=>document.getElementById('saving-monto').focus(),80);
 }
-document.getElementById('open-saving').addEventListener('click',openSavingModal);
-document.getElementById('open-saving-detail').addEventListener('click',()=>{
-  renderSavingsDetail();
-  document.getElementById('modal-savings-detail').classList.add('open');
+
+// Tipo pills
+document.querySelectorAll('.saving-tipo-pill').forEach(p=>{
+  p.addEventListener('click',()=>{
+    document.querySelectorAll('.saving-tipo-pill').forEach(x=>x.classList.remove('active'));
+    p.classList.add('active');
+    const tipo=p.dataset.tipo;
+    document.getElementById('saving-tipo').value=tipo;
+    const hint=document.getElementById('saving-monto-hint');
+    if(hint)hint.classList.toggle('visible',tipo==='retiro');
+  });
 });
+
+document.getElementById('open-saving').addEventListener('click',()=>openSavingModal());
 document.getElementById('close-savings-detail').addEventListener('click',()=>document.getElementById('modal-savings-detail').classList.remove('open'));
 document.getElementById('open-saving-from-detail').addEventListener('click',()=>{
+  const mon=_detailMoneda;
   document.getElementById('modal-savings-detail').classList.remove('open');
-  openSavingModal();
+  openSavingModal(mon);
 });
 document.getElementById('cancel-saving').addEventListener('click',()=>document.getElementById('modal-saving').classList.remove('open'));
 document.getElementById('saving-monto').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('save-saving').click();});
 document.getElementById('save-saving').addEventListener('click',()=>{
   const tipo=document.getElementById('saving-tipo').value;
+  const moneda=document.getElementById('saving-moneda').value||'USD';
   const monto=parseFloat(document.getElementById('saving-monto').value);
   const desc=document.getElementById('saving-desc').value.trim();
   if(isNaN(monto)||monto<=0){document.getElementById('saving-monto').focus();return;}
   const md=getMonthData(state.currentYear,state.currentMonth);
-  md.ahorros.push({tipo,monto,desc});
+  md.ahorros.push({tipo,monto,desc,moneda});
   document.getElementById('modal-saving').classList.remove('open');
   renderAll();
+  saveState();
 });
 
 // ══════════════════════════════════════════════════════════════════════
