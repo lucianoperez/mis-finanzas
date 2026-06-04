@@ -769,9 +769,9 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" id="sidebar-toggle-icon" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
         <span class="sidebar-label">Colapsar menú</span>
       </button>
-      <button class="sidebar-item active" data-section="mensual" title="Gestión mensual" aria-label="Gestión mensual">
+      <button class="sidebar-item active" data-section="mensual" title="Mensual" aria-label="Mensual">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <span class="sidebar-label" data-short="Gestión">Gestión mensual</span>
+        <span class="sidebar-label" data-short="Mensual">Mensual</span>
       </button>
       <button class="sidebar-item" data-section="resumen" title="Resumen anual" aria-label="Resumen anual">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -809,7 +809,7 @@
     <section id="section-mensual" class="app-section active">
       <div class="section-header">
         <div>
-          <h2 class="section-title">Gestión mensual</h2>
+          <h2 class="section-title">Mensual</h2>
           <p class="section-sub">Seguimiento de ingresos y egresos</p>
         </div>
         <div class="section-header-right">
@@ -1369,6 +1369,7 @@ function startDemo(){
   document.body.classList.add('demo-mode');
   document.getElementById('demo-banner').style.display='flex';
   showApp('demo');
+  switchSection('mensual');
   renderAll();
 }
 document.getElementById('demo-btn').addEventListener('click', startDemo);
