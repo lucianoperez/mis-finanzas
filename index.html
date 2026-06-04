@@ -171,6 +171,8 @@
 
   /* ── MONTH NAV ───────────────────────────────────────── */
   .month-nav { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 6px 10px; position: relative; }
+  .month-nav-side-btn { font-size: 12px; font-weight: 600; padding: 3px 10px 3px 12px; border: none; border-left: 1px solid var(--border); border-radius: 0; background: none; color: var(--green); cursor: pointer; font-family: inherit; }
+  .month-nav-side-icon { display: flex; align-items: center; color: var(--green); opacity: .75; padding-left: 12px; border-left: 1px solid var(--border); }
   .month-label { cursor: pointer; }
   .month-label:hover { color: var(--blue); }
   .month-picker-popup { position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%); background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; box-shadow:0 8px 28px rgba(0,0,0,0.22); z-index:300; width:212px; display:none; }
@@ -831,8 +833,11 @@
                 </div>
                 <div class="mp-grid" id="mp-grid"></div>
               </div>
+              <button id="today-btn" class="month-nav-side-btn">Hoy</button>
+              <span id="month-icon-current" class="month-nav-side-icon" style="visibility:hidden;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><circle cx="17" cy="14" r="1" fill="currentColor"/></svg>
+              </span>
             </div>
-            <button id="today-btn" style="visibility:hidden;font-size:12px;font-weight:600;padding:5px 11px;border-radius:20px;border:1.5px solid var(--green);background:var(--green-bg);color:var(--green);cursor:pointer;font-family:inherit;transition:opacity 0.15s;">Hoy</button>
           </div>
           <div class="export-dropdown">
             <button class="export-trigger" id="export-trigger">
@@ -1687,7 +1692,9 @@ function renderMonthLabel(){
   const n=new Date();
   const isToday=state.currentYear===n.getFullYear()&&state.currentMonth===n.getMonth();
   const btn=document.getElementById('today-btn');
+  const walletIcon=document.getElementById('month-icon-current');
   if(btn) btn.style.visibility=isToday?'hidden':'visible';
+  if(walletIcon) walletIcon.style.visibility=isToday?'visible':'hidden';
 }
 
 const CARD_COLORS=['cc-0','cc-1','cc-2','cc-3','cc-4','cc-5'];
