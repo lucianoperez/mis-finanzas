@@ -1,0 +1,66 @@
+name: Version Bump
+
+on:
+  push:
+    branches: [main]
+
+# Evita correr en commits generados por este mismo workflow
+concurrency:
+  group: version-bump
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Determinar tipo de bump y actualizar versión
+        id: bump
+        run: |
+          # Leer versión actual desde index.html
+          CURRENT=$(grep -oP '(?<=· v)\d+\.\d+\.\d+' index.html | head -1)
+          echo "Versión actual: $CURRENT"
+
+          MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT" | cut -d. -f2)
+          PATCH=$(echo "$CURRENT" | cut -d. -f3)
+
+          MSG=$(cat << 'COMMITMSG'
+          ${{ github.event.head_commit.message }}
+          COMMITMSG
+          )
+
+          # Detectar tipo de bump según Conventional Commits
+          if echo "$MSG" | grep -qE "^feat!:|BREAKING CHANGE"; then
+            MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0; TYPE="major"
+          elif echo "$MSG" | grep -qE "^feat(\([^)]*\))?:"; then
+            MINOR=$((MINOR + 1)); PATCH=0; TYPE="minor"
+          else
+            PATCH=$((PATCH + 1)); TYPE="patch"
+          fi
+
+          NEW="$MAJOR.$MINOR.$PATCH"
+          echo "Nueva versión: $NEW ($TYPE)"
+
+          # Reemplazar en index.html
+          sed -i "s/· v$CURRENT/· v$NEW/" index.html
+
+          echo "new_version=$NEW" >> "$GITHUB_OUTPUT"
+          echo "bump_type=$TYPE"  >> "$GITHUB_OUTPUT"
+
+      - name: Commit y push del bump
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "chore(version): v${{ steps.bump.outputs.new_version }} (${{ steps.bump.outputs.bump_type }}) [skip ci]"
+          git push
