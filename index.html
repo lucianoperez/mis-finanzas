@@ -897,15 +897,15 @@
       <!-- Panel Ahorros — multi-moneda -->
       <div class="panel savings-panel">
         <div class="savings-mc-header">
-          <span class="savings-mc-title">Ahorros</span>
-          <div class="savings-mc-actions">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="savings-mc-title">Ahorros</span>
             <button class="savings-mc-eye" id="savings-eye-toggle" aria-label="Mostrar / ocultar saldos" title="Mostrar / ocultar saldos">
-              <svg id="savings-eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg id="savings-eye-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
               </svg>
             </button>
-            <button class="savings-mc-add-btn" id="open-saving">+ Agregar</button>
           </div>
+          <button class="savings-mc-add-btn" id="open-saving">+ Agregar</button>
         </div>
         <div class="savings-mc-cards" id="savings-cards"></div>
       </div>
@@ -1739,7 +1739,8 @@ function renderLists(){
   if(!hasAny){eList.innerHTML='<div class="empty-state">Sin egresos este mes</div>';}
   else{
     let html='';
-    const _gh=(key,cls,label,total,items)=>{const c=_collapsedGroups[key]?' collapsed':'';let h='<div class="group-header '+cls+c+'" data-group="'+key+'"><div style="display:flex;align-items:center;"><span class="group-chevron"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span><span class="gname">'+label+'</span></div><span class="gtotal">'+fmt(total)+'</span></div><div class="group-items'+c+'" data-group="'+key+'">';items.forEach(x=>h+=x);return h+'</div>';};
+    // Los grupos arrancan colapsados por default (undefined o true = colapsado, false = expandido explícitamente)
+    const _gh=(key,cls,label,total,items)=>{const c=(_collapsedGroups[key]!==false)?' collapsed':'';let h='<div class="group-header '+cls+c+'" data-group="'+key+'"><div style="display:flex;align-items:center;"><span class="group-chevron"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span><span class="gname">'+label+'</span></div><span class="gtotal">'+fmt(total)+'</span></div><div class="group-items'+c+'" data-group="'+key+'">';items.forEach(x=>h+=x);return h+'</div>';};
     if(allFijos.length){let its=[];allFijos.forEach(e=>{const ir=e.isRecurrente?false:!!e.id;its.push(itemHTML(e,'cc-fijo',ir?-1:md.egresos.indexOf(e),ir));});html+=_gh('fijo','cc-fijo','Gastos fijos',allFijos.reduce((a,x)=>a+ +x.monto,0),its);}
     Object.keys(tarjetas).forEach(card=>{if(!tarjetas[card].length)return;const cc=cardColorClass(card);let its=[];tarjetas[card].forEach(e=>{const ir=e.isRecurrente?false:!!e.id;its.push(itemHTML(e,cc,ir?-1:md.egresos.indexOf(e),ir));});html+=_gh('card:'+card,cc,'Tarjeta '+card,tarjetas[card].reduce((a,x)=>a+ +x.monto,0),its);});
     if(allEfec.length){let its=[];allEfec.forEach(e=>{const ir=e.isRecurrente?false:!!e.id;its.push(itemHTML(e,'cc-efec',ir?-1:md.egresos.indexOf(e),ir));});html+=_gh('efec','cc-efec','Efectivo',allEfec.reduce((a,x)=>a+ +x.monto,0),its);}
@@ -1751,7 +1752,7 @@ function renderLists(){
     eList.querySelectorAll('.edit-rec').forEach(b=>{b.addEventListener('click',()=>openEditRecurring(b.dataset.rid));});
     eList.querySelectorAll('.edit-rec-mensual').forEach(b=>{b.addEventListener('click',()=>openEditRecurrenteMensual(b.dataset.rid,state.currentYear,state.currentMonth));});
     eList.querySelectorAll('.pagar-eg').forEach(b=>{b.addEventListener('click',()=>{md.egresos[+b.dataset.idx].pendiente=false;renderAll();});});
-    eList.querySelectorAll('.group-header[data-group]').forEach(h=>{h.addEventListener('click',e=>{if(e.target.closest('.del-btn,.edit-btn,.pagar-eg'))return;const key=h.dataset.group;_collapsedGroups[key]=!_collapsedGroups[key];h.classList.toggle('collapsed',!!_collapsedGroups[key]);const items=h.nextElementSibling;if(items&&items.classList.contains('group-items'))items.classList.toggle('collapsed',!!_collapsedGroups[key]);});});
+    eList.querySelectorAll('.group-header[data-group]').forEach(h=>{h.addEventListener('click',e=>{if(e.target.closest('.del-btn,.edit-btn,.pagar-eg'))return;const key=h.dataset.group;const nowCollapsed=_collapsedGroups[key]!==false;_collapsedGroups[key]=nowCollapsed?false:true;h.classList.toggle('collapsed',!nowCollapsed);const items=h.nextElementSibling;if(items&&items.classList.contains('group-items'))items.classList.toggle('collapsed',!nowCollapsed);});});
   }
   if(!md.ingresos.length){iList.innerHTML='<div class="empty-state">Sin ingresos este mes</div>';}
   else{
