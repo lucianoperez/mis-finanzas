@@ -208,7 +208,7 @@
   .cuotas-bar-names { font-size: 11px; color: var(--text3); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; }
   .cuotas-bar-mas { border-bottom: 1px dotted var(--text3); cursor: default; }
   .metric-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; font-weight: 600; }
-  .metric-value { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .metric-value { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; white-space: nowrap; }
   .metric-value.pos     { color: var(--green); }
   .metric-value.neg     { color: var(--red); }
   .metric-value.neutral { color: var(--text); }
@@ -857,7 +857,7 @@
       <div class="summary-grid">
         <div class="metric"><div class="metric-label">Ingresos del mes</div><div class="metric-value pos" id="sum-ingresos">$0</div></div>
         <div class="metric"><div class="metric-label">Egresos del mes</div><div class="metric-value neg" id="sum-egresos">$0</div></div>
-        <div class="metric"><div class="metric-label">Diferencia del mes</div><div class="metric-value neutral" id="dif-mes">$0</div></div>
+        <div class="metric"><div class="metric-label">Diferencia mensual</div><div class="metric-value neutral" id="dif-mes">$0</div></div>
         <div class="metric"><div class="metric-label">Diferencia acumulada</div><div class="metric-value neutral" id="dif-acum">$0</div></div>
       </div>
 
@@ -1786,8 +1786,8 @@ function renderSummary(){
   for(let m=0;m<state.currentMonth;m++){const md=getMonthData(state.currentYear,m);acum+=md.ingresos.reduce((a,x)=>a+ +x.monto,0)-getMonthEgresosTotal(state.currentYear,m);}
   const md=getMonthData(state.currentYear,state.currentMonth),ingT=md.ingresos.reduce((a,x)=>a+ +x.monto,0),egT=getMonthEgresosTotal(state.currentYear,state.currentMonth),dif=ingT-egT;acum+=dif;
   document.getElementById('sum-ingresos').textContent=fmt(ingT);document.getElementById('sum-egresos').textContent=fmt(egT);
-  const dMes=document.getElementById('dif-mes');dMes.textContent=fmt(dif);dMes.className='metric-value '+(dif>0?'pos':dif<0?'neg':'neutral');
-  const dAcum=document.getElementById('dif-acum');dAcum.textContent=fmt(acum);dAcum.className='metric-value '+(acum>0?'pos':acum<0?'neg':'neutral');
+  const dMes=document.getElementById('dif-mes');dMes.textContent='$'+Math.abs(Math.round(dif)).toLocaleString('es-AR');dMes.className='metric-value '+(dif>0?'pos':dif<0?'neg':'neutral');
+  const dAcum=document.getElementById('dif-acum');dAcum.textContent='$'+Math.abs(Math.round(acum)).toLocaleString('es-AR');dAcum.className='metric-value '+(acum>0?'pos':acum<0?'neg':'neutral');
   const rec=getRecurringForMonth(state.currentYear,state.currentMonth),ending=rec.filter(r=>r.isLast),endT=ending.reduce((a,r)=>a+ +r.monto,0);
   const ctEl=document.getElementById('cuotas-terminan'),ctList=document.getElementById('cuotas-terminan-list'),ctBar=document.getElementById('metric-cuotas');
   ctEl.textContent=ending.length>0?fmt(endT):'$0';
