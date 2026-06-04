@@ -196,12 +196,17 @@
   .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
   @media (max-width: 700px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
   .metric { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; display: flex; flex-direction: column; }
-  .cuotas-bar { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 0.5px solid var(--border); border-left: 3px solid #5DCAA5; border-radius: var(--radius-lg); padding: 10px 1.25rem; margin-bottom: 1.25rem; }
+  .cuotas-bar { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 0.5px solid var(--border); border-left: 3px solid #5DCAA5; border-radius: var(--radius-lg); padding: 11px 1.25rem; margin-bottom: 1.25rem; }
+  .cuotas-bar.empty { border-left-color: var(--amber); }
+  .cuotas-bar.empty .cuotas-bar-value { color: var(--amber); }
+  .cuotas-bar-left { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+  .cuotas-bar-right { flex: 1; display: flex; align-items: center; justify-content: center; padding-left: 10px; border-left: 1px solid var(--border); }
   .cuotas-bar-label  { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; white-space: nowrap; }
-  .cuotas-bar-value  { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; white-space: nowrap; }
+  .cuotas-bar-value  { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; white-space: nowrap; }
   .cuotas-bar-value.pos     { color: var(--green); }
   .cuotas-bar-value.neutral { color: var(--text); }
-  .cuotas-bar-detail { font-size: 12px; color: var(--text3); }
+  .cuotas-bar-names { font-size: 11px; color: var(--text3); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; }
+  .cuotas-bar-mas { border-bottom: 1px dotted var(--text3); cursor: default; }
   .metric-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; font-weight: 600; }
   .metric-value { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
   .metric-value.pos     { color: var(--green); }
@@ -856,10 +861,14 @@
         <div class="metric"><div class="metric-label">Diferencia acumulada</div><div class="metric-value neutral" id="dif-acum">$0</div></div>
       </div>
 
-      <div class="cuotas-bar" id="metric-cuotas">
-        <span class="cuotas-bar-label">Cuotas que terminan este mes</span>
-        <span class="cuotas-bar-value neutral" id="cuotas-terminan">$0</span>
-        <span class="cuotas-bar-detail" id="cuotas-terminan-list"></span>
+      <div class="cuotas-bar empty" id="metric-cuotas">
+        <div class="cuotas-bar-left">
+          <span class="cuotas-bar-label">Últimas cuotas</span>
+          <div class="cuotas-bar-names" id="cuotas-terminan-list"></div>
+        </div>
+        <div class="cuotas-bar-right">
+          <span class="cuotas-bar-value neutral" id="cuotas-terminan">$0</span>
+        </div>
       </div>
 
       <div class="search-bar search-bar-styled">
@@ -1780,9 +1789,19 @@ function renderSummary(){
   const dMes=document.getElementById('dif-mes');dMes.textContent=fmt(dif);dMes.className='metric-value '+(dif>0?'pos':dif<0?'neg':'neutral');
   const dAcum=document.getElementById('dif-acum');dAcum.textContent=fmt(acum);dAcum.className='metric-value '+(acum>0?'pos':acum<0?'neg':'neutral');
   const rec=getRecurringForMonth(state.currentYear,state.currentMonth),ending=rec.filter(r=>r.isLast),endT=ending.reduce((a,r)=>a+ +r.monto,0);
-  const ctEl=document.getElementById('cuotas-terminan'),ctList=document.getElementById('cuotas-terminan-list');
-  ctEl.textContent=ending.length>0?fmt(endT):'$0';ctEl.className='cuotas-bar-value '+(ending.length>0?'pos':'neutral');
-  ctList.innerHTML=ending.length===0?'<span style="font-size:11px;color:var(--text3);">Ninguna este mes</span>':'<span style="font-size:11px;color:var(--text3);">'+ending.length+' cuota'+(ending.length>1?'s':'')+' finaliza'+(ending.length>1?'n':'')+'</span>';
+  const ctEl=document.getElementById('cuotas-terminan'),ctList=document.getElementById('cuotas-terminan-list'),ctBar=document.getElementById('metric-cuotas');
+  ctEl.textContent=ending.length>0?fmt(endT):'$0';
+  ctEl.className='cuotas-bar-value '+(ending.length>0?'pos':'neutral');
+  ctBar.classList.toggle('empty',ending.length===0);
+  if(ending.length===0){
+    ctList.innerHTML='<span>Ninguna este mes</span>';
+  } else {
+    const names=ending.map(r=>r.desc||r.descripcion||'');
+    const vis=names.slice(0,3), hid=names.slice(3);
+    let html=vis.join(' · ');
+    if(hid.length>0) html+=` <span class="cuotas-bar-mas" title="${hid.join(', ')}">+${hid.length} más</span>`;
+    ctList.innerHTML=html;
+  }
 }
 
 function renderResumen(){
