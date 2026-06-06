@@ -398,8 +398,8 @@
   }
 
   .login-brand { display:flex; align-items:center; gap:14px; margin-bottom:56px; }
-  .login-brand img { width:48px; height:48px; border-radius:14px; }
-  .login-brand-name { font-size:18px; font-weight:700; color:#f0efe9; letter-spacing:-0.3px; }
+  #vi-login-icon { width:72px; height:72px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .login-brand-name { font-size:24px; font-weight:700; color:#f0efe9; letter-spacing:-0.3px; }
 
   .login-tagline { font-size:36px; font-weight:700; letter-spacing:-0.8px; line-height:1.18; color:#f0efe9; margin-bottom:20px; max-width:380px; }
   .login-tagline span { color:#5DCAA5; }
@@ -661,7 +661,7 @@
     <!-- ── PANEL IZQUIERDO ── -->
     <div class="login-left login-anim-left">
       <div class="login-brand">
-        <img src="logo.svg" alt="Logo" />
+        <div id="vi-login-icon"></div>
         <span class="login-brand-name">Vinanzas</span>
       </div>
       <h1 class="login-tagline">Tomá el control<br>de tu <span>dinero</span>.</h1>
@@ -1423,6 +1423,34 @@ async function initAppForUser(user){
   if(remote){state={...emptyState(),...remote};if(!state.recurring)state.recurring=[];if(!state.recurrentes)state.recurrentes=[];const local=loadLocalState();state.currentYear=local.currentYear||state.currentYear;state.currentMonth=local.currentMonth||state.currentMonth;saveLocalState();}
   setSyncStatus('');showApp(user.email);setAuthLoading(false);renderAll();
 }
+// ── VinanzasIcon (vanilla JS) ─────────────────────────────────────
+(function(){const NS='http://www.w3.org/2000/svg',GEO={APEX:{x:50,y:93},TL:{x:6,y:6},TR:{x:94,y:6}},GEN={HW:10,SP:4.8,RAVG:2.4,JIT:.40},ANIM={STEP:50,DUR_BASE:270,DUR_SPREAD:40,HOLD:3800,FADE:600};
+function stonePath(cx,cy,r){const n=3+Math.floor(Math.random()*3),base=Math.random()*Math.PI*2,eA=Math.random()*Math.PI,eF=1.8+Math.random()*.9,pts=[];for(let i=0;i<n;i++){const s=(Math.PI*2)/n,a=base+i*s+(Math.random()-.5)*s*.45,d=r*(.72+Math.random()*.42),rx=d*Math.cos(a),ry=d*Math.sin(a),al=rx*Math.cos(eA)+ry*Math.sin(eA),pe=-rx*Math.sin(eA)+ry*Math.cos(eA);pts.push([cx+al*eF*Math.cos(eA)-pe*Math.sin(eA),cy+al*eF*Math.sin(eA)+pe*Math.cos(eA)]);}return pts.map((p,i)=>`${i?'L':'M'}${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(' ')+'Z';}
+function genBand(s,e){const{HW,SP,JIT}=GEN,dx=e.x-s.x,dy=e.y-s.y,len=Math.hypot(dx,dy),ux=dx/len,uy=dy/len,px=-uy,nA=Math.round(len/SP),nP=Math.floor(HW/SP),out=[];for(let i=0;i<=nA;i++){const bA=(i/nA)*len,ap=i/Math.max(nA,1);for(let j=-nP;j<=nP;j++){if(Math.abs(j)===nP&&Math.random()<ap*.70)continue;const jA=(Math.random()-.5)*SP*JIT,jP=(Math.random()-.5)*SP*JIT,al=bA+jA,ac=j*SP+jP;if(Math.abs(ac)>HW+3)continue;const cx=s.x+ux*al+px*ac,cy=s.y+uy*al+(-ux)*ac;if(cx<1||cx>99||cy<1||cy>97)continue;out.push({cx,cy});}}return out;}
+function dedupe(pts){const minD=GEN.SP*.78,r=[];for(const p of pts)if(!r.some(q=>Math.hypot(p.cx-q.cx,p.cy-q.cy)<minD))r.push(p);return r;}
+function grad(cy,pfx){if(cy>76)return`url(#${pfx}gd)`;if(cy>52)return`url(#${pfx}ga)`;if(cy>28)return`url(#${pfx}gg)`;if(cy>14)return`url(#${pfx}gm)`;return`url(#${pfx}gv)`;}
+function mkGrad(defs,id,stops){const g=document.createElementNS(NS,'radialGradient');g.id=id;g.setAttribute('cx','36%');g.setAttribute('cy','28%');g.setAttribute('r','76%');stops.forEach(([o,c])=>{const s=document.createElementNS(NS,'stop');s.setAttribute('offset',o);s.setAttribute('stop-color',c);g.appendChild(s);});defs.appendChild(g);}
+window.initVinanzasIcon=function(containerId,size=52){
+  const container=document.getElementById(containerId);if(!container)return;
+  const pfx='vi_'+Math.random().toString(36).slice(2,6)+'_';
+  if(!document.getElementById('vi-icon-css')){const s=document.createElement('style');s.id='vi-icon-css';s.textContent='.vi-stone{transform-box:fill-box;transform-origin:center center;}@keyframes vi-drop{0%{opacity:0;transform:translateY(var(--fy));animation-timing-function:linear;}7%{opacity:1;transform:translateY(var(--fy));animation-timing-function:cubic-bezier(0.4,0,1,0.85);}76%{transform:translateY(6px);animation-timing-function:cubic-bezier(0.15,0.6,0.4,1);}89%{transform:translateY(-4px);}100%{opacity:1;transform:translateY(0);}}@media(prefers-reduced-motion:reduce){.vi-stone{animation:none!important;opacity:1!important;}}';document.head.appendChild(s);}
+  const wrap=document.createElement('div');wrap.style.cssText='filter:drop-shadow(0 0 28px rgba(190,130,10,0.52)) drop-shadow(0 0 8px rgba(255,200,40,0.16));display:inline-block;';container.appendChild(wrap);
+  const svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','0 0 100 100');svg.setAttribute('fill','none');svg.style.cssText=`width:${size}px;height:${size}px;display:block;overflow:visible;`;svg.setAttribute('role','img');svg.setAttribute('aria-label','Vinanzas');wrap.appendChild(svg);
+  const defs=document.createElementNS(NS,'defs');
+  mkGrad(defs,`${pfx}gd`,[['0%','#C89E58'],['44%','#8B5C08'],['100%','#3A1E00']]);
+  mkGrad(defs,`${pfx}ga`,[['0%','#EAC060'],['44%','#B87800'],['100%','#5C3800']]);
+  mkGrad(defs,`${pfx}gg`,[['0%','#FFF098'],['44%','#D49208'],['100%','#8B5C08']]);
+  mkGrad(defs,`${pfx}gm`,[['0%','#D8DA58'],['44%','#7A8A20'],['100%','#283810']]);
+  mkGrad(defs,`${pfx}gv`,[['0%','#A8DC68'],['44%','#4A8F3F'],['100%','#1E4A18']]);
+  svg.appendChild(defs);
+  const pts=dedupe([...genBand(GEO.APEX,GEO.TL),...genBand(GEO.APEX,GEO.TR)]);
+  const stones=pts.map(({cx,cy})=>{const el=document.createElementNS(NS,'path');el.setAttribute('class','vi-stone');el.setAttribute('d',stonePath(cx,cy,GEN.RAVG));el.setAttribute('fill',grad(cy,pfx));el.style.opacity='0';el.style.setProperty('--fy',`-${65+Math.random()*45}px`);svg.appendChild(el);return{el,cx,cy};});
+  let stopped=false;const timers=[];const t=(ms,fn)=>{const id=setTimeout(()=>{if(!stopped)fn();},ms);timers.push(id);};
+  function run(){stones.forEach(s=>{s.el.style.animation='none';s.el.style.opacity='0';s.el.style.transition='none';});void svg.getBoundingClientRect();const sorted=[...stones].sort((a,b)=>b.cy-a.cy);let maxDelay=0;sorted.forEach((s,i)=>{const dur=ANIM.DUR_BASE+Math.round((Math.random()-.5)*2*ANIM.DUR_SPREAD);s.delay=i*ANIM.STEP;s.dur=dur;if(s.delay>maxDelay)maxDelay=s.delay;});stones.forEach(s=>s.el.style.animation=`vi-drop ${s.dur}ms linear ${s.delay}ms both`);const totalBuild=maxDelay+ANIM.DUR_BASE+ANIM.DUR_SPREAD;t(totalBuild+ANIM.HOLD,()=>{stones.forEach(s=>{s.el.style.animation='none';s.el.style.opacity='1';s.el.style.transition='none';});void svg.getBoundingClientRect();requestAnimationFrame(()=>{if(stopped)return;stones.forEach(s=>{s.el.style.transition=`opacity ${ANIM.FADE}ms ease-in`;s.el.style.opacity='0';});t(ANIM.FADE+300,run);});});}
+  t(500,run);
+};})();
+initVinanzasIcon('vi-login-icon',72);
+
 (async()=>{showLogin();const user=await sbGetUser();if(user){await initAppForUser(user);}else{const ok=await sbRefreshSession();if(ok)await initAppForUser({email:_userEmail});}})();
 
 // ── HELPERS ──────────────────────────────────────────────────────────
