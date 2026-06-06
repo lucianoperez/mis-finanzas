@@ -534,9 +534,12 @@
   .comp-table td.concept { padding-left: 36px !important; color: var(--text2); font-size: 11px; font-style: italic; }
   .comp-table tr.concept-row td { border-bottom: 0.5px solid var(--border); }
   .comp-table tr.collapsible-hdr { cursor: pointer; user-select: none; }
-  .comp-table tr.collapsible-hdr:hover td:first-child { opacity: 0.75; }
-  .comp-table .caret { display: inline-block; margin-right: 5px; font-size: 9px; transition: transform 0.15s ease; vertical-align: middle; line-height: 1; }
+  .comp-table .caret { display: inline-block; margin-right: 5px; font-size: 9px; transition: transform 0.15s ease; vertical-align: middle; line-height: 1; color: var(--text3); }
   .comp-table tr.collapsible-hdr.collapsed .caret { transform: rotate(-90deg); }
+  .comp-table tr.section-row.collapsible-hdr td:first-child { border-left: 3px solid var(--green) !important; padding-left: 11px !important; }
+  .comp-table tr.subgroup-row.collapsible-hdr td:first-child { border-left: 2px solid var(--amber) !important; padding-left: 12px !important; }
+  .comp-table tr.section-row.collapsible-hdr:hover td:first-child { background: rgba(93,202,165,0.07) !important; opacity: 1 !important; }
+  .comp-table tr.subgroup-row.collapsible-hdr:hover td:first-child { background: rgba(239,159,39,0.07) !important; opacity: 1 !important; }
   .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
   @media (max-width: 650px) { .analysis-grid { grid-template-columns: 1fr; } }
 
@@ -1852,9 +1855,9 @@ function renderComparativo(){
   html+='<tr class="section-row collapsible-hdr" data-toggle="ing"><td class="col-label" colspan="'+(months.length+1)+'"><span class="caret">▾</span>Ingresos</td></tr>';
   [...allIngC].forEach(desc=>{html+='<tr class="concept-row" data-grp="ing"><td class="col-label indent">'+desc+'</td>';months.forEach(({y,m})=>html+=vCell(getIngCT(y,m,desc),y===cy&&m===cm));html+='</tr>';});
   html+='<tr class="total-row"><td class="col-label">Total ingresos</td>';months.forEach(({y,m})=>{const ic=y===cy&&m===cm,v=getMonthData(y,m).ingresos.reduce((a,x)=>a+ +x.monto,0);html+='<td class="'+(ic?'current ':'')+( v>0?'pos':v<0?'neg':'')+'">'+fmt(v)+'</td>';});html+='</tr>';
-  html+='<tr class="section-row"><td class="col-label" colspan="'+(months.length+1)+'">Egresos</td></tr>';
+  html+='<tr class="section-row collapsible-hdr" data-toggle="eg"><td class="col-label" colspan="'+(months.length+1)+'"><span class="caret">▾</span>Egresos</td></tr>';
   const og=[];if(allGrpKeys.has('fijo'))og.push('fijo');state.cards.forEach(c=>{if(allGrpKeys.has('card:'+c))og.push('card:'+c);});if(allGrpKeys.has('efec'))og.push('efec');allGrpKeys.forEach(k=>{if(k.startsWith('card:')&&!og.includes(k))og.push(k);});
-  og.forEach((gk,gi)=>{html+='<tr class="subgroup-row collapsible-hdr" data-toggle="eg'+gi+'"><td class="col-label indent"><span class="caret">▾</span>'+grpLabel(gk)+'</td>';months.forEach(({y,m})=>html+=vCell(getEgByGrp(y,m,gk),y===cy&&m===cm));html+='</tr>';[...allEgC].filter(k=>cGrpKey(k)===gk).forEach(k=>{html+='<tr class="concept-row" data-grp="eg'+gi+'"><td class="col-label concept">'+k.split('|||')[0]+'</td>';months.forEach(({y,m})=>html+=vCell(getEgCT(y,m,k),y===cy&&m===cm));html+='</tr>';});});
+  og.forEach((gk,gi)=>{html+='<tr class="subgroup-row collapsible-hdr" data-toggle="eg'+gi+'" data-grp="eg"><td class="col-label indent"><span class="caret">▾</span>'+grpLabel(gk)+'</td>';months.forEach(({y,m})=>html+=vCell(getEgByGrp(y,m,gk),y===cy&&m===cm));html+='</tr>';[...allEgC].filter(k=>cGrpKey(k)===gk).forEach(k=>{html+='<tr class="concept-row" data-grp="eg eg'+gi+'"><td class="col-label concept">'+k.split('|||')[0]+'</td>';months.forEach(({y,m})=>html+=vCell(getEgCT(y,m,k),y===cy&&m===cm));html+='</tr>';});});
   html+='<tr class="total-row"><td class="col-label">Total egresos</td>';months.forEach(({y,m})=>{const ic=y===cy&&m===cm,v=getMonthEgresosTotal(y,m);html+='<td class="'+(ic?'current ':'')+' neg">'+fmt(v)+'</td>';});html+='</tr>';
   html+='<tr class="total-row"><td class="col-label">Diferencia</td>';months.forEach(({y,m})=>{const ic=y===cy&&m===cm,ing=getMonthData(y,m).ingresos.reduce((a,x)=>a+ +x.monto,0),eg=getMonthEgresosTotal(y,m),d=ing-eg;html+='<td class="'+(ic?'current ':'')+(d>0?'pos':d<0?'neg':'')+'">'+fmt(d)+'</td>';});html+='</tr></tbody></table>';
   document.getElementById('comp-container').innerHTML=html;
@@ -2000,7 +2003,11 @@ document.getElementById('comp-container').addEventListener('click',e=>{
   if(!hdr)return;
   const key=hdr.dataset.toggle;
   const collapsed=hdr.classList.toggle('collapsed');
-  hdr.closest('table').querySelectorAll('[data-grp="'+key+'"]').forEach(r=>{r.style.display=collapsed?'none':'';});
+  const tbl=hdr.closest('table');
+  tbl.querySelectorAll('[data-grp~="'+key+'"]').forEach(r=>{
+    if(collapsed){r.style.display='none';}
+    else{const blocked=(r.dataset.grp||'').split(' ').filter(g=>g!==key).some(g=>tbl.querySelector('[data-toggle="'+g+'"].collapsed'));if(!blocked)r.style.display='';}
+  });
 });
 document.getElementById('edit-eg-tipo').addEventListener('change',function(){document.getElementById('edit-eg-card-group').style.display=this.value==='tarjeta'?'':'none';});
 document.getElementById('cancel-edit-egreso').addEventListener('click',()=>document.getElementById('modal-edit-egreso').classList.remove('open'));
