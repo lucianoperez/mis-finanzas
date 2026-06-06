@@ -516,13 +516,14 @@
   .comp-table th { padding: 8px 14px; text-align: right; font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 0.5px solid var(--border); white-space: nowrap; position: sticky; top: 0; background: var(--surface); }
   .comp-table th.col-label { text-align: left; min-width: 150px; }
   .comp-table th.col-month { min-width: 110px; }
-  .comp-table th.col-month.current { color: var(--text); background: var(--surface2); }
+  .comp-table th.col-month.current { background: linear-gradient(transparent 0%, transparent 18%, rgba(200,162,64,0.28) 18%, rgba(200,162,64,0.28) 82%, transparent 82%) !important; color: #C8A240 !important; font-weight: 700; }
+  .comp-table td.current { background: rgba(200,162,64,0.13) !important; }
+  .comp-table tr.section-row td.current { background: rgba(200,162,64,0.07) !important; }
+  .comp-table tr.subgroup-row td.current { background: rgba(200,162,64,0.07) !important; }
   .comp-table td { padding: 7px 14px; text-align: right; border-bottom: 0.5px solid var(--border); white-space: nowrap; color: var(--text2); }
   .comp-table td.col-label { text-align: left; color: var(--text); font-weight: 500; padding-left: 16px; }
   .comp-table td.col-label.indent { padding-left: 28px; color: var(--text2); font-weight: 400; font-size: 12px; }
-  .comp-table td.current { background: var(--surface2); }
   .comp-table tr.section-row td { background: var(--surface2); font-weight: 700; font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 14px; border-top: 0.5px solid var(--border); }
-  .comp-table tr.section-row td.current { background: var(--surface); }
   .comp-table tr.total-row td { font-weight: 700; font-size: 13px; border-top: 1px solid var(--border-md); padding: 10px 14px; }
   .comp-table tr.total-row td.pos { color: var(--green); }
   .comp-table tr.total-row td.neg { color: var(--red); }
@@ -530,7 +531,6 @@
   .comp-table .val-neg  { color: var(--red); }
   .comp-table .val-zero { color: var(--text3); }
   .comp-table tr.subgroup-row td { background: var(--surface2); font-weight: 600; font-size: 12px; }
-  .comp-table tr.subgroup-row td.current { background: var(--surface); }
   .comp-table td.concept { padding-left: 36px !important; color: var(--text2); font-size: 11px; font-style: italic; }
   .comp-table tr.concept-row td { border-bottom: 0.5px solid var(--border); }
   .comp-table tr.collapsible-hdr { cursor: pointer; user-select: none; }
@@ -538,8 +538,9 @@
   .comp-table tr.collapsible-hdr.collapsed .caret { transform: rotate(-90deg); }
   .comp-table tr.section-row.collapsible-hdr td:first-child { border-left: 3px solid var(--green) !important; padding-left: 11px !important; }
   .comp-table tr.subgroup-row.collapsible-hdr td:first-child { border-left: 2px solid var(--amber) !important; padding-left: 12px !important; }
-  .comp-table tr.section-row.collapsible-hdr:hover td:first-child { background: rgba(93,202,165,0.07) !important; opacity: 1 !important; }
-  .comp-table tr.subgroup-row.collapsible-hdr:hover td:first-child { background: rgba(239,159,39,0.07) !important; opacity: 1 !important; }
+  .comp-table tr.section-row.collapsible-hdr:hover td { background: rgba(93,202,165,0.07) !important; opacity: 1 !important; }
+  .comp-table tr.subgroup-row.collapsible-hdr:hover td { background: rgba(239,159,39,0.07) !important; opacity: 1 !important; }
+  .comp-table tr.subgroup-row td:not(.col-label) { border-bottom: 1.5px solid rgba(240,153,123,0.45) !important; padding-bottom: 7px !important; }
   .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
   @media (max-width: 650px) { .analysis-grid { grid-template-columns: 1fr; } }
 
@@ -1239,7 +1240,8 @@ async function sbLoadState(){if(!_userId)return null;const r=await fetch(SUPABAS
 async function sbSaveState(payload){if(!_userId||window._previewMode)return;await fetch(SUPABASE_URL+'/rest/v1/finanzas_state',{method:'POST',headers:sbHeaders({'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({user_id:_userId,state:payload})});}
 
 // ── STATE ────────────────────────────────────────────────────────────
-function emptyState(){return{cards:[],data:{},recurring:[],recurrentes:[],currentYear:new Date().getFullYear(),currentMonth:new Date().getMonth()};}
+function nowAR(){return new Date(new Date().toLocaleString('en-US',{timeZone:'America/Argentina/Buenos_Aires'}));}
+function emptyState(){const n=nowAR();return{cards:[],data:{},recurring:[],recurrentes:[],currentYear:n.getFullYear(),currentMonth:n.getMonth()};}
 function migrateCatToTags(st){let changed=false;Object.values(st.data||{}).forEach(md=>{(md.ingresos||[]).forEach(ing=>{if(ing.cat&&ing.cat!=='Ingreso'){if(!ing.tags)ing.tags=[];if(!ing.tags.includes(ing.cat))ing.tags.unshift(ing.cat);changed=true;}if('cat'in ing){delete ing.cat;changed=true;}});});return changed;}
 function loadLocalState(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)return JSON.parse(r);}catch(e){}return emptyState();}
 function saveLocalState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}}
@@ -1310,7 +1312,7 @@ function startDemo(){
   const y = 2026;
   state = {
     cards: ['Visa Galicia', 'Naranja X'],
-    currentYear: y, currentMonth: 4,
+    currentYear: y, currentMonth: 5,
     recurring: [
       {id:'rd1',desc:'iPhone 15 Pro',monto:95000,tipo:'tarjeta',card:'Visa Galicia',cuotas:12,startYear:2025,startMonth:10},
       {id:'rd2',desc:'Smart TV Samsung',monto:48000,tipo:'tarjeta',card:'Naranja X',cuotas:6,startYear:2026,startMonth:1},
@@ -1366,6 +1368,17 @@ function startDemo(){
           {desc:'Cumpleaños amigo',monto:44000,tipo:'tarjeta',card:'Naranja X',dia:17},
           {desc:'Peluquería',monto:10000,tipo:'débito',dia:16,pendiente:true},
         ]
+      },
+      [y+'-5']:{ // Junio (mes actual)
+        ingresos:[
+          {desc:'Sueldo',monto:898000,tags:['Trabajo'],dia:5},
+        ],
+        egresos:[
+          {desc:'Alquiler',monto:320000,tipo:'transferencia',dia:1},
+          {desc:'Netflix',monto:4800,tipo:'tarjeta',card:'Visa Galicia',dia:10},
+          {desc:'Spotify',monto:3200,tipo:'tarjeta',card:'Visa Galicia',dia:10},
+          {desc:'Internet Personal',monto:14000,tipo:'débito',dia:20},
+        ]
       }
     }
   };
@@ -1406,7 +1419,7 @@ document.getElementById('logout-btn').addEventListener('click',async()=>{await s
 document.getElementById('logout-btn-mobile').addEventListener('click',async()=>{await sbSignOut();state=emptyState();saveLocalState();showLogin();});
 async function initAppForUser(user){
   setSyncStatus('Cargando datos…');const remote=await sbLoadState();
-  if(remote){state={...emptyState(),...remote};if(!state.recurring)state.recurring=[];if(!state.recurrentes)state.recurrentes=[];const local=loadLocalState();state.currentYear=local.currentYear||state.currentYear;state.currentMonth=local.currentMonth||state.currentMonth;if(migrateCatToTags(state))saveState();else saveLocalState();}
+  if(remote){state={...emptyState(),...remote};if(!state.recurring)state.recurring=[];if(!state.recurrentes)state.recurrentes=[];const n=nowAR();state.currentYear=n.getFullYear();state.currentMonth=n.getMonth();if(migrateCatToTags(state))saveState();else saveLocalState();}
   setSyncStatus('');showApp(user.email);setAuthLoading(false);renderAll();
 }
 // ── VinanzasIcon (vanilla JS) ─────────────────────────────────────
@@ -1707,7 +1720,7 @@ function renderAll(){
 }
 function renderMonthLabel(){
   document.getElementById('month-label').textContent=MONTHS[state.currentMonth]+' '+state.currentYear;
-  const n=new Date();
+  const n=nowAR();
   const isToday=state.currentYear===n.getFullYear()&&state.currentMonth===n.getMonth();
   const btn=document.getElementById('today-btn');
   const walletIcon=document.getElementById('month-icon-current');
@@ -1845,7 +1858,7 @@ function renderComparativo(){
   months.forEach(({y,m})=>{const md=getMonthData(y,m);md.egresos.forEach(e=>{if(e.tipo==='fijo')allGrpKeys.add('fijo');else if(e.tipo==='efectivo')allGrpKeys.add('efec');else if(e.tipo==='tarjeta')allGrpKeys.add('card:'+e.card);});getRecurringForMonth(y,m).forEach(r=>{if(r.tipo==='fijo')allGrpKeys.add('fijo');else if(r.tipo==='efectivo')allGrpKeys.add('efec');else if(r.tipo==='tarjeta')allGrpKeys.add('card:'+r.card);});getRecurrentesForMonth(y,m).forEach(r=>{if(r.tipo==='fijo')allGrpKeys.add('fijo');else if(r.tipo==='efectivo')allGrpKeys.add('efec');else if(r.tipo==='tarjeta')allGrpKeys.add('card:'+r.card);});});
   const grpLabel=k=>k==='fijo'?'Gastos fijos':k==='efec'?'Efectivo':k.replace('card:','');
   const getEgByGrp=(y,m,k)=>{const md=getMonthData(y,m),rec=getRecurringForMonth(y,m),recM=getRecurrentesForMonth(y,m);let t=0;if(k==='fijo'){t+=md.egresos.filter(e=>e.tipo==='fijo').reduce((a,x)=>a+ +x.monto,0)+rec.filter(r=>r.tipo==='fijo').reduce((a,x)=>a+ +x.monto,0)+recM.filter(r=>r.tipo==='fijo').reduce((a,x)=>a+ +x.monto,0);}else if(k==='efec'){t+=md.egresos.filter(e=>e.tipo==='efectivo').reduce((a,x)=>a+ +x.monto,0)+rec.filter(r=>r.tipo==='efectivo').reduce((a,x)=>a+ +x.monto,0)+recM.filter(r=>r.tipo==='efectivo').reduce((a,x)=>a+ +x.monto,0);}else{const c=k.replace('card:','');t+=md.egresos.filter(e=>e.tipo==='tarjeta'&&e.card===c).reduce((a,x)=>a+ +x.monto,0)+rec.filter(r=>r.tipo==='tarjeta'&&r.card===c).reduce((a,x)=>a+ +x.monto,0)+recM.filter(r=>r.tipo==='tarjeta'&&r.card===c).reduce((a,x)=>a+ +x.monto,0);}return t;};
-  const vCell=(n,ic)=>'<td class="'+(ic?'current':'')+' '+(n>0?'val-pos':n<0?'val-neg':'val-zero')+'">'+(n===0?'—':fmt(n))+'</td>';
+  const vCell=(n,ic,eg)=>'<td class="'+(ic?'current':'')+' '+(n===0?'val-zero':eg?'val-neg':n>0?'val-pos':'val-neg')+'">'+(n===0?'—':fmt(n))+'</td>';
   let html='<table class="comp-table"><thead><tr><th class="col-label">Concepto</th>';months.forEach(({y,m})=>{const ic=y===cy&&m===cm;html+='<th class="col-month'+(ic?' current':'')+'">'+MONTHS[m].slice(0,3)+' '+y+'</th>';});html+='</tr></thead><tbody>';
   const allIngC=new Set(),allEgC=new Set();
   months.forEach(({y,m})=>{getMonthData(y,m).ingresos.forEach(i=>allIngC.add(i.desc));const md=getMonthData(y,m);md.egresos.forEach(e=>allEgC.add(e.desc+'|||'+e.tipo+'|||'+(e.card||'')));getRecurringForMonth(y,m).forEach(r=>allEgC.add(r.desc+'|||'+r.tipo+'|||'+(r.card||'')+'|||rec'));getRecurrentesForMonth(y,m).forEach(r=>allEgC.add(r.desc+'|||'+r.tipo+'|||'+(r.card||'')+'|||rcm'));});
@@ -1857,7 +1870,7 @@ function renderComparativo(){
   html+='<tr class="total-row"><td class="col-label">Total ingresos</td>';months.forEach(({y,m})=>{const ic=y===cy&&m===cm,v=getMonthData(y,m).ingresos.reduce((a,x)=>a+ +x.monto,0);html+='<td class="'+(ic?'current ':'')+( v>0?'pos':v<0?'neg':'')+'">'+fmt(v)+'</td>';});html+='</tr>';
   html+='<tr class="section-row collapsible-hdr" data-toggle="eg"><td class="col-label" colspan="'+(months.length+1)+'"><span class="caret">▾</span>Egresos</td></tr>';
   const og=[];if(allGrpKeys.has('fijo'))og.push('fijo');state.cards.forEach(c=>{if(allGrpKeys.has('card:'+c))og.push('card:'+c);});if(allGrpKeys.has('efec'))og.push('efec');allGrpKeys.forEach(k=>{if(k.startsWith('card:')&&!og.includes(k))og.push(k);});
-  og.forEach((gk,gi)=>{html+='<tr class="subgroup-row collapsible-hdr" data-toggle="eg'+gi+'" data-grp="eg"><td class="col-label indent"><span class="caret">▾</span>'+grpLabel(gk)+'</td>';months.forEach(({y,m})=>html+=vCell(getEgByGrp(y,m,gk),y===cy&&m===cm));html+='</tr>';[...allEgC].filter(k=>cGrpKey(k)===gk).forEach(k=>{html+='<tr class="concept-row" data-grp="eg eg'+gi+'"><td class="col-label concept">'+k.split('|||')[0]+'</td>';months.forEach(({y,m})=>html+=vCell(getEgCT(y,m,k),y===cy&&m===cm));html+='</tr>';});});
+  og.forEach((gk,gi)=>{html+='<tr class="subgroup-row collapsible-hdr" data-toggle="eg'+gi+'" data-grp="eg"><td class="col-label indent"><span class="caret">▾</span>'+grpLabel(gk)+'</td>';months.forEach(({y,m})=>html+=vCell(getEgByGrp(y,m,gk),y===cy&&m===cm,true));html+='</tr>';[...allEgC].filter(k=>cGrpKey(k)===gk).forEach(k=>{html+='<tr class="concept-row" data-grp="eg eg'+gi+'"><td class="col-label concept">'+k.split('|||')[0]+'</td>';months.forEach(({y,m})=>html+=vCell(getEgCT(y,m,k),y===cy&&m===cm,true));html+='</tr>';});});
   html+='<tr class="total-row"><td class="col-label">Total egresos</td>';months.forEach(({y,m})=>{const ic=y===cy&&m===cm,v=getMonthEgresosTotal(y,m);html+='<td class="'+(ic?'current ':'')+' neg">'+fmt(v)+'</td>';});html+='</tr>';
   html+='<tr class="total-row"><td class="col-label">Diferencia</td>';months.forEach(({y,m})=>{const ic=y===cy&&m===cm,ing=getMonthData(y,m).ingresos.reduce((a,x)=>a+ +x.monto,0),eg=getMonthEgresosTotal(y,m),d=ing-eg;html+='<td class="'+(ic?'current ':'')+(d>0?'pos':d<0?'neg':'')+'">'+fmt(d)+'</td>';});html+='</tr></tbody></table>';
   document.getElementById('comp-container').innerHTML=html;
