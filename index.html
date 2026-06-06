@@ -541,6 +541,15 @@
   .comp-table tr.section-row.collapsible-hdr:hover td { background: rgba(93,202,165,0.07) !important; opacity: 1 !important; }
   .comp-table tr.subgroup-row.collapsible-hdr:hover td { background: rgba(239,159,39,0.07) !important; opacity: 1 !important; }
   .comp-table tr.subgroup-row td:not(.col-label) { border-bottom: 1.5px solid rgba(240,153,123,0.45) !important; padding-bottom: 7px !important; }
+  /* ── COMP CHIPS ─────────────────────────────────────── */
+  #comp-chips { padding: 0 16px 14px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .comp-chip { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 400; cursor: pointer; border: 0.5px solid var(--border-md); background: transparent; color: var(--text3); transition: all 0.12s; font-family: inherit; line-height: 1.4; }
+  .comp-chip:hover { opacity: 0.8; }
+  .comp-chip.selected { background: rgba(93,202,165,0.12); border: 1px solid var(--green); color: var(--green); font-weight: 600; }
+  .comp-chip.current { background: rgba(200,162,64,0.15); border: 1.5px solid #C8A240; color: #C8A240; font-weight: 600; }
+  .comp-chip.future { background: rgba(93,202,165,0.06); border: 1px dashed rgba(93,202,165,0.45); color: rgba(93,202,165,0.5); }
+  .comp-chip.future.selected { background: rgba(93,202,165,0.12); border: 1px solid var(--green); color: var(--green); font-weight: 600; }
+  .comp-chip.year-sep { border: none; background: none; color: var(--text3); font-size: 10px; padding: 0 4px; cursor: default; pointer-events: none; }
   .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
   @media (max-width: 650px) { .analysis-grid { grid-template-columns: 1fr; } }
 
@@ -965,17 +974,9 @@
 
       <div id="view-comparativo" style="display:none;">
         <div class="panel full-width">
-          <div class="panel-header" style="justify-content:space-between;">
-            <span class="panel-title">Comparativo mensual</span>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:12px;color:var(--text2);">Mostrar</span>
-              <select id="comp-months-count" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border-md);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-family:inherit;">
-                <option value="3">3 meses</option>
-                <option value="4">4 meses</option>
-                <option value="6" selected>6 meses</option>
-                <option value="12">12 meses</option>
-              </select>
-            </div>
+          <div class="panel-header" style="flex-direction:column;align-items:stretch;gap:0;padding:0;">
+            <div style="padding:14px 16px 10px;"><span class="panel-title">Comparativo mensual</span></div>
+            <div id="comp-chips"></div>
           </div>
           <div style="overflow-x:auto;" id="comp-container"></div>
         </div>
@@ -1714,7 +1715,7 @@ function renderAll(){
   const rs=document.getElementById('section-resumen');
   if(rs&&rs.classList.contains('active')){
     if(document.getElementById('view-resumen').style.display!=='none')renderResumen();
-    if(document.getElementById('view-comparativo').style.display!=='none')renderComparativo();
+    if(document.getElementById('view-comparativo').style.display!=='none'){renderCompChips();renderComparativo();}
   }
   saveState();
 }
@@ -1850,10 +1851,59 @@ function renderResumen(){
   renderSavingsResumen();
 }
 
+// ── COMP CHIPS STATE ─────────────────────────────────────────────────
+let _compSel=new Set();
+function _compChipMonths(){
+  const n=nowAR();const cy=n.getFullYear(),cm=n.getMonth();
+  let minY=cy,minM=cm;
+  Object.keys(state.data||{}).forEach(k=>{const[ys,ms]=k.split('-');const y=+ys,m=+ms;if(y<minY||(y===minY&&m<minM)){minY=y;minM=m;}});
+  let sy=cy,sm=cm-11;if(sm<0){sm+=12;sy--;}
+  if(sy>minY||(sy===minY&&sm>minM)){sy=minY;sm=minM;}
+  const out=[];let y=sy,m=sm;
+  let ey=cy,em=cm+2;if(em>11){em-=12;ey++;}
+  while(y<ey||(y===ey&&m<=em)){out.push({y,m,isCurrent:y===cy&&m===cm,isFuture:(y>cy)||(y===cy&&m>cm)});m++;if(m>11){m=0;y++;}}
+  return out;
+}
+function initCompSel(){
+  const n=nowAR();const cy=n.getFullYear(),cm=n.getMonth();
+  _compSel=new Set();
+  for(let i=2;i>=0;i--){let m=cm-i,y=cy;if(m<0){m+=12;y--;}_compSel.add(y+'-'+m);}
+}
+function renderCompChips(){
+  const wrap=document.getElementById('comp-chips');if(!wrap)return;
+  const n=nowAR();const cy=n.getFullYear(),cm=n.getMonth();
+  const chips=_compChipMonths();
+  let html='',lastY=null;
+  chips.forEach(({y,m,isCurrent,isFuture})=>{
+    if(lastY!==null&&y!==lastY){html+=`<span class="comp-chip year-sep">${lastY}</span>`;}
+    lastY=y;
+    const key=y+'-'+m;const sel=_compSel.has(key);
+    let cls='comp-chip';
+    if(isCurrent)cls+=' current';          // mes actual siempre dorado
+    else if(sel)cls+=' selected';           // pasado seleccionado: verde sólido
+    else if(isFuture)cls+=' future';        // futuro no seleccionado: verde punteado
+    // else: pasado no seleccionado → gris base
+    html+=`<button class="${cls}" data-key="${key}">${MONTHS[m].slice(0,3)}${isCurrent?'&thinsp;●':''}</button>`;
+  });
+  if(lastY)html+=`<span class="comp-chip year-sep">${lastY}</span>`;
+  wrap.innerHTML=html;
+  wrap.querySelectorAll('.comp-chip:not(.year-sep)').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const key=btn.dataset.key;
+      const [ky,km]=key.split('-').map(Number);const nw=nowAR();
+      if(ky===nw.getFullYear()&&km===nw.getMonth())return; // no se puede desactivar el mes actual
+      if(_compSel.has(key)){if(_compSel.size>1)_compSel.delete(key);}else _compSel.add(key);
+      renderCompChips();
+      if(document.getElementById('view-comparativo').style.display!=='none')renderComparativo();
+    });
+  });
+}
+
 function renderComparativo(){
-  const count=parseInt(document.getElementById('comp-months-count').value)||6;
-  const cy=state.currentYear,cm=state.currentMonth,months=[];
-  for(let i=count-1;i>=0;i--){let m=cm-i,y=cy;if(m<0){m+=12;y--;}months.push({y,m});}
+  if(_compSel.size===0)initCompSel();
+  const n2=nowAR();const cy=n2.getFullYear(),cm=n2.getMonth();
+  const months=[..._compSel].map(k=>{const[y,m]=k.split('-').map(Number);return{y,m};}).sort((a,b)=>a.y!==b.y?a.y-b.y:a.m-b.m);
+  if(months.length===0)return;
   const allGrpKeys=new Set();
   months.forEach(({y,m})=>{const md=getMonthData(y,m);md.egresos.forEach(e=>{if(e.tipo==='fijo')allGrpKeys.add('fijo');else if(e.tipo==='efectivo')allGrpKeys.add('efec');else if(e.tipo==='tarjeta')allGrpKeys.add('card:'+e.card);});getRecurringForMonth(y,m).forEach(r=>{if(r.tipo==='fijo')allGrpKeys.add('fijo');else if(r.tipo==='efectivo')allGrpKeys.add('efec');else if(r.tipo==='tarjeta')allGrpKeys.add('card:'+r.card);});getRecurrentesForMonth(y,m).forEach(r=>{if(r.tipo==='fijo')allGrpKeys.add('fijo');else if(r.tipo==='efectivo')allGrpKeys.add('efec');else if(r.tipo==='tarjeta')allGrpKeys.add('card:'+r.card);});});
   const grpLabel=k=>k==='fijo'?'Gastos fijos':k==='efec'?'Efectivo':k.replace('card:','');
@@ -1963,7 +2013,7 @@ document.querySelectorAll('#resumen-tabs .nav-tab').forEach(tab=>{
     document.getElementById('view-resumen').style.display=v==='resumen'?'':'none';
     document.getElementById('view-comparativo').style.display=v==='comparativo'?'':'none';
     document.getElementById('view-analisis').style.display=v==='analisis'?'':'none';
-    if(v==='resumen')renderResumen();if(v==='comparativo')renderComparativo();if(v==='analisis')setTimeout(renderAnalisis,50);
+    if(v==='resumen')renderResumen();if(v==='comparativo'){if(_compSel.size===0)initCompSel();renderCompChips();renderComparativo();}if(v==='analisis')setTimeout(renderAnalisis,50);
   });
 });
 
@@ -2010,7 +2060,6 @@ document.getElementById('save-ingreso').addEventListener('click',()=>{
   getMonthData(state.currentYear,state.currentMonth).ingresos.push(entry);document.getElementById('modal-ingreso').classList.remove('open');renderAll();
 });
 
-document.getElementById('comp-months-count').addEventListener('change',()=>{if(document.getElementById('view-comparativo').style.display!=='none')renderComparativo();});
 document.getElementById('comp-container').addEventListener('click',e=>{
   const hdr=e.target.closest('.collapsible-hdr');
   if(!hdr)return;
