@@ -1086,7 +1086,7 @@
       <label for="eg-fecha">Fecha (opcional)</label>
       <input type="date" id="eg-fecha" />
     </div>
-    <div class="form-group"><label for="eg-tag-input">Etiquetas (opcional)</label><div class="tags-input-wrap" id="eg-tags-wrap"><input type="text" id="eg-tag-input" placeholder="Agregá etiquetas..." /></div></div>
+    <div class="form-group"><label for="eg-etiqueta">Etiqueta (opcional)</label><input type="text" id="eg-etiqueta" placeholder="Ej: comida, trabajo, ocio..." /></div>
     <label class="cuota-toggle"><input type="checkbox" id="eg-cuota-check" /><span>Gasto en cuotas</span></label>
     <div class="cuota-fields" id="eg-cuota-fields">
       <div class="form-group"><label for="eg-cuotas">Cantidad de cuotas</label><input type="number" id="eg-cuotas" placeholder="Ej: 6" min="2" max="120" step="1" /><div class="form-hint">El monto ingresado es el valor de cada cuota.</div></div>
@@ -1103,12 +1103,11 @@
     <h3 id="modal-ingreso-title">Nuevo ingreso</h3>
     <div class="form-group"><label for="ing-desc">Descripción</label><input type="text" id="ing-desc" placeholder="Ej: Sueldo, Freelance..." /></div>
     <div class="form-group"><label for="ing-monto">Monto ($)</label><input type="number" id="ing-monto" placeholder="0.00" min="0" step="0.01" /></div>
-    <div class="form-group"><label for="ing-cat">Categoría</label><input type="text" id="ing-cat" placeholder="Ej: Sueldo, Freelance, Dividendos..." /></div>
     <div class="form-group">
       <label for="ing-fecha">Fecha (opcional)</label>
       <input type="date" id="ing-fecha" />
     </div>
-    <div class="form-group"><label for="ing-tag-input">Etiquetas (opcional)</label><div class="tags-input-wrap" id="ing-tags-wrap"><input type="text" id="ing-tag-input" placeholder="Agregá etiquetas..." /></div></div>
+    <div class="form-group"><label for="ing-etiqueta">Etiqueta (opcional)</label><input type="text" id="ing-etiqueta" placeholder="Ej: sueldo, freelance, extra..." /></div>
     <div class="modal-actions"><button class="btn-cancel" id="cancel-ingreso">Cancelar</button><button class="btn-save" id="save-ingreso">Guardar ingreso</button></div>
   </div>
 </div>
@@ -1121,7 +1120,7 @@
     <div class="form-group"><label id="edit-eg-monto-label" for="edit-eg-monto">Monto ($)</label><input type="number" id="edit-eg-monto" min="0" step="0.01" /><div class="form-hint" id="edit-eg-monto-hint" style="display:none;">Monto por cuota. El cambio aplica a todas las cuotas.</div></div>
     <div class="form-group" id="edit-eg-tipo-group"><label for="edit-eg-tipo">Tipo de egreso</label><select id="edit-eg-tipo"><option value="efectivo">Efectivo</option><option value="fijo">Gasto fijo</option></select></div>
     <div class="form-group" id="edit-eg-card-group" style="display:none;"><label for="edit-eg-card">Tarjeta</label><select id="edit-eg-card"></select></div>
-    <div class="form-group"><label for="edit-eg-tag-input">Etiquetas (opcional)</label><div class="tags-input-wrap" id="edit-eg-tags-wrap"><input type="text" id="edit-eg-tag-input" placeholder="Agregá etiquetas..." /></div></div>
+    <div class="form-group"><label for="edit-eg-etiqueta">Etiqueta (opcional)</label><input type="text" id="edit-eg-etiqueta" placeholder="Ej: comida, trabajo, ocio..." /></div>
     <div class="form-group" id="edit-eg-cuotas-group" style="display:none;"><label for="edit-eg-cuotas">Cantidad de cuotas</label><input type="number" id="edit-eg-cuotas" min="2" max="120" step="1" /><div class="form-hint">Modificar afecta todos los meses de este gasto.</div></div>
     <div class="form-group">
       <label for="edit-eg-fecha">Fecha (opcional)</label>
@@ -1138,12 +1137,11 @@
     <h3 id="modal-edit-ingreso-title">Editar ingreso</h3>
     <div class="form-group"><label for="edit-ing-desc">Descripción</label><input type="text" id="edit-ing-desc" /></div>
     <div class="form-group"><label for="edit-ing-monto">Monto ($)</label><input type="number" id="edit-ing-monto" min="0" step="0.01" /></div>
-    <div class="form-group"><label for="edit-ing-cat">Categoría</label><input type="text" id="edit-ing-cat" /></div>
     <div class="form-group">
       <label for="edit-ing-fecha">Fecha (opcional)</label>
       <input type="date" id="edit-ing-fecha" />
     </div>
-    <div class="form-group"><label for="edit-ing-tag-input">Etiquetas (opcional)</label><div class="tags-input-wrap" id="edit-ing-tags-wrap"><input type="text" id="edit-ing-tag-input" placeholder="Agregá etiquetas..." /></div></div>
+    <div class="form-group"><label for="edit-ing-etiqueta">Etiqueta (opcional)</label><input type="text" id="edit-ing-etiqueta" placeholder="Ej: sueldo, freelance, extra..." /></div>
     <div class="modal-actions"><button class="btn-cancel" id="cancel-edit-ingreso">Cancelar</button><button class="btn-save" id="save-edit-ingreso">Guardar cambios</button></div>
   </div>
 </div>
@@ -1235,6 +1233,7 @@ async function sbSaveState(payload){if(!_userId||window._previewMode)return;awai
 
 // ── STATE ────────────────────────────────────────────────────────────
 function emptyState(){return{cards:[],data:{},recurring:[],recurrentes:[],currentYear:new Date().getFullYear(),currentMonth:new Date().getMonth()};}
+function migrateCatToTags(st){let changed=false;Object.values(st.data||{}).forEach(md=>{(md.ingresos||[]).forEach(ing=>{if(ing.cat&&ing.cat!=='Ingreso'){if(!ing.tags)ing.tags=[];if(!ing.tags.includes(ing.cat))ing.tags.unshift(ing.cat);changed=true;}if('cat'in ing){delete ing.cat;changed=true;}});});return changed;}
 function loadLocalState(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)return JSON.parse(r);}catch(e){}return emptyState();}
 function saveLocalState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}}
 let _syncTimeout=null;
@@ -1313,8 +1312,8 @@ function startDemo(){
     data:{
       [y+'-2']:{ // Marzo
         ingresos:[
-          {desc:'Sueldo',monto:850000,cat:'Trabajo',dia:5},
-          {desc:'Freelance diseño web',monto:130000,cat:'Freelance',dia:18},
+          {desc:'Sueldo',monto:850000,tags:['Trabajo'],dia:5},
+          {desc:'Freelance diseño web',monto:130000,tags:['Freelance'],dia:18},
         ],
         egresos:[
           {desc:'Alquiler',monto:320000,tipo:'transferencia',dia:1},
@@ -1330,7 +1329,7 @@ function startDemo(){
       },
       [y+'-3']:{ // Abril
         ingresos:[
-          {desc:'Sueldo',monto:850000,cat:'Trabajo',dia:5},
+          {desc:'Sueldo',monto:850000,tags:['Trabajo'],dia:5},
         ],
         egresos:[
           {desc:'Alquiler',monto:320000,tipo:'transferencia',dia:1},
@@ -1347,8 +1346,8 @@ function startDemo(){
       },
       [y+'-4']:{ // Mayo
         ingresos:[
-          {desc:'Sueldo',monto:850000,cat:'Trabajo',dia:5},
-          {desc:'Venta Mercado Libre',monto:48000,cat:'Extra',dia:12},
+          {desc:'Sueldo',monto:850000,tags:['Trabajo'],dia:5},
+          {desc:'Venta Mercado Libre',monto:48000,tags:['Extra'],dia:12},
         ],
         egresos:[
           {desc:'Alquiler',monto:320000,tipo:'transferencia',dia:1},
@@ -1400,7 +1399,7 @@ document.getElementById('logout-btn').addEventListener('click',async()=>{await s
 document.getElementById('logout-btn-mobile').addEventListener('click',async()=>{await sbSignOut();state=emptyState();saveLocalState();showLogin();});
 async function initAppForUser(user){
   setSyncStatus('Cargando datos…');const remote=await sbLoadState();
-  if(remote){state={...emptyState(),...remote};if(!state.recurring)state.recurring=[];if(!state.recurrentes)state.recurrentes=[];const local=loadLocalState();state.currentYear=local.currentYear||state.currentYear;state.currentMonth=local.currentMonth||state.currentMonth;saveLocalState();}
+  if(remote){state={...emptyState(),...remote};if(!state.recurring)state.recurring=[];if(!state.recurrentes)state.recurrentes=[];const local=loadLocalState();state.currentYear=local.currentYear||state.currentYear;state.currentMonth=local.currentMonth||state.currentMonth;if(migrateCatToTags(state))saveState();else saveLocalState();}
   setSyncStatus('');showApp(user.email);setAuthLoading(false);renderAll();
 }
 // ── VinanzasIcon (vanilla JS) ─────────────────────────────────────
@@ -1901,7 +1900,7 @@ function openEditRecurrenteMensual(rid,year,month){
   document.getElementById('edit-eg-cuotas-group').style.display='none';
   document.getElementById('edit-eg-fecha').value='';
   document.getElementById('edit-eg-pendiente').checked=false;
-  _editEgTags=[...(r.tags||[])];setTimeout(()=>initTagInput('edit-eg-tags-wrap','edit-eg-tag-input',()=>_editEgTags,v=>{_editEgTags=v;}),50);
+  document.getElementById('edit-eg-etiqueta').value=(r.tags||[]).join(', ');
   document.getElementById('modal-edit-egreso').classList.add('open');
   setTimeout(()=>document.getElementById('edit-eg-desc').focus(),80);
 }
@@ -1920,15 +1919,15 @@ function _popEditEg(e,isRec){
   document.getElementById('edit-eg-cuotas-group').style.display=isRec?'':'none';if(isRec)document.getElementById('edit-eg-cuotas').value=e.cuotas||'';
   document.getElementById('edit-eg-fecha').value=dateInputVal(e.dia,e.mes,_editEgY||state.currentYear);
   document.getElementById('edit-eg-pendiente').checked=!!e.pendiente;
-  _editEgTags=[...(e.tags||[])];setTimeout(()=>initTagInput('edit-eg-tags-wrap','edit-eg-tag-input',()=>_editEgTags,v=>{_editEgTags=v;}),50);
+  document.getElementById('edit-eg-etiqueta').value=(e.tags||[]).join(', ');
   document.getElementById('modal-edit-egreso').classList.add('open');setTimeout(()=>document.getElementById('edit-eg-desc').focus(),80);
 }
 let _editIngY,_editIngM,_editIngIdx;
 function openEditIngreso(y,m,idx){
   _editIngY=y;_editIngM=m;_editIngIdx=idx;const ing=getMonthData(y,m).ingresos[idx];if(!ing)return;
-  document.getElementById('edit-ing-desc').value=ing.desc||'';document.getElementById('edit-ing-monto').value=ing.monto||'';document.getElementById('edit-ing-cat').value=ing.cat||'';
+  document.getElementById('edit-ing-desc').value=ing.desc||'';document.getElementById('edit-ing-monto').value=ing.monto||'';
   document.getElementById('edit-ing-fecha').value=dateInputVal(ing.dia,ing.mes,_editIngY||state.currentYear);
-  _editIngTags=[...(ing.tags||[])];setTimeout(()=>initTagInput('edit-ing-tags-wrap','edit-ing-tag-input',()=>_editIngTags,v=>{_editIngTags=v;}),50);
+  document.getElementById('edit-ing-etiqueta').value=(ing.tags||[]).join(', ');
   document.getElementById('modal-edit-ingreso').classList.add('open');setTimeout(()=>document.getElementById('edit-ing-desc').focus(),80);
 }
 
@@ -1974,20 +1973,21 @@ document.getElementById('save-egreso').addEventListener('click',()=>{
     const entry={id,desc,monto,tipo,startYear:state.currentYear,startMonth:state.currentMonth,amounts:[{year:state.currentYear,month:state.currentMonth,monto}]};
     if(tipo==='tarjeta')entry.card=document.getElementById('eg-card').value;
     if(esDia)entry.dia=esDia;
-    entry.tags=[..._egTags];
+    const etRawR=document.getElementById('eg-etiqueta').value.trim();if(etRawR)entry.tags=etRawR.split(',').map(t=>t.trim()).filter(Boolean);
     if(!state.recurrentes)state.recurrentes=[];
     state.recurrentes.push(entry);
   }
-  else{const isPendiente=document.getElementById('eg-pendiente').checked;const entry={desc,monto,tipo};if(tipo==='tarjeta')entry.card=document.getElementById('eg-card').value;if(esDia)entry.dia=esDia;if(esMes)entry.mes=esMes;if(isPendiente)entry.pendiente=true;if(window._pendingEgTags&&window._pendingEgTags.length){entry.tags=window._pendingEgTags;window._pendingEgTags=[];}getMonthData(state.currentYear,state.currentMonth).egresos.push(entry);}
+  else{const isPendiente=document.getElementById('eg-pendiente').checked;const entry={desc,monto,tipo};if(tipo==='tarjeta')entry.card=document.getElementById('eg-card').value;if(esDia)entry.dia=esDia;if(esMes)entry.mes=esMes;if(isPendiente)entry.pendiente=true;const etRawE=document.getElementById('eg-etiqueta').value.trim();if(etRawE)entry.tags=etRawE.split(',').map(t=>t.trim()).filter(Boolean);getMonthData(state.currentYear,state.currentMonth).egresos.push(entry);}
   document.getElementById('modal-egreso').classList.remove('open');renderAll();
 });
 
-document.getElementById('open-ingreso').addEventListener('click',()=>{document.getElementById('ing-desc').value='';document.getElementById('ing-monto').value='';document.getElementById('ing-cat').value='';document.getElementById('ing-fecha').value='';document.getElementById('modal-ingreso').classList.add('open');setTimeout(()=>document.getElementById('ing-desc').focus(),80);});
+document.getElementById('open-ingreso').addEventListener('click',()=>{document.getElementById('ing-desc').value='';document.getElementById('ing-monto').value='';document.getElementById('ing-etiqueta').value='';document.getElementById('ing-fecha').value='';document.getElementById('modal-ingreso').classList.add('open');setTimeout(()=>document.getElementById('ing-desc').focus(),80);});
 document.getElementById('cancel-ingreso').addEventListener('click',()=>document.getElementById('modal-ingreso').classList.remove('open'));
 document.getElementById('save-ingreso').addEventListener('click',()=>{
-  const desc=document.getElementById('ing-desc').value.trim(),monto=parseFloat(document.getElementById('ing-monto').value),cat=document.getElementById('ing-cat').value.trim()||'Ingreso';
+  const desc=document.getElementById('ing-desc').value.trim(),monto=parseFloat(document.getElementById('ing-monto').value);
   if(!desc||isNaN(monto)||monto<=0){document.getElementById('ing-desc').focus();return;}
-  const {dia,mes}=parseDateInput(document.getElementById('ing-fecha').value);const entry={desc,monto,cat};if(dia)entry.dia=dia;if(mes)entry.mes=mes;
+  const {dia,mes}=parseDateInput(document.getElementById('ing-fecha').value);const entry={desc,monto};if(dia)entry.dia=dia;if(mes)entry.mes=mes;
+  const etRaw=document.getElementById('ing-etiqueta').value.trim();if(etRaw)entry.tags=etRaw.split(',').map(t=>t.trim()).filter(Boolean);
   getMonthData(state.currentYear,state.currentMonth).ingresos.push(entry);document.getElementById('modal-ingreso').classList.remove('open');renderAll();
 });
 
@@ -2007,19 +2007,19 @@ document.getElementById('save-edit-egreso').addEventListener('click',()=>{
       r.amounts=r.amounts.filter(a=>a.year*12+a.month<curKey);
       r.amounts.push({year:_editEgRecYear,month:_editEgRecMonth,monto});
       r.desc=desc;
-      r.tags=[..._editEgTags];
+      const etRawRec=document.getElementById('edit-eg-etiqueta').value.trim();r.tags=etRawRec?etRawRec.split(',').map(t=>t.trim()).filter(Boolean):[];
     }
     _editEgRecId=null;
-  } else if(_editEgRid){const ri=state.recurring.findIndex(r=>r.id===_editEgRid);if(ri>=0){const cuotas=parseInt(document.getElementById('edit-eg-cuotas').value);if(!cuotas||cuotas<2){document.getElementById('edit-eg-cuotas').focus();return;}pushUndo({type:'del-rec',item:{...state.recurring[ri]}},'Edición de cuotas');state.recurring[ri]={...state.recurring[ri],desc,monto,cuotas};if(dia)state.recurring[ri].dia=dia;else delete state.recurring[ri].dia;if(mes)state.recurring[ri].mes=mes;else delete state.recurring[ri].mes;state.recurring[ri].tags=[..._editEgTags];}}
-  else{const prev={...getMonthData(_editEgY,_editEgM).egresos[_editEgIdx]};pushUndo({type:'edit-eg',y:_editEgY,m:_editEgM,idx:_editEgIdx,prev},'Egreso editado');const tipo=document.getElementById('edit-eg-tipo').value,entry={desc,monto,tipo};if(tipo==='tarjeta')entry.card=document.getElementById('edit-eg-card').value;if(dia)entry.dia=dia;if(mes)entry.mes=mes;if(isPendiente)entry.pendiente=true;else delete entry.pendiente;entry.tags=[..._editEgTags];getMonthData(_editEgY,_editEgM).egresos[_editEgIdx]=entry;}
+  } else if(_editEgRid){const ri=state.recurring.findIndex(r=>r.id===_editEgRid);if(ri>=0){const cuotas=parseInt(document.getElementById('edit-eg-cuotas').value);if(!cuotas||cuotas<2){document.getElementById('edit-eg-cuotas').focus();return;}pushUndo({type:'del-rec',item:{...state.recurring[ri]}},'Edición de cuotas');state.recurring[ri]={...state.recurring[ri],desc,monto,cuotas};if(dia)state.recurring[ri].dia=dia;else delete state.recurring[ri].dia;if(mes)state.recurring[ri].mes=mes;else delete state.recurring[ri].mes;const etRawRid=document.getElementById('edit-eg-etiqueta').value.trim();state.recurring[ri].tags=etRawRid?etRawRid.split(',').map(t=>t.trim()).filter(Boolean):[];}}
+  else{const prev={...getMonthData(_editEgY,_editEgM).egresos[_editEgIdx]};pushUndo({type:'edit-eg',y:_editEgY,m:_editEgM,idx:_editEgIdx,prev},'Egreso editado');const tipo=document.getElementById('edit-eg-tipo').value,entry={desc,monto,tipo};if(tipo==='tarjeta')entry.card=document.getElementById('edit-eg-card').value;if(dia)entry.dia=dia;if(mes)entry.mes=mes;if(isPendiente)entry.pendiente=true;else delete entry.pendiente;const etRawEg=document.getElementById('edit-eg-etiqueta').value.trim();entry.tags=etRawEg?etRawEg.split(',').map(t=>t.trim()).filter(Boolean):[];getMonthData(_editEgY,_editEgM).egresos[_editEgIdx]=entry;}
   document.getElementById('modal-edit-egreso').classList.remove('open');renderAll();
 });
 document.getElementById('cancel-edit-ingreso').addEventListener('click',()=>document.getElementById('modal-edit-ingreso').classList.remove('open'));
 document.getElementById('save-edit-ingreso').addEventListener('click',()=>{
-  const desc=document.getElementById('edit-ing-desc').value.trim(),monto=parseFloat(document.getElementById('edit-ing-monto').value),cat=document.getElementById('edit-ing-cat').value.trim()||'Ingreso';if(!desc||isNaN(monto)||monto<=0)return;
+  const desc=document.getElementById('edit-ing-desc').value.trim(),monto=parseFloat(document.getElementById('edit-ing-monto').value);if(!desc||isNaN(monto)||monto<=0)return;
   const {dia,mes}=parseDateInput(document.getElementById('edit-ing-fecha').value);
   const prev={...getMonthData(_editIngY,_editIngM).ingresos[_editIngIdx]};pushUndo({type:'edit-ing',y:_editIngY,m:_editIngM,idx:_editIngIdx,prev},'Ingreso editado');
-  const entry={desc,monto,cat};if(dia)entry.dia=dia;if(mes)entry.mes=mes;entry.tags=[..._editIngTags];
+  const entry={desc,monto};if(dia)entry.dia=dia;if(mes)entry.mes=mes;const etRawIng=document.getElementById('edit-ing-etiqueta').value.trim();if(etRawIng)entry.tags=etRawIng.split(',').map(t=>t.trim()).filter(Boolean);
   getMonthData(_editIngY,_editIngM).ingresos[_editIngIdx]=entry;document.getElementById('modal-edit-ingreso').classList.remove('open');renderAll();
 });
 document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
@@ -2085,12 +2085,7 @@ function initTagInput(wrapId,inputId,getTags,setTags){
   inp.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===',')&&inp.value.trim()){e.preventDefault();const tag=inp.value.trim().replace(/,/g,'');if(tag&&!getTags().includes(tag))setTags([...getTags(),tag]);inp.value='';render();}else if(e.key==='Backspace'&&!inp.value){const tags=getTags();if(tags.length){setTags(tags.slice(0,-1));render();}}});
   wrap.addEventListener('click',()=>inp.focus());render();return render;
 }
-let _egTags=[],_ingTags=[],_editEgTags=[],_editIngTags=[];
-document.getElementById('open-egreso').addEventListener('click',()=>{_egTags=[];},true);
-initTagInput('eg-tags-wrap','eg-tag-input',()=>_egTags,v=>{_egTags=v;});
-document.getElementById('open-ingreso').addEventListener('click',()=>{_ingTags=[];},true);
-initTagInput('ing-tags-wrap','ing-tag-input',()=>_ingTags,v=>{_ingTags=v;});
-document.getElementById('modal-egreso').addEventListener('click',e=>{if(e.target.id==='save-egreso')window._pendingEgTags=[..._egTags];});
+document.getElementById('open-egreso').addEventListener('click',()=>{document.getElementById('eg-etiqueta').value='';},true);
 
 // ── BÚSQUEDA ─────────────────────────────────────────────────────────
 function getAllItems(){
