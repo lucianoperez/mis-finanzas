@@ -524,7 +524,11 @@
   .comp-table td.col-label { text-align: left; color: var(--text); font-weight: 500; padding-left: 16px; }
   .comp-table td.col-label.indent { padding-left: 28px; color: var(--text2); font-weight: 400; font-size: 12px; }
   .comp-table tr.section-row td { background: var(--surface2); font-weight: 700; font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 14px; border-top: 0.5px solid var(--border); }
-  .comp-table tr.total-row td { font-weight: 700; font-size: 13px; border-top: 1px solid var(--border-md); padding: 10px 14px; }
+  .comp-table tr.section-row td:not(.col-label) { text-align: right; text-transform: none; letter-spacing: 0; font-size: 12px; }
+  .comp-table tr.section-row td.val-pos { color: var(--green) !important; }
+  .comp-table tr.section-row td.val-neg { color: var(--red) !important; }
+  .comp-table tr.section-row td.val-zero { color: var(--text3) !important; }
+  .comp-table tr.total-row td { font-weight: 700; font-size: 13px; border-top: 2px solid var(--border-md); padding: 10px 14px; }
   .comp-table tr.total-row td.pos { color: var(--green); }
   .comp-table tr.total-row td.neg { color: var(--red); }
   .comp-table .val-pos  { color: var(--green); }
@@ -536,11 +540,18 @@
   .comp-table tr.collapsible-hdr { cursor: pointer; user-select: none; }
   .comp-table .caret { display: inline-block; margin-right: 5px; font-size: 9px; transition: transform 0.15s ease; vertical-align: middle; line-height: 1; color: var(--text3); }
   .comp-table tr.collapsible-hdr.collapsed .caret { transform: rotate(-90deg); }
+  /* Ingresos: acento verde */
   .comp-table tr.section-row.collapsible-hdr td:first-child { border-left: 3px solid var(--green) !important; padding-left: 11px !important; }
-  .comp-table tr.subgroup-row.collapsible-hdr td:first-child { border-left: 2px solid var(--amber) !important; padding-left: 12px !important; }
   .comp-table tr.section-row.collapsible-hdr:hover td { background: rgba(93,202,165,0.07) !important; opacity: 1 !important; }
-  .comp-table tr.subgroup-row.collapsible-hdr:hover td { background: rgba(239,159,39,0.07) !important; opacity: 1 !important; }
-  .comp-table tr.subgroup-row td:not(.col-label) { border-bottom: 1.5px solid rgba(240,153,123,0.45) !important; padding-bottom: 7px !important; }
+  /* Egresos: acento rojo */
+  .comp-table tr.eg-hdr.collapsible-hdr td:first-child { border-left: 3px solid var(--red) !important; padding-left: 11px !important; }
+  .comp-table tr.eg-hdr.collapsible-hdr:hover td { background: rgba(240,153,123,0.07) !important; opacity: 1 !important; }
+  /* Subgrupos (tarjetas): rojo más claro */
+  .comp-table tr.subgroup-row.collapsible-hdr td:first-child { border-left: 2px solid rgba(240,153,123,0.5) !important; padding-left: 12px !important; }
+  .comp-table tr.subgroup-row.collapsible-hdr:hover td { background: rgba(240,153,123,0.05) !important; opacity: 1 !important; }
+  .comp-table tr.subgroup-row td:not(.col-label) { border-bottom: 1.5px solid rgba(240,153,123,0.35) !important; padding-bottom: 7px !important; }
+  /* Divisor entre ingresos y egresos */
+  .comp-table tr.section-divider td { padding: 0; height: 5px; background: var(--bg); border-top: 1.5px solid var(--border-md); border-bottom: none; }
   /* ── COMP CHIPS ─────────────────────────────────────── */
   #comp-chips { padding: 0 16px 14px; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; justify-content: center; }
   .comp-chips-inner { display: flex; align-items: center; gap: 5px; }
@@ -1931,13 +1942,20 @@ function renderComparativo(){
   const getIngCT=(y,m,desc)=>getMonthData(y,m).ingresos.filter(i=>i.desc===desc).reduce((a,x)=>a+ +x.monto,0);
   const getEgCT=(y,m,k)=>{const[d,tp,ca,ir]=k.split('|||');const md=getMonthData(y,m),rec=getRecurringForMonth(y,m),recM=getRecurrentesForMonth(y,m);if(ir==='rec')return rec.filter(r=>r.desc===d&&r.tipo===tp&&(r.card||'')===ca).reduce((a,x)=>a+ +x.monto,0);if(ir==='rcm')return recM.filter(r=>r.desc===d&&r.tipo===tp&&(r.card||'')===ca).reduce((a,x)=>a+ +x.monto,0);return md.egresos.filter(e=>e.desc===d&&e.tipo===tp&&(e.card||'')===ca).reduce((a,x)=>a+ +x.monto,0);};
   const cGrpKey=k=>{const[,tp,ca]=k.split('|||');if(tp==='fijo')return'fijo';if(tp==='efectivo')return'efec';return'card:'+ca;};
-  html+='<tr class="section-row collapsible-hdr" data-toggle="ing"><td class="col-label" colspan="'+(months.length+1)+'"><span class="caret">▾</span>Ingresos</td></tr>';
+  // INGRESOS: header lleva el total inline (Opción A — sin fila "Total ingresos")
+  html+='<tr class="section-row collapsible-hdr" data-toggle="ing"><td class="col-label"><span class="caret">▾</span>Ingresos</td>';
+  months.forEach(({y,m})=>{const ic=y===cy&&m===cm,v=getMonthData(y,m).ingresos.reduce((a,x)=>a+ +x.monto,0);html+='<td class="'+(ic?'current ':'')+( v===0?'val-zero':v>0?'val-pos':'val-neg')+'">'+(v===0?'—':fmt(v))+'</td>';});
+  html+='</tr>';
   [...allIngC].forEach(desc=>{html+='<tr class="concept-row" data-grp="ing"><td class="col-label indent">'+desc+'</td>';months.forEach(({y,m})=>html+=vCell(getIngCT(y,m,desc),y===cy&&m===cm));html+='</tr>';});
-  html+='<tr class="total-row"><td class="col-label">Total ingresos</td>';months.forEach(({y,m})=>{const ic=y===cy&&m===cm,v=getMonthData(y,m).ingresos.reduce((a,x)=>a+ +x.monto,0);html+='<td class="'+(ic?'current ':'')+( v>0?'pos':v<0?'neg':'')+'">'+fmt(v)+'</td>';});html+='</tr>';
-  html+='<tr class="section-row collapsible-hdr" data-toggle="eg"><td class="col-label" colspan="'+(months.length+1)+'"><span class="caret">▾</span>Egresos</td></tr>';
+  // Divisor visual entre Ingresos y Egresos
+  html+='<tr class="section-divider"><td colspan="'+(months.length+1)+'"></td></tr>';
+  // EGRESOS: header lleva el total inline (acento rojo, clase eg-hdr)
+  html+='<tr class="section-row eg-hdr collapsible-hdr" data-toggle="eg"><td class="col-label"><span class="caret">▾</span>Egresos</td>';
+  months.forEach(({y,m})=>{const ic=y===cy&&m===cm,v=getMonthEgresosTotal(y,m);html+='<td class="'+(ic?'current ':'')+( v===0?'val-zero':'val-neg')+'">'+(v===0?'—':fmt(v))+'</td>';});
+  html+='</tr>';
   const og=[];if(allGrpKeys.has('fijo'))og.push('fijo');state.cards.forEach(c=>{if(allGrpKeys.has('card:'+c))og.push('card:'+c);});if(allGrpKeys.has('efec'))og.push('efec');allGrpKeys.forEach(k=>{if(k.startsWith('card:')&&!og.includes(k))og.push(k);});
   og.forEach((gk,gi)=>{html+='<tr class="subgroup-row collapsible-hdr" data-toggle="eg'+gi+'" data-grp="eg"><td class="col-label indent"><span class="caret">▾</span>'+grpLabel(gk)+'</td>';months.forEach(({y,m})=>html+=vCell(getEgByGrp(y,m,gk),y===cy&&m===cm,true));html+='</tr>';[...allEgC].filter(k=>cGrpKey(k)===gk).forEach(k=>{html+='<tr class="concept-row" data-grp="eg eg'+gi+'"><td class="col-label concept">'+k.split('|||')[0]+'</td>';months.forEach(({y,m})=>html+=vCell(getEgCT(y,m,k),y===cy&&m===cm,true));html+='</tr>';});});
-  html+='<tr class="total-row"><td class="col-label">Total egresos</td>';months.forEach(({y,m})=>{const ic=y===cy&&m===cm,v=getMonthEgresosTotal(y,m);html+='<td class="'+(ic?'current ':'')+' neg">'+fmt(v)+'</td>';});html+='</tr>';
+  // DIFERENCIA: fila final destacada (sin "Total ingresos" ni "Total egresos")
   html+='<tr class="total-row"><td class="col-label">Diferencia</td>';months.forEach(({y,m})=>{const ic=y===cy&&m===cm,ing=getMonthData(y,m).ingresos.reduce((a,x)=>a+ +x.monto,0),eg=getMonthEgresosTotal(y,m),d=ing-eg;html+='<td class="'+(ic?'current ':'')+(d>0?'pos':d<0?'neg':'')+'">'+fmt(d)+'</td>';});html+='</tr></tbody></table>';
   document.getElementById('comp-container').innerHTML=html;
 }
