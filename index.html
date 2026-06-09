@@ -558,18 +558,28 @@
   .comp-table tr.acum-row td.pos { color: var(--green); }
   .comp-table tr.acum-row td.neg { color: var(--red); }
   .comp-table tr.acum-row td.zero { color: var(--text3); }
-  /* ── COMP CHIPS ─────────────────────────────────────── */
-  #comp-chips { padding: 0 16px 14px; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; justify-content: center; }
-  .comp-chips-inner { display: flex; align-items: center; gap: 5px; }
-  .comp-chip { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 400; cursor: pointer; border: 0.5px solid var(--border-md); background: transparent; color: var(--text3); transition: all 0.12s; font-family: inherit; line-height: 1.4; white-space: nowrap; flex-shrink: 0; }
-  .comp-chip:hover { opacity: 0.8; }
-  .comp-chip.selected { background: rgba(93,202,165,0.12); border: 1px solid var(--green); color: var(--green); font-weight: 600; }
-  .comp-chip.current { background: rgba(200,162,64,0.15); border: 1.5px solid #C8A240; color: #C8A240; font-weight: 600; }
-  .comp-chip.future { background: rgba(93,202,165,0.06); border: 1px dashed rgba(93,202,165,0.45); color: rgba(93,202,165,0.5); }
-  .comp-chip.future.selected { background: rgba(93,202,165,0.12); border: 1px solid var(--green); color: var(--green); font-weight: 600; }
-  .comp-chip.year-sep { border: none; background: none; color: var(--text3); font-size: 10px; padding: 0 2px; cursor: default; pointer-events: none; font-weight: 600; letter-spacing: 0.3px; }
-  .comp-nav-arrow { background: transparent; border: 0.5px solid var(--border-md); border-radius: 6px; color: var(--text2); padding: 4px 9px; font-size: 15px; cursor: pointer; line-height: 1; transition: all 0.12s; flex-shrink: 0; font-family: inherit; }
-  .comp-nav-arrow:hover { background: var(--surface2); color: var(--text); border-color: var(--border-md); }
+  /* ── YEAR STRIP ─────────────────────────────────────── */
+  #comp-chips { padding: 0; }
+  .year-strip-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px 6px; }
+  .year-strip-yr { font-size: 12px; font-weight: 700; color: var(--text2); letter-spacing: 0.3px; }
+  .year-strip-hint { font-size: 10px; color: var(--text3); }
+  .year-strip-nav { display: flex; align-items: center; gap: 4px; padding: 0 12px 14px; }
+  .year-strip-inner { flex: 1; display: flex; gap: 4px; overflow: hidden; }
+  .strip-nav-arrow { background: transparent; border: 0.5px solid var(--border-md); border-radius: 6px; color: var(--text2); padding: 4px 9px; font-size: 16px; cursor: pointer; line-height: 1; transition: all 0.12s; flex-shrink: 0; font-family: inherit; }
+  .strip-nav-arrow:hover:not(:disabled) { background: var(--surface2); }
+  .strip-nav-arrow:disabled { opacity: 0.3; cursor: default; }
+  .year-tile { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; padding: 6px 2px 5px; border-radius: 8px; border: 0.5px solid var(--border); background: transparent; cursor: pointer; font-family: inherit; transition: all 0.12s; gap: 3px; }
+  .year-tile:hover { border-color: var(--border-md); background: var(--surface2); }
+  .year-tile .yt-mon { font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.2px; line-height: 1; }
+  .year-tile .yt-dif { font-size: 9px; font-weight: 700; line-height: 1; }
+  .year-tile .yt-dif.pos { color: var(--green); }
+  .year-tile .yt-dif.neg { color: var(--red); }
+  .year-tile .yt-dif.zero { color: var(--text3); }
+  .year-tile.sel { border-color: var(--green) !important; background: rgba(15,110,86,0.09) !important; }
+  .year-tile.sel .yt-mon { color: var(--green); }
+  .year-tile.cur { border-color: #C8A240 !important; background: rgba(200,162,64,0.10) !important; }
+  .year-tile.cur .yt-mon { color: #C8A240; }
+  .year-tile.fut { opacity: 0.40; }
   .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
   @media (max-width: 650px) { .analysis-grid { grid-template-columns: 1fr; } }
 
@@ -949,27 +959,28 @@
     <section id="section-resumen" class="app-section">
       <div class="section-header">
         <div>
-          <h2 class="section-title">Resumen anual <span id="resumen-year" style="color:var(--text2);font-weight:400;font-size:18px;"></span></h2>
+          <h2 class="section-title">Resumen anual</h2>
         </div>
       </div>
 
       <div class="view-bar">
         <div class="nav-tabs" id="resumen-tabs">
           <button class="nav-tab active" data-view="resumen">Resumen</button>
-          <button class="nav-tab" data-view="comparativo">Comparativo</button>
+          <button class="nav-tab" data-view="ahorros">Ahorros</button>
           <button class="nav-tab" data-view="analisis">Análisis</button>
         </div>
       </div>
 
+      <!-- ── RESUMEN: strip rolling 12m + tabla de detalle + gráfico ── -->
       <div id="view-resumen">
         <div class="panel full-width">
-          <div class="panel-header"><span class="panel-title">Resumen por mes</span></div>
-          <div style="overflow-x:auto;">
-            <table class="resumen-table">
-              <thead><tr><th>Mes</th><th>Ingresos</th><th>Egresos</th><th>Diferencia mes</th><th>Acumulado</th></tr></thead>
-              <tbody id="resumen-body"></tbody>
-            </table>
+          <div class="panel-header" style="flex-direction:column;align-items:stretch;gap:0;padding:0;">
+            <div style="padding:14px 16px 4px;"><span class="panel-title">Detalle mensual</span></div>
+            <div id="comp-chips"></div>
           </div>
+          <div style="overflow-x:auto;" id="comp-container"></div>
+        </div>
+        <div class="panel full-width" style="margin-top:14px;">
           <div class="chart-container">
             <div class="chart-legend">
               <span><span class="legend-dot" style="background:#5DCAA5;"></span>Ingresos</span>
@@ -978,28 +989,11 @@
             <div class="chart-wrap"><div id="myChart" style="width:100%;height:200px;"></div></div>
           </div>
         </div>
-
-        <div class="panel full-width" style="margin-top:14px;">
-          <div class="panel-header">
-            <span class="panel-title">Ahorros en USD — <span id="savings-resumen-year"></span></span>
-          </div>
-          <div style="overflow-x:auto;">
-            <table class="resumen-table">
-              <thead><tr><th>Mes</th><th>Depósitos</th><th>Retiros</th><th>Neto del mes</th><th>Saldo acumulado</th></tr></thead>
-              <tbody id="savings-resumen-body"></tbody>
-            </table>
-          </div>
-        </div>
       </div>
 
-      <div id="view-comparativo" style="display:none;">
-        <div class="panel full-width">
-          <div class="panel-header" style="flex-direction:column;align-items:stretch;gap:0;padding:0;">
-            <div style="padding:14px 16px 10px;"><span class="panel-title">Comparativo mensual</span></div>
-            <div id="comp-chips"></div>
-          </div>
-          <div style="overflow-x:auto;" id="comp-container"></div>
-        </div>
+      <!-- ── AHORROS: strip rolling 12m + tablas multimoneda ── -->
+      <div id="view-ahorros" style="display:none;">
+        <div id="savings-container"></div>
       </div>
 
       <div id="view-analisis" style="display:none;">
@@ -1734,8 +1728,8 @@ function renderAll(){
   renderMonthLabel();renderCards();renderLists();renderSummary();renderSavings();renderDistPanel();
   const rs=document.getElementById('section-resumen');
   if(rs&&rs.classList.contains('active')){
-    if(document.getElementById('view-resumen').style.display!=='none')renderResumen();
-    if(document.getElementById('view-comparativo').style.display!=='none'){renderCompChips();renderComparativo();}
+    if(document.getElementById('view-resumen').style.display!=='none'){renderCompChips();renderComparativo();renderResumen();}
+    if(document.getElementById('view-ahorros').style.display!=='none'){if(!document.getElementById('ahor-chips'))renderSavingsView();else{renderAhorChips();renderSavingsTable();}}
   }
   saveState();
 }
@@ -1872,30 +1866,97 @@ function renderSummary(){
 }
 
 function renderResumen(){
-  document.getElementById('resumen-year').textContent=state.currentYear;
-  const tbody=document.getElementById('resumen-body');let html='',acum=0;const cI=[],cE=[],cL=[];
-  for(let m=0;m<12;m++){const md=getMonthData(state.currentYear,m),ing=md.ingresos.reduce((a,x)=>a+ +x.monto,0),eg=getMonthEgresosTotal(state.currentYear,m),dif=ing-eg;acum+=dif;cL.push(MONTHS[m].slice(0,3));cI.push(Math.round(ing));cE.push(Math.round(eg));const dc=dif>0?'pos':dif<0?'neg':'',ac=acum>0?'pos':acum<0?'neg':'',cur=m===state.currentMonth?' class="current-month"':'';html+='<tr'+cur+'><td>'+MONTHS[m]+'</td><td class="pos">'+fmt(ing)+'</td><td class="neg">'+fmt(eg)+'</td><td class="'+dc+'">'+fmt(dif)+'</td><td class="'+ac+'">'+fmt(acum)+'</td></tr>';}
-  tbody.innerHTML=html;NativeChart.bar('myChart',cL,[{label:'Ingresos',data:cI,backgroundColor:'#5DCAA5'},{label:'Egresos',data:cE,backgroundColor:'#F0997B'}]);
-  renderSavingsResumen();
+  // Gráfico: usa los últimos 12 meses del rolling window
+  const rolling=getRolling12();
+  const cL=[],cI=[],cE=[];
+  rolling.forEach(({y,m})=>{const md=getMonthData(y,m),ing=md.ingresos.reduce((a,x)=>a+ +x.monto,0),eg=getMonthEgresosTotal(y,m);cL.push(MONTHS[m].slice(0,3));cI.push(Math.round(ing));cE.push(Math.round(eg));});
+  NativeChart.bar('myChart',cL,[{label:'Ingresos',data:cI,backgroundColor:'#5DCAA5'},{label:'Egresos',data:cE,backgroundColor:'#F0997B'}]);
+}
+
+// ── AHORROS VIEW: multimoneda, strip navegable + tabla por meses seleccionados ──
+function renderSavingsView(){
+  const container=document.getElementById('savings-container');if(!container)return;
+  if(_ahorSel.size===0)initAhorSel();
+  container.innerHTML=`<div class="panel full-width" style="margin-bottom:14px;"><div class="panel-header" style="flex-direction:column;align-items:stretch;gap:0;padding:0;"><div style="padding:14px 16px 4px;"><span class="panel-title">Ahorros</span></div><div id="ahor-chips"></div></div></div><div id="ahor-tables"></div>`;
+  renderAhorChips();renderSavingsTable();
+}
+
+function renderSavingsTable(){
+  const tablesEl=document.getElementById('ahor-tables');if(!tablesEl)return;
+  const currencies=getSavingsCurrencies();if(currencies.length===0)currencies.push('USD');
+  const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
+  const months=[..._ahorSel].map(k=>{const[y,m]=k.split('-').map(Number);return{y,m};}).sort((a,b)=>a.y!==b.y?a.y-b.y:a.m-b.m);
+  let tablesHtml='';
+  currencies.forEach(mon=>{
+    let rows='';
+    months.forEach(({y,m})=>{
+      const md=getMonthData(y,m),ahs=(md.ahorros||[]).filter(a=>(a.moneda||'USD')===mon);
+      const dep=ahs.filter(a=>a.tipo==='deposito').reduce((s,a)=>s+ +a.monto,0);
+      const ret=ahs.filter(a=>a.tipo!=='deposito').reduce((s,a)=>s+ +a.monto,0);
+      const neto=dep-ret,bal=getBalanceUntil(y,m,mon);
+      const isCur=y===cy&&m===cm,cur=isCur?' class="current-month"':'';
+      const nc=neto>0?'pos':neto<0?'neg':'',bc=bal>0?'pos':bal<0?'neg':'';
+      rows+=`<tr${cur}><td>${MONTHS[m]} ${y}</td><td class="pos">${dep>0?fmtCurrency(dep,mon):'—'}</td><td class="neg">${ret>0?fmtCurrency(ret,mon):'—'}</td><td class="${nc}">${neto!==0?(neto>0?'+':'')+fmtCurrency(Math.abs(neto),mon):'—'}</td><td class="${bc}">${fmtCurrency(bal,mon)}</td></tr>`;
+    });
+    if(!rows)rows=`<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px;">Sin movimientos en los meses seleccionados</td></tr>`;
+    tablesHtml+=`<div class="panel full-width" style="margin-bottom:14px;"><div class="panel-header"><span class="panel-title">Ahorros en ${mon}</span></div><div style="overflow-x:auto;"><table class="resumen-table"><thead><tr><th>Mes</th><th>Depósitos</th><th>Retiros</th><th>Neto del mes</th><th>Saldo acumulado</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  });
+  tablesEl.innerHTML=tablesHtml;
 }
 
 // ── COMP CHIPS STATE ─────────────────────────────────────────────────
 let _compSel=new Set();
-let _compWinStart=null; // {y,m} primer mes visible en la ventana de 6 chips
-const _COMP_WIN=6;
+let _compWinStart=true; // legacy — ya no controla ventana deslizante, solo evita re-init
+let _stripOffset = 0;       // meses hacia atrás en el strip de Resumen
+let _ahorSel = new Set();   // meses seleccionados en Ahorros
+let _ahorStripOffset = 0;   // meses hacia atrás en el strip de Ahorros
+
+// Devuelve los últimos 12 meses (del más viejo al actual) como rolling window
+function getRolling12(offset=0){
+  const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
+  const months=[];
+  for(let i=11;i>=0;i--){let m=cm-i-offset,y=cy;while(m<0){m+=12;y--;}months.push({y,m});}
+  return months;
+}
 
 function initCompSel(){
-  const n=nowAR();const cy=n.getFullYear(),cm=n.getMonth();
-  // Selección default: mes anterior + actual + siguiente
+  const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
   _compSel=new Set();
-  let pm=cm-1,py=cy;if(pm<0){pm=11;py--;}
-  let nm=cm+1,ny=cy;if(nm>11){nm=0;ny++;}
-  _compSel.add(py+'-'+pm);
+  // Default: últimos 3 meses del rolling window
+  let pp=cm-2,ppy=cy;if(pp<0){pp+=12;ppy--;}
+  let p=cm-1,py=cy;if(p<0){p+=12;py--;}
+  _compSel.add(ppy+'-'+pp);
+  _compSel.add(py+'-'+p);
   _compSel.add(cy+'-'+cm);
-  _compSel.add(ny+'-'+nm);
-  // Ventana: empieza 2 meses antes del actual → actual queda en posición 3 de 6
-  let ws=cm-2,wy=cy;if(ws<0){ws+=12;wy--;}
-  _compWinStart={y:wy,m:ws};
+}
+
+function initAhorSel(){
+  const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
+  _ahorSel=new Set();
+  let pp=cm-2,ppy=cy;if(pp<0){pp+=12;ppy--;}
+  let p=cm-1,py=cy;if(p<0){p+=12;py--;}
+  _ahorSel.add(ppy+'-'+pp);_ahorSel.add(py+'-'+p);_ahorSel.add(cy+'-'+cm);
+}
+function _ahorChipClick(key){
+  if(!key)return;
+  if(_ahorSel.has(key)){if(_ahorSel.size>1)_ahorSel.delete(key);}else _ahorSel.add(key);
+  renderAhorChips();renderSavingsTable();
+}
+function _shiftResumenStrip(d){
+  _stripOffset=Math.max(0,_stripOffset+d);renderCompChips();
+}
+function _shiftAhorStrip(d){
+  _ahorStripOffset=Math.max(0,_ahorStripOffset+d);renderAhorChips();
+}
+function getBalanceUntil(y,m,mon){
+  let bal=0;
+  Object.entries(state.data).forEach(([k,md])=>{
+    const[ky,km]=k.split('-').map(Number);
+    if(ky<y||(ky===y&&km<=m)){
+      (md.ahorros||[]).filter(a=>(a.moneda||'USD')===mon).forEach(a=>{bal+=a.tipo==='deposito'?+a.monto:-(+a.monto);});
+    }
+  });
+  return bal;
 }
 
 function _shiftWin(delta){
@@ -1910,34 +1971,52 @@ function _compChipClick(key){
   if(ky===nw.getFullYear()&&km===nw.getMonth())return;
   if(_compSel.has(key)){if(_compSel.size>1)_compSel.delete(key);}else _compSel.add(key);
   renderCompChips();
-  if(document.getElementById('view-comparativo').style.display!=='none')renderComparativo();
+  if(document.getElementById('view-resumen').style.display!=='none')renderComparativo();
 }
 
 function renderCompChips(){
   const wrap=document.getElementById('comp-chips');if(!wrap)return;
-  if(!_compWinStart)initCompSel();
-  const n=nowAR();const cy=n.getFullYear(),cm=n.getMonth();
-  // Generar los _COMP_WIN meses de la ventana
-  const win=[];let wy=_compWinStart.y,wm=_compWinStart.m;
-  for(let i=0;i<_COMP_WIN;i++){
-    win.push({y:wy,m:wm,isCurrent:wy===cy&&wm===cm,isFuture:(wy>cy)||(wy===cy&&wm>cm)});
-    wm++;if(wm>11){wm=0;wy++;}
-  }
-  // Chips con separador de año cuando cambia dentro de la ventana
-  let chipsHtml='',lastY=null;
-  win.forEach(({y,m,isCurrent,isFuture})=>{
-    if(lastY!==null&&y!==lastY)chipsHtml+=`<span class="comp-chip year-sep">${lastY}</span>`;
-    lastY=y;
-    const key=y+'-'+m;const sel=_compSel.has(key);
-    let cls='comp-chip';
-    if(isCurrent)cls+=' current';
-    else if(sel)cls+=' selected';
-    else if(isFuture)cls+=' future';
-    // onclick inline evita acumulación de event listeners en cada render
-    chipsHtml+=`<button class="${cls}" onclick="_compChipClick('${key}')">${MONTHS[m].slice(0,3)}${isCurrent?'&thinsp;&#9679;':''}</button>`;
+  if(_compSel.size===0)initCompSel();
+  const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
+  const rolling=getRolling12(_stripOffset);
+  let tilesHtml='';
+  rolling.forEach(({y,m})=>{
+    const isCur=y===cy&&m===cm;
+    const key=y+'-'+m,sel=_compSel.has(key);
+    const ing=getMonthData(y,m).ingresos.reduce((a,x)=>a+ +x.monto,0);
+    const eg=getMonthEgresosTotal(y,m);
+    const dif=ing-eg,hasData=ing>0||eg>0;
+    const absD=Math.abs(dif);
+    const valStr=!hasData?'—':(absD>=1000?(dif<0?'-':'+')+Math.round(absD/1000)+'k':fmt(dif));
+    const valCls=!hasData?'zero':dif>0?'pos':dif<0?'neg':'zero';
+    let cls='year-tile'+(isCur?' cur':sel?' sel':'');
+    tilesHtml+=`<button class="${cls}" onclick="_compChipClick('${key}')"><span class="yt-mon">${MONTHS[m].slice(0,3)}</span><span class="yt-dif ${valCls}">${valStr}</span></button>`;
   });
-  if(lastY)chipsHtml+=`<span class="comp-chip year-sep">${lastY}</span>`;
-  wrap.innerHTML=`<button class="comp-nav-arrow" onclick="_shiftWin(-1)">&#8249;</button><div class="comp-chips-inner">${chipsHtml}</div><button class="comp-nav-arrow" onclick="_shiftWin(1)">&#8250;</button>`;
+  const years=[...new Set(rolling.map(({y})=>y))];
+  const yearLabel=years.length>1?years.join(' – '):years[0];
+  wrap.innerHTML=`<div class="year-strip-head"><span class="year-strip-yr">${yearLabel}</span><span class="year-strip-hint">tocá para seleccionar meses</span></div><div class="year-strip-nav"><button class="strip-nav-arrow" onclick="_shiftResumenStrip(1)">&#8249;</button><div class="year-strip-inner">${tilesHtml}</div><button class="strip-nav-arrow"${_stripOffset===0?' disabled':''} onclick="_shiftResumenStrip(-1)">&#8250;</button></div>`;
+}
+
+function renderAhorChips(){
+  const wrap=document.getElementById('ahor-chips');if(!wrap)return;
+  if(_ahorSel.size===0)initAhorSel();
+  const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
+  const rolling=getRolling12(_ahorStripOffset);
+  let tilesHtml='';
+  rolling.forEach(({y,m})=>{
+    const isCur=y===cy&&m===cm;
+    const key=y+'-'+m,sel=_ahorSel.has(key);
+    const md=getMonthData(y,m);
+    const hasAct=(md.ahorros||[]).length>0;
+    const net=(md.ahorros||[]).reduce((s,a)=>s+(a.tipo==='deposito'?1:-1),0);
+    const valStr=!hasAct?'—':net>=0?'+mov':'−mov';
+    const valCls=!hasAct?'zero':net>=0?'pos':'neg';
+    let cls='year-tile'+(isCur?' cur':sel?' sel':'');
+    tilesHtml+=`<button class="${cls}" onclick="_ahorChipClick('${key}')"><span class="yt-mon">${MONTHS[m].slice(0,3)}</span><span class="yt-dif ${valCls}">${valStr}</span></button>`;
+  });
+  const years=[...new Set(rolling.map(({y})=>y))];
+  const yearLabel=years.length>1?years.join(' – '):years[0];
+  wrap.innerHTML=`<div class="year-strip-head"><span class="year-strip-yr">${yearLabel}</span><span class="year-strip-hint">tocá para seleccionar meses</span></div><div class="year-strip-nav"><button class="strip-nav-arrow" onclick="_shiftAhorStrip(1)">&#8249;</button><div class="year-strip-inner">${tilesHtml}</div><button class="strip-nav-arrow"${_ahorStripOffset===0?' disabled':''} onclick="_shiftAhorStrip(-1)">&#8250;</button></div>`;
 }
 
 function renderComparativo(){
@@ -2063,9 +2142,11 @@ document.querySelectorAll('#resumen-tabs .nav-tab').forEach(tab=>{
     document.querySelectorAll('#resumen-tabs .nav-tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');
     const v=tab.dataset.view;
     document.getElementById('view-resumen').style.display=v==='resumen'?'':'none';
-    document.getElementById('view-comparativo').style.display=v==='comparativo'?'':'none';
+    document.getElementById('view-ahorros').style.display=v==='ahorros'?'':'none';
     document.getElementById('view-analisis').style.display=v==='analisis'?'':'none';
-    if(v==='resumen')renderResumen();if(v==='comparativo'){if(!_compWinStart)initCompSel();renderCompChips();renderComparativo();}if(v==='analisis')setTimeout(renderAnalisis,50);
+    if(v==='resumen'){if(_compSel.size===0)initCompSel();renderCompChips();renderComparativo();renderResumen();}
+    if(v==='ahorros')renderSavingsView();
+    if(v==='analisis')setTimeout(renderAnalisis,50);
   });
 });
 
@@ -2541,7 +2622,7 @@ function switchSection(id){
   const btn=document.querySelector('.sidebar-item[data-section="'+id+'"]');if(btn)btn.classList.add('active');
   document.querySelectorAll('.app-section').forEach(s=>s.classList.remove('active'));
   const sec=document.getElementById('section-'+id);if(sec)sec.classList.add('active');
-  if(id==='resumen'){const at=document.querySelector('#resumen-tabs .nav-tab.active'),v=at?at.dataset.view:'resumen';if(v==='resumen')renderResumen();else if(v==='comparativo')renderComparativo();else if(v==='analisis')setTimeout(renderAnalisis,50);}
+  if(id==='resumen'){const at=document.querySelector('#resumen-tabs .nav-tab.active'),v=at?at.dataset.view:'resumen';if(v==='resumen'){if(_compSel.size===0)initCompSel();renderCompChips();renderComparativo();renderResumen();}else if(v==='ahorros')renderSavingsView();else if(v==='analisis')setTimeout(renderAnalisis,50);}
   if(id==='tarjetas')renderCardConfig();
   if(id==='admin')adminLoadUsers();
   // Panel de distribución solo en Gestión mensual
