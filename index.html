@@ -558,6 +558,10 @@
   .comp-table tr.acum-row td.pos { color: var(--green); }
   .comp-table tr.acum-row td.neg { color: var(--red); }
   .comp-table tr.acum-row td.zero { color: var(--text3); }
+  /* ── CURRENCY BADGE ──────────────────────────────────── */
+  .curr-badge-wrap { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+  .curr-flag { font-size: 22px; line-height: 1; }
+  .curr-code { font-size: 13px; font-weight: 700; color: var(--text1); letter-spacing: 0.5px; }
   /* ── YEAR STRIP ─────────────────────────────────────── */
   #comp-chips { padding: 0; }
   .year-strip-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px 6px; }
@@ -975,7 +979,6 @@
       <div id="view-resumen">
         <div class="panel full-width">
           <div class="panel-header" style="flex-direction:column;align-items:stretch;gap:0;padding:0;">
-            <div style="padding:14px 16px 4px;"><span class="panel-title">Detalle mensual</span></div>
             <div id="comp-chips"></div>
           </div>
           <div style="overflow-x:auto;" id="comp-container"></div>
@@ -1873,11 +1876,28 @@ function renderResumen(){
   NativeChart.bar('myChart',cL,[{label:'Ingresos',data:cI,backgroundColor:'#5DCAA5'},{label:'Egresos',data:cE,backgroundColor:'#F0997B'}]);
 }
 
+// ── CURRENCY BADGE ────────────────────────────────────────────────────────────
+function getCurrencyBadge(mon){
+  const map={
+    'USD':  {flag:'🇺🇸', sym:'$',  label:'USD'},
+    'EUR':  {flag:'🇪🇺', sym:'€',  label:'EUR'},
+    'ARS':  {flag:'🇦🇷', sym:'$',  label:'ARS'},
+    'GBP':  {flag:'🇬🇧', sym:'£',  label:'GBP'},
+    'BRL':  {flag:'🇧🇷', sym:'R$', label:'BRL'},
+    'ORO':  {flag:'🥇',  sym:'',   label:'Oro'},
+    'XAU':  {flag:'🥇',  sym:'',   label:'Oro'},
+    'BTC':  {flag:'₿',  sym:'',   label:'BTC'},
+    'USDT': {flag:'💵', sym:'',   label:'USDT'},
+  };
+  const c=map[mon]||{flag:'💱',sym:'',label:mon};
+  return `<div class="curr-badge-wrap"><span class="curr-flag">${c.flag}</span><span class="curr-code">${c.label}</span></div>`;
+}
+
 // ── AHORROS VIEW: multimoneda, strip navegable + tabla por meses seleccionados ──
 function renderSavingsView(){
   const container=document.getElementById('savings-container');if(!container)return;
   if(_ahorSel.size===0)initAhorSel();
-  container.innerHTML=`<div class="panel full-width" style="margin-bottom:14px;"><div class="panel-header" style="flex-direction:column;align-items:stretch;gap:0;padding:0;"><div style="padding:14px 16px 4px;"><span class="panel-title">Ahorros</span></div><div id="ahor-chips"></div></div></div><div id="ahor-tables"></div>`;
+  container.innerHTML=`<div class="panel full-width" style="margin-bottom:14px;"><div class="panel-header" style="flex-direction:column;align-items:stretch;gap:0;padding:0;"><div id="ahor-chips"></div></div></div><div id="ahor-tables"></div>`;
   renderAhorChips();renderSavingsTable();
 }
 
@@ -1899,7 +1919,7 @@ function renderSavingsTable(){
       rows+=`<tr${cur}><td>${MONTHS[m]} ${y}</td><td class="pos">${dep>0?fmtCurrency(dep,mon):'—'}</td><td class="neg">${ret>0?fmtCurrency(ret,mon):'—'}</td><td class="${nc}">${neto!==0?(neto>0?'+':'')+fmtCurrency(Math.abs(neto),mon):'—'}</td><td class="${bc}">${fmtCurrency(bal,mon)}</td></tr>`;
     });
     if(!rows)rows=`<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px;">Sin movimientos en los meses seleccionados</td></tr>`;
-    tablesHtml+=`<div class="panel full-width" style="margin-bottom:14px;"><div class="panel-header"><span class="panel-title">Ahorros en ${mon}</span></div><div style="overflow-x:auto;"><table class="resumen-table"><thead><tr><th>Mes</th><th>Depósitos</th><th>Retiros</th><th>Neto del mes</th><th>Saldo acumulado</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    tablesHtml+=`<div class="panel full-width" style="margin-bottom:14px;"><div class="panel-header">${getCurrencyBadge(mon)}</div><div style="overflow-x:auto;"><table class="resumen-table"><thead><tr><th>Mes</th><th>Depósitos</th><th>Retiros</th><th>Neto del mes</th><th>Saldo acumulado</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
   });
   tablesEl.innerHTML=tablesHtml;
 }
