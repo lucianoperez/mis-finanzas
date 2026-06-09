@@ -2095,19 +2095,19 @@ function renderComparativo(){
   const getIngCT=(y,m,desc)=>getMonthData(y,m).ingresos.filter(i=>i.desc===desc).reduce((a,x)=>a+ +x.monto,0);
   const getEgCT=(y,m,k)=>{const[d,tp,ca,ir]=k.split('|||');const md=getMonthData(y,m),rec=getRecurringForMonth(y,m),recM=getRecurrentesForMonth(y,m);if(ir==='rec')return rec.filter(r=>r.desc===d&&r.tipo===tp&&(r.card||'')===ca).reduce((a,x)=>a+ +x.monto,0);if(ir==='rcm')return recM.filter(r=>r.desc===d&&r.tipo===tp&&(r.card||'')===ca).reduce((a,x)=>a+ +x.monto,0);return md.egresos.filter(e=>e.desc===d&&e.tipo===tp&&(e.card||'')===ca).reduce((a,x)=>a+ +x.monto,0);};
   const cGrpKey=k=>{const[,tp,ca]=k.split('|||');if(tp==='fijo')return'fijo';if(tp==='efectivo')return'efec';return'card:'+ca;};
-  // INGRESOS: header lleva el total inline (Opción A — sin fila "Total ingresos")
-  html+='<tr class="section-row collapsible-hdr" data-toggle="ing"><td class="col-label"><span class="caret">▾</span>Ingresos</td>';
+  // INGRESOS: colapsado por default
+  html+='<tr class="section-row collapsible-hdr collapsed" data-toggle="ing"><td class="col-label"><span class="caret">▾</span>Ingresos</td>';
   months.forEach(({y,m})=>{const ic=y===cy&&m===cm,v=getMonthData(y,m).ingresos.reduce((a,x)=>a+ +x.monto,0);html+='<td class="'+(ic?'current ':'')+( v===0?'val-zero':v>0?'val-pos':'val-neg')+'">'+(v===0?'—':fmt(v))+'</td>';});
   html+='</tr>';
-  [...allIngC].forEach(desc=>{html+='<tr class="concept-row" data-grp="ing"><td class="col-label indent">'+desc+'</td>';months.forEach(({y,m})=>html+=vCell(getIngCT(y,m,desc),y===cy&&m===cm));html+='</tr>';});
+  [...allIngC].forEach(desc=>{html+='<tr class="concept-row" data-grp="ing" style="display:none"><td class="col-label indent">'+desc+'</td>';months.forEach(({y,m})=>html+=vCell(getIngCT(y,m,desc),y===cy&&m===cm));html+='</tr>';});
   // Divisor visual entre Ingresos y Egresos
   html+='<tr class="section-divider"><td colspan="'+(months.length+1)+'"></td></tr>';
-  // EGRESOS: header lleva el total inline (acento rojo, clase eg-hdr)
-  html+='<tr class="section-row eg-hdr collapsible-hdr" data-toggle="eg"><td class="col-label"><span class="caret">▾</span>Egresos</td>';
+  // EGRESOS: colapsado por default
+  html+='<tr class="section-row eg-hdr collapsible-hdr collapsed" data-toggle="eg"><td class="col-label"><span class="caret">▾</span>Egresos</td>';
   months.forEach(({y,m})=>{const ic=y===cy&&m===cm,v=getMonthEgresosTotal(y,m);html+='<td class="'+(ic?'current ':'')+( v===0?'val-zero':'val-neg')+'">'+(v===0?'—':fmt(v))+'</td>';});
   html+='</tr>';
   const og=[];if(allGrpKeys.has('fijo'))og.push('fijo');state.cards.forEach(c=>{if(allGrpKeys.has('card:'+c))og.push('card:'+c);});if(allGrpKeys.has('efec'))og.push('efec');allGrpKeys.forEach(k=>{if(k.startsWith('card:')&&!og.includes(k))og.push(k);});
-  og.forEach((gk,gi)=>{html+='<tr class="subgroup-row collapsible-hdr" data-toggle="eg'+gi+'" data-grp="eg"><td class="col-label indent"><span class="caret">▾</span>'+grpLabel(gk)+'</td>';months.forEach(({y,m})=>html+=vCell(getEgByGrp(y,m,gk),y===cy&&m===cm,true));html+='</tr>';[...allEgC].filter(k=>cGrpKey(k)===gk).forEach(k=>{html+='<tr class="concept-row" data-grp="eg eg'+gi+'"><td class="col-label concept">'+k.split('|||')[0]+'</td>';months.forEach(({y,m})=>html+=vCell(getEgCT(y,m,k),y===cy&&m===cm,true));html+='</tr>';});});
+  og.forEach((gk,gi)=>{html+='<tr class="subgroup-row collapsible-hdr collapsed" data-toggle="eg'+gi+'" data-grp="eg" style="display:none"><td class="col-label indent"><span class="caret">▾</span>'+grpLabel(gk)+'</td>';months.forEach(({y,m})=>html+=vCell(getEgByGrp(y,m,gk),y===cy&&m===cm,true));html+='</tr>';[...allEgC].filter(k=>cGrpKey(k)===gk).forEach(k=>{html+='<tr class="concept-row" data-grp="eg eg'+gi+'" style="display:none"><td class="col-label concept">'+k.split('|||')[0]+'</td>';months.forEach(({y,m})=>html+=vCell(getEgCT(y,m,k),y===cy&&m===cm,true));html+='</tr>';});});
   // DIFERENCIA: fila final destacada
   html+='<tr class="total-row"><td class="col-label">Diferencia</td>';months.forEach(({y,m})=>{const ic=y===cy&&m===cm,ing=getMonthData(y,m).ingresos.reduce((a,x)=>a+ +x.monto,0),eg=getMonthEgresosTotal(y,m),d=ing-eg;html+='<td class="'+(ic?'current ':'')+(d>0?'pos':d<0?'neg':'')+'">'+fmt(d)+'</td>';});html+='</tr>';
   // ACUMULADO: fila al pie (YTD de ene al mes correspondiente)
