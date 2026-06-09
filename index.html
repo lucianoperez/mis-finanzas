@@ -589,6 +589,16 @@
   /* divisor de año en el strip */
   .strip-yr-div { display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0; width:18px; border-radius:7px; background:rgba(255,255,255,0.06); border:0.5px solid var(--border-md); margin:0 1px; }
   .strip-yr-div span { font-size:8px; font-weight:800; color:#C8A240; writing-mode:vertical-lr; transform:rotate(180deg); letter-spacing:0.6px; padding:5px 0; }
+  /* strip mobile: tiles más grandes con 5 meses visibles */
+  @media (max-width: 639px) {
+    .year-tile { padding: 10px 4px 8px; gap: 5px; border-radius: 10px; }
+    .year-tile .yt-mon { font-size: 11px; letter-spacing: 0.3px; }
+    .year-tile .yt-dif { font-size: 11px; }
+    .year-strip-nav { gap: 6px; padding: 0 10px 16px; }
+    .strip-nav-arrow { padding: 6px 11px; font-size: 18px; }
+    .strip-yr-div { width: 16px; }
+    .year-strip-hint { display: none; }
+  }
   .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
   @media (max-width: 650px) { .analysis-grid { grid-template-columns: 1fr; } }
 
@@ -1936,11 +1946,11 @@ let _stripOffset = 0;       // meses hacia atrás en el strip de Resumen
 let _ahorSel = new Set();   // meses seleccionados en Ahorros
 let _ahorStripOffset = 0;   // meses hacia atrás en el strip de Ahorros
 
-// Devuelve los últimos 12 meses (del más viejo al actual) como rolling window
-function getRolling12(offset=0){
-  const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
+// Devuelve los últimos N meses como rolling window (offset negativo = meses futuros)
+function getRollingN(n=12,offset=0){
+  const now=nowAR(),cy=now.getFullYear(),cm=now.getMonth();
   const months=[];
-  for(let i=11;i>=0;i--){
+  for(let i=n-1;i>=0;i--){
     let m=cm-i-offset,y=cy;
     while(m<0){m+=12;y--;}
     while(m>11){m-=12;y++;}
@@ -1948,24 +1958,38 @@ function getRolling12(offset=0){
   }
   return months;
 }
+function getRolling12(offset=0){ return getRollingN(12,offset); }
+function isMobile(){ return window.innerWidth<640; }
 
 function initCompSel(){
-  const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
+  const now=nowAR(),cy=now.getFullYear(),cm=now.getMonth();
   _compSel=new Set();
-  // Default: últimos 3 meses del rolling window
-  let pp=cm-2,ppy=cy;if(pp<0){pp+=12;ppy--;}
-  let p=cm-1,py=cy;if(p<0){p+=12;py--;}
-  _compSel.add(ppy+'-'+pp);
-  _compSel.add(py+'-'+p);
-  _compSel.add(cy+'-'+cm);
+  if(isMobile()){
+    // Mobile: anterior, actual, siguiente
+    let p=cm-1,py=cy;if(p<0){p+=12;py--;}
+    let nx=cm+1,nxy=cy;if(nx>11){nx-=12;nxy++;}
+    _compSel.add(py+'-'+p);_compSel.add(cy+'-'+cm);_compSel.add(nxy+'-'+nx);
+    if(_stripOffset===0)_stripOffset=-2; // centrar current: cm-2 cm-1 [cm] cm+1 cm+2
+  } else {
+    let pp=cm-2,ppy=cy;if(pp<0){pp+=12;ppy--;}
+    let p=cm-1,py=cy;if(p<0){p+=12;py--;}
+    _compSel.add(ppy+'-'+pp);_compSel.add(py+'-'+p);_compSel.add(cy+'-'+cm);
+  }
 }
 
 function initAhorSel(){
-  const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
+  const now=nowAR(),cy=now.getFullYear(),cm=now.getMonth();
   _ahorSel=new Set();
-  let pp=cm-2,ppy=cy;if(pp<0){pp+=12;ppy--;}
-  let p=cm-1,py=cy;if(p<0){p+=12;py--;}
-  _ahorSel.add(ppy+'-'+pp);_ahorSel.add(py+'-'+p);_ahorSel.add(cy+'-'+cm);
+  if(isMobile()){
+    let p=cm-1,py=cy;if(p<0){p+=12;py--;}
+    let nx=cm+1,nxy=cy;if(nx>11){nx-=12;nxy++;}
+    _ahorSel.add(py+'-'+p);_ahorSel.add(cy+'-'+cm);_ahorSel.add(nxy+'-'+nx);
+    if(_ahorStripOffset===0)_ahorStripOffset=-2; // centrar current
+  } else {
+    let pp=cm-2,ppy=cy;if(pp<0){pp+=12;ppy--;}
+    let p=cm-1,py=cy;if(p<0){p+=12;py--;}
+    _ahorSel.add(ppy+'-'+pp);_ahorSel.add(py+'-'+p);_ahorSel.add(cy+'-'+cm);
+  }
 }
 function _ahorChipClick(key){
   if(!key)return;
@@ -2008,7 +2032,8 @@ function renderCompChips(){
   const wrap=document.getElementById('comp-chips');if(!wrap)return;
   if(_compSel.size===0)initCompSel();
   const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
-  const rolling=getRolling12(_stripOffset);
+  const stripSize=isMobile()?5:12;
+  const rolling=getRollingN(stripSize,_stripOffset);
   let tilesHtml='',prevY=null,yrIdx=0;
   rolling.forEach(({y,m})=>{
     if(prevY!==null&&y!==prevY){tilesHtml+=`<div class="strip-yr-div"><span>${y}</span></div>`;yrIdx++;}
@@ -2033,7 +2058,8 @@ function renderAhorChips(){
   const wrap=document.getElementById('ahor-chips');if(!wrap)return;
   if(_ahorSel.size===0)initAhorSel();
   const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
-  const rolling=getRolling12(_ahorStripOffset);
+  const stripSize=isMobile()?5:12;
+  const rolling=getRollingN(stripSize,_ahorStripOffset);
   let tilesHtml='',prevY=null,yrIdx=0;
   rolling.forEach(({y,m})=>{
     if(prevY!==null&&y!==prevY){tilesHtml+=`<div class="strip-yr-div"><span>${y}</span></div>`;yrIdx++;}
