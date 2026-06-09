@@ -573,7 +573,9 @@
   .strip-nav-arrow:hover:not(:disabled) { background: var(--surface2); }
   .strip-nav-arrow:disabled { opacity: 0.3; cursor: default; }
   .year-tile { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; padding: 6px 2px 5px; border-radius: 8px; border: 0.5px solid var(--border); background: transparent; cursor: pointer; font-family: inherit; transition: all 0.12s; gap: 3px; }
-  .year-tile:hover { border-color: var(--border-md); background: var(--surface2); }
+  .year-tile.yr-a { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.07); }
+  .year-tile.yr-b { background: rgba(160,200,255,0.05); border-color: rgba(160,200,255,0.10); }
+  .year-tile:hover { border-color: var(--border-md) !important; background: var(--surface2) !important; }
   .year-tile .yt-mon { font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.2px; line-height: 1; }
   .year-tile .yt-dif { font-size: 9px; font-weight: 700; line-height: 1; }
   .year-tile .yt-dif.pos { color: var(--green); }
@@ -584,6 +586,9 @@
   .year-tile.cur { border-color: #C8A240 !important; background: rgba(200,162,64,0.10) !important; }
   .year-tile.cur .yt-mon { color: #C8A240; }
   .year-tile.fut { opacity: 0.40; }
+  /* divisor de año en el strip */
+  .strip-yr-div { display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0; width:18px; border-radius:7px; background:rgba(255,255,255,0.06); border:0.5px solid var(--border-md); margin:0 1px; }
+  .strip-yr-div span { font-size:8px; font-weight:800; color:#C8A240; writing-mode:vertical-lr; transform:rotate(180deg); letter-spacing:0.6px; padding:5px 0; }
   .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
   @media (max-width: 650px) { .analysis-grid { grid-template-columns: 1fr; } }
 
@@ -1935,7 +1940,12 @@ let _ahorStripOffset = 0;   // meses hacia atrás en el strip de Ahorros
 function getRolling12(offset=0){
   const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
   const months=[];
-  for(let i=11;i>=0;i--){let m=cm-i-offset,y=cy;while(m<0){m+=12;y--;}months.push({y,m});}
+  for(let i=11;i>=0;i--){
+    let m=cm-i-offset,y=cy;
+    while(m<0){m+=12;y--;}
+    while(m>11){m-=12;y++;}
+    months.push({y,m});
+  }
   return months;
 }
 
@@ -1963,10 +1973,10 @@ function _ahorChipClick(key){
   renderAhorChips();renderSavingsTable();
 }
 function _shiftResumenStrip(d){
-  _stripOffset=Math.max(0,_stripOffset+d);renderCompChips();
+  _stripOffset=Math.max(-12,_stripOffset+d);renderCompChips();
 }
 function _shiftAhorStrip(d){
-  _ahorStripOffset=Math.max(0,_ahorStripOffset+d);renderAhorChips();
+  _ahorStripOffset=Math.max(-12,_ahorStripOffset+d);renderAhorChips();
 }
 function getBalanceUntil(y,m,mon){
   let bal=0;
@@ -1999,8 +2009,10 @@ function renderCompChips(){
   if(_compSel.size===0)initCompSel();
   const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
   const rolling=getRolling12(_stripOffset);
-  let tilesHtml='';
+  let tilesHtml='',prevY=null,yrIdx=0;
   rolling.forEach(({y,m})=>{
+    if(prevY!==null&&y!==prevY){tilesHtml+=`<div class="strip-yr-div"><span>${y}</span></div>`;yrIdx++;}
+    prevY=y;
     const isCur=y===cy&&m===cm;
     const key=y+'-'+m,sel=_compSel.has(key);
     const ing=getMonthData(y,m).ingresos.reduce((a,x)=>a+ +x.monto,0);
@@ -2009,12 +2021,12 @@ function renderCompChips(){
     const absD=Math.abs(dif);
     const valStr=!hasData?'—':(absD>=1000?(dif<0?'-':'+')+Math.round(absD/1000)+'k':fmt(dif));
     const valCls=!hasData?'zero':dif>0?'pos':dif<0?'neg':'zero';
-    let cls='year-tile'+(isCur?' cur':sel?' sel':'');
-    tilesHtml+=`<button class="${cls}" onclick="_compChipClick('${key}')"><span class="yt-mon">${MONTHS[m].slice(0,3)}</span><span class="yt-dif ${valCls}">${valStr}</span></button>`;
+    const yrCls=isCur?'cur':sel?'sel':(yrIdx%2===0?'yr-a':'yr-b');
+    tilesHtml+=`<button class="year-tile ${yrCls}" onclick="_compChipClick('${key}')"><span class="yt-mon">${MONTHS[m].slice(0,3)}</span><span class="yt-dif ${valCls}">${valStr}</span></button>`;
   });
   const years=[...new Set(rolling.map(({y})=>y))];
   const yearLabel=years.length>1?years.join(' – '):years[0];
-  wrap.innerHTML=`<div class="year-strip-head"><span class="year-strip-yr">${yearLabel}</span><span class="year-strip-hint">tocá para seleccionar meses</span></div><div class="year-strip-nav"><button class="strip-nav-arrow" onclick="_shiftResumenStrip(1)">&#8249;</button><div class="year-strip-inner">${tilesHtml}</div><button class="strip-nav-arrow"${_stripOffset===0?' disabled':''} onclick="_shiftResumenStrip(-1)">&#8250;</button></div>`;
+  wrap.innerHTML=`<div class="year-strip-head"><span class="year-strip-yr">${yearLabel}</span><span class="year-strip-hint">tocá para seleccionar meses</span></div><div class="year-strip-nav"><button class="strip-nav-arrow" onclick="_shiftResumenStrip(1)">&#8249;</button><div class="year-strip-inner">${tilesHtml}</div><button class="strip-nav-arrow"${_stripOffset<=-12?' disabled':''} onclick="_shiftResumenStrip(-1)">&#8250;</button></div>`;
 }
 
 function renderAhorChips(){
@@ -2022,8 +2034,10 @@ function renderAhorChips(){
   if(_ahorSel.size===0)initAhorSel();
   const n=nowAR(),cy=n.getFullYear(),cm=n.getMonth();
   const rolling=getRolling12(_ahorStripOffset);
-  let tilesHtml='';
+  let tilesHtml='',prevY=null,yrIdx=0;
   rolling.forEach(({y,m})=>{
+    if(prevY!==null&&y!==prevY){tilesHtml+=`<div class="strip-yr-div"><span>${y}</span></div>`;yrIdx++;}
+    prevY=y;
     const isCur=y===cy&&m===cm;
     const key=y+'-'+m,sel=_ahorSel.has(key);
     const md=getMonthData(y,m);
@@ -2031,12 +2045,12 @@ function renderAhorChips(){
     const net=(md.ahorros||[]).reduce((s,a)=>s+(a.tipo==='deposito'?1:-1),0);
     const valStr=!hasAct?'—':net>=0?'+mov':'−mov';
     const valCls=!hasAct?'zero':net>=0?'pos':'neg';
-    let cls='year-tile'+(isCur?' cur':sel?' sel':'');
-    tilesHtml+=`<button class="${cls}" onclick="_ahorChipClick('${key}')"><span class="yt-mon">${MONTHS[m].slice(0,3)}</span><span class="yt-dif ${valCls}">${valStr}</span></button>`;
+    const yrCls=isCur?'cur':sel?'sel':(yrIdx%2===0?'yr-a':'yr-b');
+    tilesHtml+=`<button class="year-tile ${yrCls}" onclick="_ahorChipClick('${key}')"><span class="yt-mon">${MONTHS[m].slice(0,3)}</span><span class="yt-dif ${valCls}">${valStr}</span></button>`;
   });
   const years=[...new Set(rolling.map(({y})=>y))];
   const yearLabel=years.length>1?years.join(' – '):years[0];
-  wrap.innerHTML=`<div class="year-strip-head"><span class="year-strip-yr">${yearLabel}</span><span class="year-strip-hint">tocá para seleccionar meses</span></div><div class="year-strip-nav"><button class="strip-nav-arrow" onclick="_shiftAhorStrip(1)">&#8249;</button><div class="year-strip-inner">${tilesHtml}</div><button class="strip-nav-arrow"${_ahorStripOffset===0?' disabled':''} onclick="_shiftAhorStrip(-1)">&#8250;</button></div>`;
+  wrap.innerHTML=`<div class="year-strip-head"><span class="year-strip-yr">${yearLabel}</span><span class="year-strip-hint">tocá para seleccionar meses</span></div><div class="year-strip-nav"><button class="strip-nav-arrow" onclick="_shiftAhorStrip(1)">&#8249;</button><div class="year-strip-inner">${tilesHtml}</div><button class="strip-nav-arrow"${_ahorStripOffset<=-12?' disabled':''} onclick="_shiftAhorStrip(-1)">&#8250;</button></div>`;
 }
 
 function renderComparativo(){
