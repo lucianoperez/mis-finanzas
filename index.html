@@ -1669,6 +1669,7 @@ document.getElementById('logout-btn-mobile').addEventListener('click',async()=>{
 async function initAppForUser(user){
   setSyncStatus('Cargando datos…');const remote=await sbLoadState();
   if(remote){state={...emptyState(),...remote};if(!state.recurring)state.recurring=[];if(!state.recurrentes)state.recurrentes=[];const n=nowAR();state.currentYear=n.getFullYear();state.currentMonth=n.getMonth();if(migrateCatToTags(state))saveState();else saveLocalState();}
+  localStorage.setItem('vin_visited','1');
   setSyncStatus('');showApp(user.email);setAuthLoading(false);renderAll();
 }
 // ── VinanzasIcon (vanilla JS) ─────────────────────────────────────
@@ -1700,7 +1701,18 @@ window.initVinanzasIcon=function(containerId,size=52){
 initVinanzasIcon('vi-login-icon',72);
 initVinanzasIcon('vi-sidebar-icon',34);
 
-(async()=>{showLogin();const user=await sbGetUser();if(user){await initAppForUser(user);}else{const ok=await sbRefreshSession();if(ok)await initAppForUser({email:_userEmail});}})();
+// Primera visita sin sesión previa → registro por defecto (síncrono, antes del render)
+if(!localStorage.getItem('vin_visited') && !localStorage.getItem('sb_refresh')){
+  _setAuthMode('register');
+  document.getElementById('auth-toggle').textContent='¿Ya tenés cuenta? Ingresá';
+}
+
+(async()=>{
+  showLogin();
+  const user=await sbGetUser();
+  if(user){await initAppForUser(user);}
+  else{const ok=await sbRefreshSession();if(ok)await initAppForUser({email:_userEmail});}
+})();
 
 // ── HELPERS ──────────────────────────────────────────────────────────
 function monthKey(y,m){return y+'-'+m;}
