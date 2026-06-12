@@ -520,14 +520,17 @@
   @media(max-width:700px){
     #login-screen { min-height:100vh; align-items:flex-start; }
     .login-split { flex-direction:column; min-height:unset; width:100%; }
-    .login-left { width:100%; padding:36px 28px 32px; background:linear-gradient(160deg,#1a2e1f 0%,#111810 60%,var(--bg) 100%); }
+    .login-left { width:100%; padding:36px 28px 28px; background:linear-gradient(160deg,#1a2e1f 0%,#111810 60%,var(--bg) 100%); }
     #login-chart-bg { display:none; }
     .login-coin { display:none; }
     .login-brand { margin-bottom:24px; }
     .login-tagline { font-size:26px; margin-bottom:12px; }
     .login-tagline-sub { font-size:13px; margin-bottom:0; }
-    .login-features { display:none; }
-    .login-right { flex:unset; width:100%; padding:32px 28px 48px; justify-content:flex-start; }
+    .login-right { flex:unset; width:100%; padding:20px 28px 40px; justify-content:flex-start; }
+    /* Features como pills verticales compactos en mobile */
+    .login-features { display:flex !important; flex-direction:column; gap:7px; margin-top:14px; animation:none; opacity:1; }
+    .login-feature { font-size:12px; padding:6px 12px; background:rgba(93,202,165,0.07); border:0.5px solid rgba(93,202,165,0.14); border-radius:12px; color:#b0afa8; gap:8px; }
+    .login-feature-icon { width:22px; height:22px; border-radius:6px; flex-shrink:0; }
   }
 
   /* ── RESUMEN / CHARTS ────────────────────────────────── */
