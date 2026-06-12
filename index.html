@@ -512,6 +512,9 @@
   .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; }
   .chart-wrap    { position: relative; width: 100%; height: 200px; }
   .chart-wrap-lg { position: relative; width: 100%; height: 260px; }
+  /* tooltip del gráfico de barras */
+  .chart-tt { position:absolute; background:var(--surface); border:0.5px solid var(--border-md); border-radius:9px; padding:6px 11px; font-size:12px; color:var(--text1); pointer-events:none; opacity:0; transform:translateY(6px); transition:opacity 0.13s ease,transform 0.13s ease; white-space:nowrap; box-shadow:0 4px 16px rgba(0,0,0,0.2); z-index:10; line-height:1.5; }
+  .chart-tt.show { opacity:1; transform:translateY(0); }
   .comp-table { border-collapse: collapse; font-size: 12px; min-width: 100%; }
   .comp-table th { padding: 8px 14px; text-align: right; font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 0.5px solid var(--border); white-space: nowrap; position: sticky; top: 0; background: var(--surface); }
   .comp-table th.col-label { text-align: left; min-width: 150px; }
@@ -2316,12 +2319,29 @@ const NativeChart={
     const dark=window.matchMedia('(prefers-color-scheme: dark)').matches,gc=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)',tc=dark?'#6b6a65':'#9e9d99';
     const W=el.offsetWidth||600,H=el.offsetHeight||200,pL=62,pR=16,pT=12,pB=36,cW=W-pL-pR,cH=H-pT-pB,n=labels.length;
     const av=datasets.flatMap(d=>d.data),mx=Math.max(...av,1),mn=Math.min(0,...av),rng=mx-mn||1;
-    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('width',W);svg.setAttribute('height',H);svg.style.fontFamily='inherit';
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('width',W);svg.setAttribute('height',H);svg.style.fontFamily='inherit';svg.style.display='block';
     for(let i=0;i<=4;i++){const v=mn+(rng/4)*i,y=pT+cH-((v-mn)/rng)*cH;const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1',pL);l.setAttribute('x2',pL+cW);l.setAttribute('y1',y);l.setAttribute('y2',y);l.setAttribute('stroke',gc);l.setAttribute('stroke-width','1');svg.appendChild(l);const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',pL-4);t.setAttribute('y',y+4);t.setAttribute('text-anchor','end');t.setAttribute('font-size','10');t.setAttribute('fill',tc);t.textContent='$'+Math.round(v).toLocaleString('es-AR');svg.appendChild(t);}
+    // Wrapper con tooltip flotante
+    const wrap=document.createElement('div');wrap.style.cssText='position:relative;width:100%;height:100%;';
+    const tip=document.createElement('div');tip.className='chart-tt';
+    const showTip=(cx,cy,html)=>{tip.innerHTML=html;tip.style.left=(cx/W*100)+'%';tip.style.top=(cy/H*100)+'%';tip.style.transform='translate(-50%,calc(-100% - 10px))';tip.classList.add('show');};
+    const hideTip=()=>tip.classList.remove('show');
     const gW=cW/n,bW=Math.max(4,gW/datasets.length-2);
-    datasets.forEach((ds,di)=>ds.data.forEach((val,i)=>{const x=pL+i*gW+di*(bW+2)+(gW-datasets.length*(bW+2))/2,bH=Math.abs(val/rng*cH),y=pT+cH-Math.max(val,0)/rng*cH;const r=document.createElementNS('http://www.w3.org/2000/svg','rect');r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',bW);r.setAttribute('height',Math.max(1,bH));r.setAttribute('fill',ds.backgroundColor||'#5DCAA5');r.setAttribute('rx','3');const tt=document.createElementNS('http://www.w3.org/2000/svg','title');tt.textContent=ds.label+': $'+Math.round(val).toLocaleString('es-AR');r.appendChild(tt);svg.appendChild(r);}));
+    datasets.forEach((ds,di)=>ds.data.forEach((val,i)=>{
+      const x=pL+i*gW+di*(bW+2)+(gW-datasets.length*(bW+2))/2,bH=Math.abs(val/rng*cH),y=pT+cH-Math.max(val,0)/rng*cH;
+      const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',bW);r.setAttribute('height',Math.max(1,bH));
+      r.setAttribute('fill',ds.backgroundColor||'#5DCAA5');r.setAttribute('rx','3');
+      r.style.cursor='pointer';r.style.transition='opacity 0.1s';
+      const color=ds.backgroundColor||'#5DCAA5';
+      const tipHtml=`<div style="font-size:10px;color:var(--text3);margin-bottom:2px">${labels[i]}</div><span style="color:${color}">● ${ds.label}</span>&ensp;<strong>$${Math.round(val).toLocaleString('es-AR')}</strong>`;
+      r.addEventListener('mouseenter',()=>{r.style.opacity='0.72';showTip(x+bW/2,y,tipHtml);});
+      r.addEventListener('mouseleave',()=>{r.style.opacity='';hideTip();});
+      r.addEventListener('touchstart',(e)=>{e.preventDefault();r.style.opacity='0.72';showTip(x+bW/2,y,tipHtml);clearTimeout(tip._tid);tip._tid=setTimeout(()=>{hideTip();r.style.opacity='';},2500);},{passive:false});
+      svg.appendChild(r);
+    }));
     labels.forEach((lbl,i)=>{const x=pL+i*gW+gW/2;const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',x);t.setAttribute('y',H-8);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','10');t.setAttribute('fill',tc);t.textContent=lbl;svg.appendChild(t);});
-    el.appendChild(svg);
+    wrap.appendChild(svg);wrap.appendChild(tip);el.appendChild(wrap);
   },
   doughnut(id,labels,data,colors){
     this.destroy(id);const el=document.getElementById(id);if(!el)return;
