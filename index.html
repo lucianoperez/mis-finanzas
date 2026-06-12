@@ -604,6 +604,18 @@
   }
   .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
   @media (max-width: 650px) { .analysis-grid { grid-template-columns: 1fr; } }
+  .analisis-kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
+  @media (max-width:650px) { .analisis-kpi-grid { grid-template-columns:repeat(2,1fr); } }
+  .kpi-card { background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-lg); padding:14px 16px; }
+  .kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:0.4px; color:var(--text3); margin-bottom:6px; }
+  .kpi-value { font-size:20px; font-weight:700; color:var(--text); margin-bottom:3px; line-height:1.2; }
+  .kpi-value.pos { color:var(--green); }
+  .kpi-value.neg { color:var(--red); }
+  .kpi-sub { font-size:11px; color:var(--text3); }
+  .kpi-trend { font-size:14px; font-weight:700; }
+  .kpi-trend.pos { color:var(--green); }
+  .kpi-trend.neg { color:var(--red); }
+  .kpi-trend.neutral { color:var(--text3); font-size:12px; font-weight:400; }
 
   /* ── TAGS ────────────────────────────────────────────── */
   .tag { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; display: inline-flex; align-items: center; cursor: pointer; border: 0.5px solid transparent; transition: opacity 0.1s; }
@@ -1020,22 +1032,37 @@
       </div>
 
       <div id="view-analisis" style="display:none;">
+        <!-- KPIs -->
+        <div id="analisis-kpis" class="analisis-kpi-grid"></div>
+        <!-- Year selector -->
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+          <select id="analisis-year" style="font-size:12px;padding:4px 10px;border:0.5px solid var(--border-md);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-family:inherit;"></select>
+        </div>
+        <!-- Ingresos vs Egresos por mes -->
+        <div class="panel full-width" style="margin-bottom:14px;">
+          <div class="panel-header"><span class="panel-title">Ingresos vs Egresos por mes</span></div>
+          <div id="analisis-bar" style="width:100%;height:220px;"></div>
+        </div>
+        <!-- Distribución + Etiquetas -->
         <div class="analysis-grid">
           <div class="panel">
             <div class="panel-header"><span class="panel-title">Distribución de egresos</span></div>
-            <div class="chart-container"><div class="chart-wrap-lg"><div id="chartPie" style="width:100%;height:260px;"></div></div></div>
+            <div id="chartPie" style="width:100%;height:260px;"></div>
           </div>
           <div class="panel">
-            <div class="panel-header"><span class="panel-title">Evolución acumulada</span></div>
-            <div class="chart-container"><div class="chart-wrap-lg"><div id="chartLine" style="width:100%;height:260px;"></div></div></div>
+            <div class="panel-header"><span class="panel-title">Gastos por etiqueta</span></div>
+            <div id="analisis-tags-bars" style="padding:14px 16px 8px;"></div>
           </div>
         </div>
+        <!-- Evolución acumulada -->
+        <div class="panel full-width" style="margin-bottom:14px;">
+          <div class="panel-header"><span class="panel-title">Evolución acumulada</span></div>
+          <div id="chartLine" style="width:100%;height:220px;"></div>
+        </div>
+        <!-- Top 5 egresos -->
         <div class="panel full-width">
-          <div class="panel-header" style="justify-content:space-between;">
-            <span class="panel-title">Gastos por etiqueta</span>
-            <select id="analisis-year" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border-md);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-family:inherit;"></select>
-          </div>
-          <div id="tags-analisis" style="padding:1rem;"></div>
+          <div class="panel-header"><span class="panel-title">Top 5 egresos del año</span></div>
+          <div id="analisis-top5" style="padding:0 16px 8px;"></div>
         </div>
       </div>
     </section>
@@ -2412,14 +2439,24 @@ const NativeChart={
     const dark=window.matchMedia('(prefers-color-scheme: dark)').matches,gc=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)',tc=dark?'#6b6a65':'#9e9d99';
     const W=el.offsetWidth||600,H=el.offsetHeight||260,pL=72,pR=16,pT=12,pB=36,cW=W-pL-pR,cH=H-pT-pB,n=data.length;
     const mx=Math.max(...data,0),mn=Math.min(...data,0),pad=(mx-mn)*0.1||100,hi=mx+pad,lo=mn-pad,rng=hi-lo||1;
-    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('width',W);svg.setAttribute('height',H);
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('width',W);svg.setAttribute('height',H);svg.style.fontFamily='inherit';svg.style.display='block';
     for(let i=0;i<=4;i++){const v=lo+(rng/4)*i,y=pT+cH-((v-lo)/rng)*cH;const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1',pL);l.setAttribute('x2',pL+cW);l.setAttribute('y1',y);l.setAttribute('y2',y);l.setAttribute('stroke',gc);l.setAttribute('stroke-width','1');svg.appendChild(l);const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',pL-4);t.setAttribute('y',y+4);t.setAttribute('text-anchor','end');t.setAttribute('font-size','10');t.setAttribute('fill',tc);t.textContent='$'+Math.round(v).toLocaleString('es-AR');svg.appendChild(t);}
     if(lo<0&&hi>0){const y0=pT+cH-((0-lo)/rng)*cH;const zl=document.createElementNS('http://www.w3.org/2000/svg','line');zl.setAttribute('x1',pL);zl.setAttribute('x2',pL+cW);zl.setAttribute('y1',y0);zl.setAttribute('y2',y0);zl.setAttribute('stroke',dark?'rgba(255,255,255,0.2)':'rgba(0,0,0,0.2)');zl.setAttribute('stroke-width','1');zl.setAttribute('stroke-dasharray','4,3');svg.appendChild(zl);}
     const pts=data.map((v,i)=>({x:pL+i*(cW/(n-1||1)),y:pT+cH-((v-lo)/rng)*cH})),y0=pT+cH-((0-lo)/rng)*cH;
     if(pts.length>1){const ap=document.createElementNS('http://www.w3.org/2000/svg','path');let d=`M ${pts[0].x} ${y0} L ${pts[0].x} ${pts[0].y}`;for(let i=1;i<pts.length;i++){const cp=(pts[i-1].x+pts[i].x)/2;d+=` C ${cp} ${pts[i-1].y} ${cp} ${pts[i].y} ${pts[i].x} ${pts[i].y}`;}d+=` L ${pts[pts.length-1].x} ${y0} Z`;ap.setAttribute('d',d);ap.setAttribute('fill','rgba(93,202,165,0.12)');svg.appendChild(ap);const lp=document.createElementNS('http://www.w3.org/2000/svg','path');let ld=`M ${pts[0].x} ${pts[0].y}`;for(let i=1;i<pts.length;i++){const cp=(pts[i-1].x+pts[i].x)/2;ld+=` C ${cp} ${pts[i-1].y} ${cp} ${pts[i].y} ${pts[i].x} ${pts[i].y}`;}lp.setAttribute('d',ld);lp.setAttribute('fill','none');lp.setAttribute('stroke','#5DCAA5');lp.setAttribute('stroke-width','2');svg.appendChild(lp);}
-    pts.forEach((pt,i)=>{const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);c.setAttribute('r','4');c.setAttribute('fill','#5DCAA5');const tt=document.createElementNS('http://www.w3.org/2000/svg','title');tt.textContent=labels[i]+': $'+Math.round(data[i]).toLocaleString('es-AR');c.appendChild(tt);svg.appendChild(c);});
+    const wrap=document.createElement('div');wrap.style.cssText='position:relative;width:100%;height:100%;';
+    const tip=document.createElement('div');tip.className='chart-tt';
+    pts.forEach((pt,i)=>{
+      const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('cx',pt.x);c.setAttribute('cy',pt.y);c.setAttribute('r','4');c.setAttribute('fill','#5DCAA5');c.style.cursor='pointer';
+      const val=data[i],sign=val>=0?'+':'';
+      const tipHtml=`<div style="font-size:10px;color:var(--text3);margin-bottom:2px">${labels[i]}</div><span style="color:#5DCAA5">● Acumulado</span>&ensp;<strong>${sign}$${Math.round(val).toLocaleString('es-AR')}</strong>`;
+      c.addEventListener('mouseenter',()=>{c.setAttribute('r','6');tip.innerHTML=tipHtml;tip.style.left=(pt.x/W*100)+'%';tip.style.top=(pt.y/H*100)+'%';tip.style.transform='translate(-50%,calc(-100% - 10px))';tip.classList.add('show');});
+      c.addEventListener('mouseleave',()=>{c.setAttribute('r','4');tip.classList.remove('show');});
+      c.addEventListener('touchstart',(e)=>{e.preventDefault();tip.innerHTML=tipHtml;tip.style.left=(pt.x/W*100)+'%';tip.style.top=(pt.y/H*100)+'%';tip.style.transform='translate(-50%,calc(-100% - 10px))';tip.classList.add('show');clearTimeout(tip._tid);tip._tid=setTimeout(()=>tip.classList.remove('show'),2500);},{passive:false});
+      svg.appendChild(c);
+    });
     labels.forEach((lbl,i)=>{const x=pL+i*(cW/(n-1||1));const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',x);t.setAttribute('y',H-8);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','10');t.setAttribute('fill',tc);t.textContent=lbl;svg.appendChild(t);});
-    el.appendChild(svg);
+    wrap.appendChild(svg);wrap.appendChild(tip);el.appendChild(wrap);
   }
 };
 
@@ -2462,18 +2499,127 @@ document.getElementById('search-clear').addEventListener('click',()=>{document.g
 
 // ── ANÁLISIS ─────────────────────────────────────────────────────────
 function renderAnalisis(){
-  const yearSel=document.getElementById('analisis-year'),year=parseInt(yearSel.value)||state.currentYear;
+  const yearSel=document.getElementById('analisis-year');
+  const year=parseInt(yearSel?.value)||state.currentYear;
+  // Populate year selector
   const years=new Set([state.currentYear]);Object.keys(state.data).forEach(k=>years.add(+k.split('-')[0]));
-  yearSel.innerHTML=[...years].sort((a,b)=>b-a).map(y=>`<option value="${y}"${y===year?' selected':''}>${y}</option>`).join('');
+  if(yearSel)yearSel.innerHTML=[...years].sort((a,b)=>b-a).map(y=>`<option value="${y}"${y===year?' selected':''}>${y}</option>`).join('');
+
+  // ── Datos mensuales ──────────────────────────────────────────────────
+  const monthly=Array.from({length:12},(_,m)=>{
+    const md=getMonthData(year,m);
+    const ing=md.ingresos.reduce((a,x)=>a+ +x.monto,0);
+    const eg=getMonthEgresosTotal(year,m);
+    return{m,ing:Math.round(ing),eg:Math.round(eg),dif:Math.round(ing-eg)};
+  });
+  const totalEg=monthly.reduce((a,x)=>a+x.eg,0);
+  const totalIng=monthly.reduce((a,x)=>a+x.ing,0);
+
+  // ── Sección 1: KPIs ─────────────────────────────────────────────────
+  const avgEg=Math.round(totalEg/12);
+  const bestMonth=monthly.reduce((b,x)=>x.dif>b.dif?x:b,monthly[0]);
+  const worstMonth=monthly.reduce((b,x)=>x.eg>b.eg?x:b,monthly[0]);
+  const savingsRate=totalIng>0?Math.round((totalIng-totalEg)/totalIng*100):0;
+  const prevYear=year-1;
+  const prevEg=Array.from({length:12},(_,m)=>getMonthEgresosTotal(prevYear,m)).reduce((a,b)=>a+b,0);
+  const trendPct=prevEg>0?Math.round((totalEg-prevEg)/prevEg*100):null;
+  const trendHtml=trendPct!==null
+    ?`<span class="kpi-trend ${trendPct>0?'neg':'pos'}">${trendPct>0?'↑':'↓'} ${Math.abs(trendPct)}%</span>`
+    :`<span class="kpi-trend neutral">Sin datos ${prevYear}</span>`;
+  const kpiEl=document.getElementById('analisis-kpis');
+  if(kpiEl)kpiEl.innerHTML=`
+    <div class="kpi-card">
+      <div class="kpi-label">Egreso promedio mensual</div>
+      <div class="kpi-value">${fmt(avgEg)}</div>
+      <div class="kpi-sub">Total anual: ${fmt(totalEg)}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Mejor mes</div>
+      <div class="kpi-value pos">${bestMonth.dif>=0?'+':''}${fmt(bestMonth.dif)}</div>
+      <div class="kpi-sub">${MONTHS[bestMonth.m]}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Tasa de ahorro</div>
+      <div class="kpi-value ${savingsRate>=0?'pos':'neg'}">${savingsRate}%</div>
+      <div class="kpi-sub">del ingreso total anual</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Egresos vs ${prevYear}</div>
+      <div class="kpi-value">${trendHtml}</div>
+      <div class="kpi-sub">${trendPct!==null?fmt(totalEg)+' vs '+fmt(prevEg):'Año anterior sin datos'}</div>
+    </div>`;
+
+  // ── Sección 2: Barras Ingresos vs Egresos ───────────────────────────
+  NativeChart.bar('analisis-bar',MONTHS.map(m=>m.slice(0,3)),[
+    {label:'Ingresos',data:monthly.map(x=>x.ing),backgroundColor:'#5DCAA5'},
+    {label:'Egresos',data:monthly.map(x=>x.eg),backgroundColor:'#F0997B'}
+  ]);
+
+  // ── Sección 3a: Donut distribución ──────────────────────────────────
   const pd={fijo:0,efectivo:0};state.cards.forEach(c=>pd[c]=0);
-  for(let m=0;m<12;m++){const md=getMonthData(year,m);md.egresos.forEach(e=>{if(e.tipo==='fijo')pd.fijo+= +e.monto;else if(e.tipo==='efectivo')pd.efectivo+= +e.monto;else if(e.tipo==='tarjeta'){if(pd[e.card]===undefined)pd[e.card]=0;pd[e.card]+= +e.monto;}});getRecurringForMonth(year,m).forEach(r=>{if(r.tipo==='fijo')pd.fijo+= +r.monto;else if(r.tipo==='efectivo')pd.efectivo+= +r.monto;else if(r.tipo==='tarjeta'){if(pd[r.card]===undefined)pd[r.card]=0;pd[r.card]+= +r.monto;}});getRecurrentesForMonth(year,m).forEach(r=>{if(r.tipo==='fijo')pd.fijo+= +r.monto;else if(r.tipo==='efectivo')pd.efectivo+= +r.monto;else if(r.tipo==='tarjeta'){if(pd[r.card]===undefined)pd[r.card]=0;pd[r.card]+= +r.monto;}});}
-  const pL=[],pV=[],pC=[],cm={fijo:'#888780',efectivo:'#1D9E75'},cc=['#378ADD','#7F77DD','#D4537E','#639922','#BA7517','#D85A30'];state.cards.forEach((c,i)=>cm[c]=cc[i%cc.length]);
-  Object.entries(pd).forEach(([k,v])=>{if(v>0){pL.push(k==='fijo'?'Gastos fijos':k==='efectivo'?'Efectivo':k);pV.push(Math.round(v));pC.push(cm[k]||'#999');}});
-  if(pV.length)NativeChart.doughnut('chartPie',pL,pV,pC);
-  const lL=[],lD=[];let acum=0;for(let m=0;m<12;m++){const md=getMonthData(year,m);acum+=md.ingresos.reduce((a,x)=>a+ +x.monto,0)-getMonthEgresosTotal(year,m);lL.push(MONTHS[m].slice(0,3));lD.push(Math.round(acum));}NativeChart.line('chartLine',lL,lD);
-  const tt={};for(let m=0;m<12;m++){const md=getMonthData(year,m);[...md.egresos,...getRecurringForMonth(year,m),...getRecurrentesForMonth(year,m)].forEach(item=>(item.tags||[]).forEach(tag=>{if(!tt[tag])tt[tag]={eg:0,ing:0};tt[tag].eg+= +item.monto;}));md.ingresos.forEach(item=>(item.tags||[]).forEach(tag=>{if(!tt[tag])tt[tag]={eg:0,ing:0};tt[tag].ing+= +item.monto;}));}
-  const tagsEl=document.getElementById('tags-analisis');if(!Object.keys(tt).length){tagsEl.innerHTML='<p style="font-size:13px;color:var(--text3);">No hay etiquetas cargadas este año.</p>';}
-  else{tagsEl.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:10px;">'+Object.entries(tt).sort((a,b)=>(b[1].eg+b[1].ing)-(a[1].eg+a[1].ing)).map(([tag,tot])=>{const{bg,text}=tagColor(tag);return`<div style="background:${bg};border-radius:var(--radius-lg);padding:10px 14px;min-width:140px;"><div style="font-size:11px;font-weight:700;color:${text};text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">${tag}</div>${tot.eg?`<div style="font-size:13px;font-weight:600;color:var(--red);">−${fmt(tot.eg)}</div>`:''} ${tot.ing?`<div style="font-size:13px;font-weight:600;color:var(--green);">+${fmt(tot.ing)}</div>`:''}</div>`;}).join('')+'</div>';}
+  for(let m=0;m<12;m++){
+    const md=getMonthData(year,m);
+    const addEg=e=>{if(e.tipo==='fijo')pd.fijo+= +e.monto;else if(e.tipo==='efectivo')pd.efectivo+= +e.monto;else if(e.tipo==='tarjeta'){if(pd[e.card]===undefined)pd[e.card]=0;pd[e.card]+= +e.monto;}};
+    md.egresos.forEach(addEg);getRecurringForMonth(year,m).forEach(addEg);getRecurrentesForMonth(year,m).forEach(addEg);
+  }
+  const pL2=[],pV2=[],pC2=[],cm={fijo:'#888780',efectivo:'#1D9E75'};
+  const cc=['#378ADD','#7F77DD','#D4537E','#639922','#BA7517','#D85A30'];
+  state.cards.forEach((c,i)=>cm[c]=cc[i%cc.length]);
+  Object.entries(pd).forEach(([k,v])=>{if(v>0){pL2.push(k==='fijo'?'Gastos fijos':k==='efectivo'?'Efectivo':k);pV2.push(Math.round(v));pC2.push(cm[k]||'#999');}});
+  if(pV2.length)NativeChart.doughnut('chartPie',pL2,pV2,pC2);
+
+  // ── Sección 3b: Etiquetas con barras de progreso ─────────────────────
+  const tt={};
+  for(let m=0;m<12;m++){
+    const md=getMonthData(year,m);
+    [...md.egresos,...getRecurringForMonth(year,m),...getRecurrentesForMonth(year,m)].forEach(item=>(item.tags||[]).forEach(tag=>{if(!tt[tag])tt[tag]={eg:0,ing:0};tt[tag].eg+= +item.monto;}));
+    md.ingresos.forEach(item=>(item.tags||[]).forEach(tag=>{if(!tt[tag])tt[tag]={eg:0,ing:0};tt[tag].ing+= +item.monto;}));
+  }
+  const tagsEl=document.getElementById('analisis-tags-bars');
+  if(tagsEl){
+    const entries=Object.entries(tt).sort((a,b)=>b[1].eg-a[1].eg);
+    const maxEg=Math.max(...entries.map(([,v])=>v.eg),1);
+    if(!entries.length){tagsEl.innerHTML='<p style="font-size:13px;color:var(--text3);">Sin etiquetas este año.</p>';}
+    else{tagsEl.innerHTML=entries.map(([tag,tot])=>{
+      const{bg,text}=tagColor(tag),pct=Math.round(tot.eg/maxEg*100);
+      return`<div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="background:${bg};color:${text};border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700;">${tag}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--text2);">${tot.eg?'−'+fmt(tot.eg):''}${tot.eg&&tot.ing?' · ':''}${tot.ing?'+'+fmt(tot.ing):''}</span>
+        </div>
+        <div style="background:var(--surface2);border-radius:4px;height:5px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${text};border-radius:4px;"></div>
+        </div>
+      </div>`;}).join('');}
+  }
+
+  // ── Sección 4: Evolución acumulada ──────────────────────────────────
+  const lL=[],lD=[];let acum=0;
+  for(let m=0;m<12;m++){const md=getMonthData(year,m);acum+=md.ingresos.reduce((a,x)=>a+ +x.monto,0)-getMonthEgresosTotal(year,m);lL.push(MONTHS[m].slice(0,3));lD.push(Math.round(acum));}
+  NativeChart.line('chartLine',lL,lD);
+
+  // ── Sección 5: Top 5 egresos ─────────────────────────────────────────
+  const allEg=[];
+  for(let m=0;m<12;m++){
+    const md=getMonthData(year,m);
+    md.egresos.forEach(e=>allEg.push({...e,_m:m}));
+    getRecurringForMonth(year,m).forEach(e=>allEg.push({...e,_m:m}));
+    getRecurrentesForMonth(year,m).forEach(e=>allEg.push({...e,_m:m}));
+  }
+  const top5=allEg.filter(e=>+e.monto>0).sort((a,b)=>+b.monto-+a.monto).slice(0,5);
+  const top5El=document.getElementById('analisis-top5');
+  if(top5El){
+    if(!top5.length){top5El.innerHTML='<p style="font-size:13px;color:var(--text3);padding:8px 0;">Sin egresos registrados este año.</p>';}
+    else{top5El.innerHTML=top5.map((e,i)=>`
+      <div style="display:flex;align-items:center;gap:12px;padding:11px 0;${i<top5.length-1?'border-bottom:0.5px solid var(--border);':''}">
+        <span style="width:22px;height:22px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text3);flex-shrink:0;">${i+1}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.desc||'Sin descripción'}</div>
+          <div style="font-size:11px;color:var(--text3);">${MONTHS[e._m]} ${year}${e.cat?' · '+e.cat:''}${e.tipo==='tarjeta'&&e.card?' · '+e.card:''}</div>
+        </div>
+        <span style="font-size:14px;font-weight:700;color:var(--red);flex-shrink:0;">−${fmt(e.monto)}</span>
+      </div>`).join('');}
+  }
 }
 document.getElementById('analisis-year').addEventListener('change',renderAnalisis);
 
