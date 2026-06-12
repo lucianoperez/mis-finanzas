@@ -464,6 +464,26 @@
 
   .login-footer-note { margin-top:28px; font-size:11px; color:var(--text3); text-align:center; line-height:1.7; }
 
+  /* ── TRUST SIGNALS ───────────────────────────────────── */
+  .login-trust { margin-top:24px; text-align:center; font-size:11px; color:var(--text3); line-height:1.8; }
+  .login-trust-row { display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:5px; }
+  .login-trust-links { display:flex; align-items:center; justify-content:center; gap:6px; }
+  .login-trust-links a { color:var(--text3); text-decoration:underline; text-underline-offset:2px; cursor:pointer; transition:color 0.15s; }
+  .login-trust-links a:hover { color:var(--text2); }
+
+  /* ── TRUST MODALES ───────────────────────────────────── */
+  .trust-modal { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .trust-modal-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px); }
+  .trust-modal-box { position:relative; background:var(--surface); border:0.5px solid var(--border-md); border-radius:var(--radius-lg); max-width:460px; width:100%; max-height:78vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 24px 64px rgba(0,0,0,0.5); }
+  .trust-modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:0.5px solid var(--border); flex-shrink:0; }
+  .trust-modal-header span { font-size:15px; font-weight:600; color:var(--text); }
+  .trust-modal-header button { background:none; border:none; color:var(--text3); cursor:pointer; font-size:18px; padding:0; line-height:1; font-family:inherit; }
+  .trust-modal-header button:hover { color:var(--text); }
+  .trust-modal-body { padding:20px; overflow-y:auto; font-size:13px; color:var(--text2); line-height:1.75; }
+  .trust-modal-body h3 { font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text3); margin:18px 0 6px; }
+  .trust-modal-body h3:first-child { margin-top:0; }
+  .trust-modal-body p { margin-bottom:10px; }
+
   /* ── LOGIN ANIMATIONS ───────────────────────────────── */
   @keyframes authFadeIn {
     from { opacity: 0; transform: translateY(-6px); }
@@ -905,10 +925,68 @@
 
         <button id="demo-btn" class="login-btn-secondary" style="margin-top:8px; color:var(--green); border-color:var(--green); opacity:0.85;">🔍 Explorar sin registrarse</button>
 
-        <p class="login-footer-note">Tus datos son 100% privados y seguros.</p>
+        <div class="login-trust">
+          <div class="login-trust-row">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Datos cifrados y almacenados con <strong style="color:var(--text2);">Supabase</strong></span>
+          </div>
+          <div class="login-trust-links">
+            <a onclick="openTrustModal('privacidad')">Política de privacidad</a>
+            <span>·</span>
+            <a onclick="openTrustModal('terminos')">Términos de uso</a>
+          </div>
+        </div>
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ── MODALES TRUST ─────────────────────────────────────── -->
+<div id="modal-privacidad" class="trust-modal" style="display:none;">
+  <div class="trust-modal-overlay" onclick="closeTrustModal('privacidad')"></div>
+  <div class="trust-modal-box">
+    <div class="trust-modal-header">
+      <span>Política de privacidad</span>
+      <button onclick="closeTrustModal('privacidad')">✕</button>
+    </div>
+    <div class="trust-modal-body">
+      <h3>Qué datos recopilamos</h3>
+      <p>Vinanzas recopila únicamente los datos que vos ingresás: tu dirección de email para crear tu cuenta y los movimientos financieros (ingresos, egresos, ahorros) que registrás manualmente.</p>
+      <p>No recopilamos datos de navegación, no instalamos cookies de seguimiento y no accedemos a cuentas bancarias ni información financiera externa.</p>
+      <h3>Cómo almacenamos tu información</h3>
+      <p>Todos los datos se almacenan en <strong>Supabase</strong>, una plataforma de base de datos segura con cifrado en tránsito (TLS) y en reposo. Cada usuario accede únicamente a sus propios datos gracias a políticas de seguridad a nivel de fila (Row Level Security).</p>
+      <h3>Compartición con terceros</h3>
+      <p>No vendemos, compartimos ni cedemos tu información personal a terceros bajo ninguna circunstancia.</p>
+      <h3>Tus derechos</h3>
+      <p>Podés eliminar tu cuenta y todos tus datos en cualquier momento desde la sección de configuración. Ante cualquier consulta escribinos a <strong>soporte@vinanzas.app</strong>.</p>
+      <h3>Última actualización</h3>
+      <p>Junio 2026.</p>
+    </div>
+  </div>
+</div>
+
+<div id="modal-terminos" class="trust-modal" style="display:none;">
+  <div class="trust-modal-overlay" onclick="closeTrustModal('terminos')"></div>
+  <div class="trust-modal-box">
+    <div class="trust-modal-header">
+      <span>Términos de uso</span>
+      <button onclick="closeTrustModal('terminos')">✕</button>
+    </div>
+    <div class="trust-modal-body">
+      <h3>Uso de la aplicación</h3>
+      <p>Vinanzas es una herramienta de registro y visualización de finanzas personales para uso individual. Al crear una cuenta aceptás utilizar el servicio de forma personal y no comercial.</p>
+      <h3>Responsabilidad del usuario</h3>
+      <p>Sos responsable de la exactitud de los datos que ingresás. Vinanzas no verifica ni valida la información financiera registrada.</p>
+      <h3>Sin asesoramiento financiero</h3>
+      <p>Vinanzas no brinda asesoramiento financiero, contable ni impositivo. Las visualizaciones y análisis son orientativos. Para decisiones financieras importantes consultá a un profesional habilitado.</p>
+      <h3>Disponibilidad del servicio</h3>
+      <p>Nos esforzamos por mantener el servicio disponible de forma continua, pero no garantizamos disponibilidad ininterrumpida. Podemos modificar o discontinuar funcionalidades con previo aviso.</p>
+      <h3>Modificaciones</h3>
+      <p>Podemos actualizar estos términos. Te notificaremos ante cambios relevantes. El uso continuado de la app implica la aceptación de los términos vigentes.</p>
+      <h3>Última actualización</h3>
+      <p>Junio 2026.</p>
+    </div>
   </div>
 </div>
 
@@ -1555,6 +1633,11 @@ function startDemo(){
   renderAll();
 }
 document.getElementById('demo-btn').addEventListener('click', startDemo);
+
+// ── Trust modales ─────────────────────────────────────────
+function openTrustModal(id){const m=document.getElementById('modal-'+id);if(m){m.style.display='flex';document.body.style.overflow='hidden';}}
+function closeTrustModal(id){const m=document.getElementById('modal-'+id);if(m){m.style.display='none';document.body.style.overflow='';}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['privacidad','terminos'].forEach(closeTrustModal);}});
 
 document.getElementById('auth-toggle').addEventListener('click',()=>{_setAuthMode(_authMode==='login'?'register':'login');document.getElementById('auth-toggle').textContent=_authMode==='register'?'¿Ya tenés cuenta? Ingresá':'¿No tenés cuenta? Registrate';});
 document.getElementById('auth-forgot').addEventListener('click',()=>_setAuthMode('forgot'));
