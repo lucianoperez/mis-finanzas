@@ -496,6 +496,19 @@
   .trust-modal-body h3:first-child { margin-top:0; }
   .trust-modal-body p { margin-bottom:10px; }
 
+  /* ── FORMULARIO CONTACTO ─────────────────────────────── */
+  .contact-field { margin-bottom:14px; }
+  .contact-field label { display:block; font-size:12px; font-weight:600; color:var(--text2); margin-bottom:6px; }
+  .contact-field input, .contact-field textarea { width:100%; background:var(--bg); border:0.5px solid var(--border-md); border-radius:var(--radius); padding:9px 12px; font-size:13px; color:var(--text); font-family:inherit; outline:none; box-sizing:border-box; transition:border-color 0.15s; }
+  .contact-field input:focus, .contact-field textarea:focus { border-color:var(--green); }
+  .contact-field textarea { resize:vertical; min-height:90px; }
+  .contact-submit { width:100%; padding:10px; background:var(--green); color:#111; font-size:14px; font-weight:700; border:none; border-radius:var(--radius); cursor:pointer; font-family:inherit; margin-top:4px; transition:opacity 0.15s; }
+  .contact-submit:hover { opacity:0.88; }
+  .contact-submit:disabled { opacity:0.5; cursor:default; }
+  .contact-msg { font-size:12px; margin-top:10px; text-align:center; display:none; }
+  .contact-msg.ok { color:var(--green); }
+  .contact-msg.err { color:var(--red); }
+
   /* ── LOGIN ANIMATIONS ───────────────────────────────── */
   @keyframes authFadeIn {
     from { opacity: 0; transform: translateY(-6px); }
@@ -993,6 +1006,8 @@
             <a onclick="openTrustModal('privacidad')">Política de privacidad</a>
             <span>·</span>
             <a onclick="openTrustModal('terminos')">Términos de uso</a>
+            <span>·</span>
+            <a onclick="openTrustModal('contacto')">Contacto</a>
           </div>
         </div>
       </div>
@@ -1018,7 +1033,7 @@
       <h3>Compartición con terceros</h3>
       <p>No vendemos, compartimos ni cedemos tu información personal a terceros bajo ninguna circunstancia.</p>
       <h3>Tus derechos</h3>
-      <p>Podés eliminar tu cuenta y todos tus datos en cualquier momento desde la sección de configuración. Ante cualquier consulta escribinos a <strong>soporte@vinanzas.app</strong>.</p>
+      <p>Podés eliminar tu cuenta y todos tus datos en cualquier momento desde la sección de configuración. Ante cualquier consulta usá el <a onclick="closeTrustModal('privacidad');openTrustModal('contacto');" style="color:var(--green);cursor:pointer;text-decoration:underline;text-underline-offset:2px;">formulario de contacto</a>.</p>
       <h3>Última actualización</h3>
       <p>Junio 2026.</p>
     </div>
@@ -1045,6 +1060,37 @@
       <p>Podemos actualizar estos términos. Te notificaremos ante cambios relevantes. El uso continuado de la app implica la aceptación de los términos vigentes.</p>
       <h3>Última actualización</h3>
       <p>Junio 2026.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL CONTACTO ───────────────────────────────────── -->
+<div id="modal-contacto" class="trust-modal" style="display:none;">
+  <div class="trust-modal-overlay" onclick="closeTrustModal('contacto')"></div>
+  <div class="trust-modal-box">
+    <div class="trust-modal-header">
+      <span>Contacto</span>
+      <button onclick="closeTrustModal('contacto')">✕</button>
+    </div>
+    <div class="trust-modal-body">
+      <p style="margin-bottom:18px;">¿Tenés alguna pregunta, sugerencia o problema? Completá el formulario y te respondemos a la brevedad.</p>
+      <form id="contact-form" action="https://formspree.io/f/FORM_ID" method="POST">
+        <div class="contact-field">
+          <label>Nombre</label>
+          <input type="text" name="name" placeholder="Tu nombre" required autocomplete="name">
+        </div>
+        <div class="contact-field">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="tu@email.com" required autocomplete="email">
+        </div>
+        <div class="contact-field">
+          <label>Mensaje</label>
+          <textarea name="message" placeholder="¿En qué podemos ayudarte?" required></textarea>
+        </div>
+        <button type="submit" class="contact-submit" id="contact-submit">Enviar mensaje</button>
+        <p class="contact-msg ok" id="contact-success">✓ ¡Mensaje enviado! Te respondemos a la brevedad.</p>
+        <p class="contact-msg err" id="contact-error">Hubo un error al enviar. Intentá de nuevo.</p>
+      </form>
     </div>
   </div>
 </div>
@@ -1696,7 +1742,22 @@ document.getElementById('demo-btn').addEventListener('click', startDemo);
 // ── Trust modales ─────────────────────────────────────────
 function openTrustModal(id){const m=document.getElementById('modal-'+id);if(m){m.style.display='flex';document.body.style.overflow='hidden';}}
 function closeTrustModal(id){const m=document.getElementById('modal-'+id);if(m){m.style.display='none';document.body.style.overflow='';}}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){['privacidad','terminos'].forEach(closeTrustModal);}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){['privacidad','terminos','contacto'].forEach(closeTrustModal);}});
+
+// Formulario de contacto — submit via fetch (sin redirección)
+document.getElementById('contact-form').addEventListener('submit', async(e)=>{
+  e.preventDefault();
+  const btn=document.getElementById('contact-submit');
+  const ok=document.getElementById('contact-success');
+  const err=document.getElementById('contact-error');
+  btn.disabled=true; btn.textContent='Enviando…'; ok.style.display='none'; err.style.display='none';
+  try{
+    const res=await fetch(e.target.action,{method:'POST',body:new FormData(e.target),headers:{Accept:'application/json'}});
+    if(res.ok){ok.style.display='block';e.target.reset();}
+    else{err.style.display='block';}
+  }catch{err.style.display='block';}
+  btn.disabled=false; btn.textContent='Enviar mensaje';
+});
 
 document.getElementById('auth-toggle').addEventListener('click',()=>{_setAuthMode(_authMode==='login'?'register':'login');document.getElementById('auth-toggle').textContent=_authMode==='register'?'¿Ya tenés cuenta? Ingresá':'¿No tenés cuenta? Registrate';});
 document.getElementById('auth-forgot').addEventListener('click',()=>_setAuthMode('forgot'));
