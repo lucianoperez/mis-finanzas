@@ -1009,6 +1009,12 @@
             <button class="auth-change-email" id="auth-change-email">Cambiar</button>
           </div>
 
+          <div class="form-group" id="auth-code-group" style="display:none;">
+            <label for="auth-code">Código de verificación</label>
+            <input type="text" id="auth-code" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" maxlength="6" style="letter-spacing:6px; text-align:center; font-size:18px; font-weight:600;" />
+            <div class="form-hint">Te lo enviamos por email. Revisá tu bandeja de entrada (y spam).</div>
+          </div>
+
           <div class="form-group" id="auth-password-group">
             <label for="auth-password">Contraseña</label>
             <div class="pw-wrap"><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" /><button type="button" class="pw-toggle" aria-label="Mostrar contraseña" aria-pressed="false" data-target="auth-password"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
@@ -1652,7 +1658,7 @@ function _setAuthMode(mode){
   _authMode=mode;
   const isStep1=mode==='step1',isReg=mode==='register',isForgot=mode==='forgot',isReset=mode==='reset';
   const titles={step1:'Ingresá a Vinanzas',login:'Seguí donde lo dejaste',register:'Creá tu cuenta',forgot:'Recuperar contraseña',reset:'Creá tu nueva contraseña'};
-  const subs={step1:'Elegí cómo continuar.',login:'Tu resumen financiero te espera.',register:'Creá tu cuenta gratuita.',forgot:'Te enviamos un email para restablecer tu contraseña.',reset:'Elegí una contraseña segura para tu cuenta.'};
+  const subs={step1:'Elegí cómo continuar.',login:'Tu resumen financiero te espera.',register:'Creá tu cuenta gratuita.',forgot:'Te enviamos un código por email para restablecer tu contraseña.',reset:'Ingresá el código que te enviamos y tu nueva contraseña.'};
   document.getElementById('login-form-title').textContent=titles[mode]||'Bienvenido de vuelta';
   document.getElementById('login-subtitle').textContent=subs[mode]||'';
   // Mostrar paso correcto
@@ -1660,19 +1666,23 @@ function _setAuthMode(mode){
   document.getElementById('auth-s2').style.display=isStep1?'none':'';
   const badge=document.getElementById('login-free-badge');if(badge)badge.style.display=isReg?'flex':'none';
   if(!isStep1){
-    // En modo reset el email viene del token, no del paso 1
+    // El email siempre viene del paso 1 (también en reset, vía código OTP)
     const emailRow=document.getElementById('auth-email-row');
-    if(emailRow)emailRow.style.display=isReset?'none':'';
+    if(emailRow)emailRow.style.display='';
     const shown=document.getElementById('auth-email-shown');
-    if(shown&&!isReset)shown.textContent=document.getElementById('auth-email').value.trim();
-    document.getElementById('auth-submit').textContent=isForgot?'Enviar email de recuperación':isReg?'Creá tu cuenta':isReset?'Guardar nueva contraseña':'Ingresar';
+    if(shown)shown.textContent=document.getElementById('auth-email').value.trim();
+    // Campo de código: sólo en reset por código (no cuando ya hay sesión vía link)
+    const codeGroup=document.getElementById('auth-code-group');
+    if(codeGroup)codeGroup.style.display=(isReset&&!_accessToken)?'':'none';
+    document.getElementById('auth-submit').textContent=isForgot?'Enviar código':isReg?'Creá tu cuenta':isReset?'Guardar nueva contraseña':'Ingresar';
     document.getElementById('auth-password-group').style.display=isForgot?'none':'';
     const p2=document.getElementById('auth-password2-group');
     const p2WasHidden=p2.style.display==='none';
     p2.style.display=(isReg||isReset)?'':'none';
     if((isReg||isReset)&&p2WasHidden){p2.classList.remove('auth-fade');void p2.offsetWidth;p2.classList.add('auth-fade');}
     document.getElementById('auth-forgot').style.display=(isForgot||isReg||isReset)?'none':'';
-    document.getElementById('auth-back').style.display=isForgot?'':'none';
+    document.getElementById('auth-back').style.display=(isForgot||isReset)?'':'none';
+    document.getElementById('auth-back').textContent=isReset?'← Pedir un código nuevo':'← Volver al inicio de sesión';
     document.getElementById('auth-toggle').style.display=(isForgot||isReset)?'none':'';
     document.getElementById('auth-toggle').textContent=isReg?'¿Ya tenés cuenta? Ingresá':'¿No tenés cuenta? Registrate';
     const div=document.querySelector('#auth-s2 .login-divider');if(div)div.style.display=(isForgot||isReset)?'none':'';
@@ -1821,7 +1831,7 @@ document.getElementById('auth-continue').addEventListener('click',()=>{
 document.getElementById('auth-change-email').addEventListener('click',()=>{_setAuthMode('step1');document.getElementById('auth-email').focus();});
 document.getElementById('auth-toggle').addEventListener('click',()=>{_setAuthMode(_authMode==='login'?'register':'login');});
 document.getElementById('auth-forgot').addEventListener('click',()=>_setAuthMode('forgot'));
-document.getElementById('auth-back').addEventListener('click',()=>_setAuthMode('login'));
+document.getElementById('auth-back').addEventListener('click',()=>_setAuthMode(_authMode==='reset'?'forgot':'login'));
 document.getElementById('auth-submit').addEventListener('click',async()=>{
   const email=document.getElementById('auth-email').value.trim(),pass=document.getElementById('auth-password').value,pass2=document.getElementById('auth-password2').value;
   setAuthError('');setAuthSuccess('');
@@ -1829,19 +1839,30 @@ document.getElementById('auth-submit').addEventListener('click',async()=>{
     if(pass.length<6){setAuthError('La contraseña debe tener al menos 6 caracteres.');return;}
     if(pass!==pass2){setAuthError('Las contraseñas no coinciden.');return;}
     setAuthLoading(true);
-    const r=await fetch(SUPABASE_URL+'/auth/v1/user',{method:'PUT',headers:{...sbHeaders(),'Authorization':'Bearer '+_accessToken},body:JSON.stringify({password:pass})});
+    // Si no hay sesión (flujo por código), verificamos el código primero.
+    // Si ya hay sesión (flujo por link), saltamos directo a actualizar la contraseña.
+    if(!_accessToken){
+      const code=document.getElementById('auth-code').value.trim();
+      if(!code){setAuthLoading(false);setAuthError('Ingresá el código que te enviamos por email.');return;}
+      const vr=await fetch(SUPABASE_URL+'/auth/v1/verify',{method:'POST',headers:sbHeaders(),body:JSON.stringify({type:'recovery',email,token:code})});
+      const vd=await vr.json().catch(()=>({}));
+      if(!vr.ok||!vd.access_token){setAuthLoading(false);setAuthError('Código inválido o expirado. Pedí uno nuevo.');return;}
+      _accessToken=vd.access_token;_refreshToken=vd.refresh_token;
+    }
+    const r=await fetch(SUPABASE_URL+'/auth/v1/user',{method:'PUT',headers:sbHeaders(),body:JSON.stringify({password:pass})});
     setAuthLoading(false);
-    if(r.ok){setAuthSuccess('Contraseña actualizada. Ya podés ingresar.');_setAuthMode('step1');}
+    if(r.ok){_accessToken=null;_refreshToken=null;document.getElementById('auth-code').value='';_setAuthMode('login');setAuthSuccess('Contraseña actualizada. Ya podés ingresar.');document.getElementById('auth-password').focus();}
     else{setAuthError('No se pudo actualizar la contraseña. Intentá de nuevo.');}
     return;
   }
   if(_authMode==='forgot'){
     if(!email){setAuthError('Ingresá tu email.');return;}
     setAuthLoading(true);
-    const r=await fetch(SUPABASE_URL+'/auth/v1/recover',{method:'POST',headers:sbHeaders(),body:JSON.stringify({email,redirect_to:window.location.origin+window.location.pathname})});
+    _accessToken=null;_refreshToken=null;
+    const r=await fetch(SUPABASE_URL+'/auth/v1/recover',{method:'POST',headers:sbHeaders(),body:JSON.stringify({email})});
     setAuthLoading(false);
-    if(r.ok){setAuthSuccess('Email enviado. Revisá tu bandeja de entrada.');_setAuthMode('login');}
-    else{setAuthError('No se pudo enviar el email. Verificá la dirección.');}
+    if(r.ok){_setAuthMode('reset');setAuthSuccess('Te enviamos un código a '+email+'. Revisá tu email.');document.getElementById('auth-code').focus();}
+    else{setAuthError('No se pudo enviar el código. Verificá la dirección.');}
     return;
   }
   if(!email||!pass){setAuthError('Completá email y contraseña.');return;}
@@ -1854,6 +1875,9 @@ document.getElementById('auth-submit').addEventListener('click',async()=>{
 });
 document.getElementById('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-continue').click();});
 document.getElementById('auth-password').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-submit').click();});
+const _authCodeInp=document.getElementById('auth-code');
+_authCodeInp.addEventListener('input',()=>{_authCodeInp.value=_authCodeInp.value.replace(/\D/g,'').slice(0,6);});
+_authCodeInp.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-password').focus();});
 document.getElementById('logout-btn').addEventListener('click',async()=>{await sbSignOut();state=emptyState();saveLocalState();showLogin();});
 document.getElementById('logout-btn-mobile').addEventListener('click',async()=>{await sbSignOut();state=emptyState();saveLocalState();showLogin();});
 async function initAppForUser(user){
@@ -1894,12 +1918,30 @@ initVinanzasIcon('vi-sidebar-icon',34);
 // ── OAuth callback: Supabase devuelve tokens en el hash tras Google Sign-In
 (async()=>{
   const hash=new URLSearchParams(window.location.hash.slice(1));
+  // Error en el link (ej: link de recuperación expirado o ya usado por el escáner de Outlook)
+  const hashError=hash.get('error');
+  if(hashError){
+    history.replaceState(null,'',window.location.pathname);
+    showLogin();
+    if(hash.get('error_code')==='otp_expired'){
+      _setAuthMode('forgot');
+      setAuthError('El link expiró o ya fue usado. Pedí un código nuevo más abajo.');
+    } else {
+      const desc=hash.get('error_description');
+      setAuthError(desc?decodeURIComponent(desc.replace(/\+/g,' ')):'No se pudo completar la operación.');
+    }
+    return;
+  }
   const at=hash.get('access_token'), rt=hash.get('refresh_token');
   if(at&&rt){
     history.replaceState(null,'',window.location.pathname);
     _accessToken=at; _refreshToken=rt;
     if(hash.get('type')==='recovery'){
+      // Fallback: el usuario llegó por un link válido. Ya tiene sesión,
+      // así que mostramos el reset sin pedir código.
       showLogin();
+      const ur=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:sbHeaders()});
+      if(ur.ok){const u=await ur.json();document.getElementById('auth-email').value=u.email||'';}
       _setAuthMode('reset');
       document.getElementById('auth-password').value='';
       document.getElementById('auth-password2').value='';
