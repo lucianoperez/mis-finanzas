@@ -1,4 +1,4 @@
-const CACHE = 'vinanzas-v1.28.1';
+const CACHE = 'vinanzas-v1.29.0';
 const ASSETS = [
   '/',
   '/index.html',
