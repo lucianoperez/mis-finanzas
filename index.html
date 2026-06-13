@@ -474,6 +474,14 @@
   .login-btn-secondary { width:100%; background:transparent; color:var(--text2); border:0.5px solid var(--border-md); border-radius:var(--radius); padding:10px; font-size:13px; font-weight:500; cursor:pointer; font-family:inherit; transition:background 0.15s; }
   .login-btn-secondary:hover { background:var(--surface); }
 
+  .login-btn-google { width:100%; background:#fff; color:#1f1f1f; border:0.5px solid rgba(0,0,0,0.15); border-radius:var(--radius); padding:10px 16px; font-size:13.5px; font-weight:500; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:10px; transition:background 0.15s, box-shadow 0.15s; }
+  .login-btn-google:hover { background:#f5f5f5; box-shadow:0 1px 4px rgba(0,0,0,0.12); }
+
+  .auth-email-row { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:rgba(255,255,255,0.04); border:0.5px solid var(--border-md); border-radius:var(--radius); margin-bottom:16px; }
+  .auth-email-shown { font-size:13px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .auth-change-email { background:none; border:none; font-size:12px; color:var(--text3); cursor:pointer; font-family:inherit; padding:0; flex-shrink:0; margin-left:8px; }
+  .auth-change-email:hover { color:var(--text2); }
+
   .login-footer-note { margin-top:28px; font-size:11px; color:var(--text3); text-align:center; line-height:1.7; }
 
   /* ── TRUST SIGNALS ───────────────────────────────────── */
@@ -959,8 +967,8 @@
     <!-- ── PANEL DERECHO ── -->
     <div class="login-right login-anim-right">
       <div class="login-form-box">
-        <h2 class="login-form-title" id="login-form-title">Bienvenido de vuelta</h2>
-        <p class="login-form-sub" id="login-subtitle">Tu resumen financiero te espera.</p>
+        <h2 class="login-form-title" id="login-form-title">Ingresá a Vinanzas</h2>
+        <p class="login-form-sub" id="login-subtitle">Elegí cómo continuar.</p>
         <div id="login-free-badge" style="display:none; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
           <span style="font-size:11px; background:rgba(93,202,165,0.12); color:#5DCAA5; border:0.5px solid rgba(93,202,165,0.25); border-radius:20px; padding:3px 10px; font-weight:600;">✓ 100% gratis</span>
           <span style="font-size:11px; background:rgba(255,255,255,0.05); color:var(--text3); border:0.5px solid var(--border); border-radius:20px; padding:3px 10px;">✓ Sin tarjeta de crédito</span>
@@ -970,32 +978,60 @@
         <div id="login-error" role="alert" aria-live="assertive" style="display:none; background:var(--red-bg); color:var(--red); font-size:12px; padding:8px 12px; border-radius:var(--radius); margin-bottom:16px;"></div>
         <div id="login-success" role="status" aria-live="polite" style="display:none; background:var(--green-bg); color:var(--green); font-size:12px; padding:8px 12px; border-radius:var(--radius); margin-bottom:16px;"></div>
 
-        <div class="form-group">
-          <label for="auth-email">Email</label>
-          <input type="email" id="auth-email" placeholder="tu@email.com" autocomplete="email" />
+        <!-- PASO 1: método de ingreso -->
+        <div id="auth-s1">
+          <button id="google-btn" class="login-btn-google">
+            <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+              <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+              <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+              <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+            </svg>
+            <span id="google-btn-label">Continuar con Google</span>
+          </button>
+
+          <div class="login-divider"><span>o continuar con email</span></div>
+
+          <div class="form-group">
+            <label for="auth-email">Email</label>
+            <input type="email" id="auth-email" placeholder="tu@email.com" autocomplete="email" />
+          </div>
+
+          <button id="auth-continue" class="btn-save" style="width:100%; padding:11px; font-size:14px;">Continuar →</button>
+
+          <button id="demo-btn" class="login-btn-secondary" style="margin-top:10px; color:var(--green); border-color:var(--green); opacity:0.85;">🔍 Explorar sin registrarse</button>
         </div>
-        <div class="form-group" id="auth-password-group">
-          <label for="auth-password">Contraseña</label>
-          <div class="pw-wrap"><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" /><button type="button" class="pw-toggle" aria-label="Mostrar contraseña" aria-pressed="false" data-target="auth-password"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+
+        <!-- PASO 2: contraseña -->
+        <div id="auth-s2" style="display:none;">
+          <div class="auth-email-row">
+            <span class="auth-email-shown" id="auth-email-shown"></span>
+            <button class="auth-change-email" id="auth-change-email">Cambiar</button>
+          </div>
+
+          <div class="form-group" id="auth-password-group">
+            <label for="auth-password">Contraseña</label>
+            <div class="pw-wrap"><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" /><button type="button" class="pw-toggle" aria-label="Mostrar contraseña" aria-pressed="false" data-target="auth-password"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+          </div>
+          <div class="form-group" id="auth-password2-group" style="display:none;">
+            <label for="auth-password2">Repetir contraseña</label>
+            <div class="pw-wrap"><input type="password" id="auth-password2" placeholder="••••••••" /><button type="button" class="pw-toggle" aria-label="Mostrar contraseña" aria-pressed="false" data-target="auth-password2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+          </div>
+
+          <button id="auth-forgot" class="login-forgot">¿Olvidaste tu contraseña?</button>
+
+          <button id="auth-submit" class="btn-save" style="width:100%; padding:11px; font-size:14px;">Ingresar</button>
+
+          <p id="auth-email-hint" style="display:none; font-size:11px; color:var(--text3); text-align:center; margin:8px 0 0;">Te enviaremos un email para confirmar tu cuenta.</p>
+
+          <button id="auth-back" style="display:none; background:none; border:none; font-size:12px; color:var(--text3); cursor:pointer; font-family:inherit; padding:0; margin-top:12px; width:100%; text-align:center;">← Volver al inicio de sesión</button>
+
+          <div class="login-divider"><span>o</span></div>
+
+          <button id="auth-toggle" class="login-btn-secondary">¿No tenés cuenta? Registrate</button>
+
+          <button id="demo-btn-s2" class="login-btn-secondary" style="margin-top:8px; color:var(--green); border-color:var(--green); opacity:0.85;">🔍 Explorar sin registrarse</button>
         </div>
-        <div class="form-group" id="auth-password2-group" style="display:none;">
-          <label for="auth-password2">Repetir contraseña</label>
-          <div class="pw-wrap"><input type="password" id="auth-password2" placeholder="••••••••" /><button type="button" class="pw-toggle" aria-label="Mostrar contraseña" aria-pressed="false" data-target="auth-password2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
-        </div>
-
-        <button id="auth-forgot" class="login-forgot">¿Olvidaste tu contraseña?</button>
-
-        <button id="auth-submit" class="btn-save" style="width:100%; padding:11px; font-size:14px;">Ingresar</button>
-
-        <p id="auth-email-hint" style="display:none; font-size:11px; color:var(--text3); text-align:center; margin:8px 0 0;">Te enviaremos un email para confirmar tu cuenta.</p>
-
-        <button id="auth-back" style="display:none; background:none; border:none; font-size:12px; color:var(--text3); cursor:pointer; font-family:inherit; padding:0; margin-top:12px; width:100%; text-align:center;">← Volver al inicio de sesión</button>
-
-        <div class="login-divider"><span>o</span></div>
-
-        <button id="auth-toggle" class="login-btn-secondary">¿No tenés cuenta? Registrate</button>
-
-        <button id="demo-btn" class="login-btn-secondary" style="margin-top:8px; color:var(--green); border-color:var(--green); opacity:0.85;">🔍 Explorar sin registrarse</button>
 
         <div class="login-trust">
           <div class="login-trust-row">
@@ -1610,30 +1646,40 @@ if(!state.recurring)state.recurring=[];
 if(!state.recurrentes)state.recurrentes=[];
 
 // ── AUTH ─────────────────────────────────────────────────────────────
-// _authMode: 'login' | 'register' | 'forgot'
-let _authMode='login';
+// _authMode: 'step1' | 'login' | 'register' | 'forgot'
+let _authMode='step1';
 function _setAuthMode(mode){
   _authMode=mode;
-  const isReg=mode==='register',isForgot=mode==='forgot';
-  document.getElementById('login-form-title').textContent=isForgot?'Recuperar contraseña':isReg?'Creá tu cuenta':'Bienvenido de vuelta';
-  document.getElementById('login-subtitle').textContent=isForgot?'Te enviamos un email para restablecer tu contraseña.':isReg?'Creá tu cuenta gratuita.':'Tu resumen financiero te espera.';
-  document.getElementById('auth-submit').textContent=isForgot?'Enviar email de recuperación':isReg?'Creá tu cuenta':'Ingresar';
-  document.getElementById('auth-password-group').style.display=isForgot?'none':'';
-  const p2=document.getElementById('auth-password2-group');
-  const p2WasHidden=p2.style.display==='none';
-  p2.style.display=isReg?'':'none';
-  if(isReg&&p2WasHidden){p2.classList.remove('auth-fade');void p2.offsetWidth;p2.classList.add('auth-fade');}
-  document.getElementById('auth-forgot').style.display=isForgot||isReg?'none':'';
-  document.getElementById('auth-back').style.display=isForgot?'':'none';
+  const isStep1=mode==='step1',isReg=mode==='register',isForgot=mode==='forgot';
+  const titles={step1:'Ingresá a Vinanzas',login:'Seguí donde lo dejaste',register:'Creá tu cuenta',forgot:'Recuperar contraseña'};
+  const subs={step1:'Elegí cómo continuar.',login:'Tu resumen financiero te espera.',register:'Creá tu cuenta gratuita.',forgot:'Te enviamos un email para restablecer tu contraseña.'};
+  document.getElementById('login-form-title').textContent=titles[mode]||'Bienvenido de vuelta';
+  document.getElementById('login-subtitle').textContent=subs[mode]||'';
+  // Mostrar paso correcto
+  document.getElementById('auth-s1').style.display=isStep1?'':'none';
+  document.getElementById('auth-s2').style.display=isStep1?'none':'';
   const badge=document.getElementById('login-free-badge');if(badge)badge.style.display=isReg?'flex':'none';
-  document.getElementById('auth-toggle').style.display=isForgot?'none':'';
-  const div=document.querySelector('.login-divider');if(div)div.style.display=isForgot?'none':'';
-  const hint=document.getElementById('auth-email-hint');if(hint)hint.style.display=isReg?'':'none';
-  // Fix autocomplete según el modo
-  const passInp=document.getElementById('auth-password');
-  if(passInp)passInp.autocomplete=isReg?'new-password':'current-password';
-  const pass2Inp=document.getElementById('auth-password2');
-  if(pass2Inp)pass2Inp.autocomplete=isReg?'new-password':'';
+  if(!isStep1){
+    // Mostrar email capturado en paso 1
+    const shown=document.getElementById('auth-email-shown');
+    if(shown)shown.textContent=document.getElementById('auth-email').value.trim();
+    document.getElementById('auth-submit').textContent=isForgot?'Enviar email de recuperación':isReg?'Creá tu cuenta':'Ingresar';
+    document.getElementById('auth-password-group').style.display=isForgot?'none':'';
+    const p2=document.getElementById('auth-password2-group');
+    const p2WasHidden=p2.style.display==='none';
+    p2.style.display=isReg?'':'none';
+    if(isReg&&p2WasHidden){p2.classList.remove('auth-fade');void p2.offsetWidth;p2.classList.add('auth-fade');}
+    document.getElementById('auth-forgot').style.display=(isForgot||isReg)?'none':'';
+    document.getElementById('auth-back').style.display=isForgot?'':'none';
+    document.getElementById('auth-toggle').style.display=isForgot?'none':'';
+    document.getElementById('auth-toggle').textContent=isReg?'¿Ya tenés cuenta? Ingresá':'¿No tenés cuenta? Registrate';
+    const div=document.querySelector('#auth-s2 .login-divider');if(div)div.style.display=isForgot?'none':'';
+    const hint=document.getElementById('auth-email-hint');if(hint)hint.style.display=isReg?'':'none';
+    const passInp=document.getElementById('auth-password');
+    if(passInp)passInp.autocomplete=isReg?'new-password':'current-password';
+    const pass2Inp=document.getElementById('auth-password2');
+    if(pass2Inp)pass2Inp.autocomplete=isReg?'new-password':'';
+  }
   setAuthError('');setAuthSuccess('');
 }
 function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('main-app').style.display='none';toggleDistPanel(false);document.getElementById('dist-toggle-btn').style.display='none';document.getElementById('dist-panel').style.display='none';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display='none';document.body.classList.remove('demo-mode');document.getElementById('demo-banner').style.display='none';window._previewMode=false;}
@@ -1644,11 +1690,11 @@ function setAuthLoading(on){
   const btn=document.getElementById('auth-submit');
   btn.disabled=on;
   if(on){
-    const labels={login:'Ingresando...',register:'Creando cuenta...',forgot:'Enviando...'};
+    const labels={login:'Ingresando...',register:'Creando cuenta...',forgot:'Enviando...',step1:'Cargando...'};
     const txt=labels[_authMode]||'Cargando...';
     btn.innerHTML='<svg class="coin-anim" width="24" height="19" viewBox="0 0 24 19" aria-hidden="true"><ellipse class="c1" cx="12" cy="15.5" rx="10" ry="3" fill="#b8860b"/><ellipse class="c2" cx="12" cy="10" rx="10" ry="3" fill="#daa520"/><ellipse class="c3" cx="12" cy="4.5" rx="10" ry="3" fill="#ffd700"/></svg>'+txt;
   } else {
-    const labels={login:'Ingresar',register:'Creá tu cuenta',forgot:'Enviar email de recuperación'};
+    const labels={login:'Ingresar',register:'Creá tu cuenta',forgot:'Enviar email de recuperación',step1:'Continuar →'};
     btn.textContent=labels[_authMode]||'Ingresar';
   }
 }
@@ -1738,6 +1784,12 @@ function startDemo(){
   renderAll();
 }
 document.getElementById('demo-btn').addEventListener('click', startDemo);
+document.getElementById('demo-btn-s2').addEventListener('click', startDemo);
+
+const _googleOAuth=()=>{const redirectTo=encodeURIComponent(window.location.origin+window.location.pathname);window.location.href=`${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`;};
+document.getElementById('google-btn').addEventListener('click',_googleOAuth);
+// Label dinámico según si el usuario ya visitó antes
+document.getElementById('google-btn-label').textContent=localStorage.getItem('vin_visited')?'Ingresar con Google':'Registrarse con Google';
 
 // ── Trust modales ─────────────────────────────────────────
 function openTrustModal(id){const m=document.getElementById('modal-'+id);if(m){m.style.display='flex';document.body.style.overflow='hidden';}}
@@ -1759,9 +1811,16 @@ document.getElementById('contact-form').addEventListener('submit', async(e)=>{
   btn.disabled=false; btn.textContent='Enviar mensaje';
 });
 
-document.getElementById('auth-toggle').addEventListener('click',()=>{_setAuthMode(_authMode==='login'?'register':'login');document.getElementById('auth-toggle').textContent=_authMode==='register'?'¿Ya tenés cuenta? Ingresá':'¿No tenés cuenta? Registrate';});
+document.getElementById('auth-continue').addEventListener('click',()=>{
+  const email=document.getElementById('auth-email').value.trim();
+  if(!email||!email.includes('@')){setAuthError('Ingresá un email válido.');return;}
+  setAuthError('');_setAuthMode('login');
+  document.getElementById('auth-password').focus();
+});
+document.getElementById('auth-change-email').addEventListener('click',()=>{_setAuthMode('step1');document.getElementById('auth-email').focus();});
+document.getElementById('auth-toggle').addEventListener('click',()=>{_setAuthMode(_authMode==='login'?'register':'login');});
 document.getElementById('auth-forgot').addEventListener('click',()=>_setAuthMode('forgot'));
-document.getElementById('auth-back').addEventListener('click',()=>{_setAuthMode('login');document.getElementById('auth-toggle').textContent='¿No tenés cuenta? Registrate';});
+document.getElementById('auth-back').addEventListener('click',()=>_setAuthMode('login'));
 document.getElementById('auth-submit').addEventListener('click',async()=>{
   const email=document.getElementById('auth-email').value.trim(),pass=document.getElementById('auth-password').value,pass2=document.getElementById('auth-password2').value;
   setAuthError('');setAuthSuccess('');
@@ -1782,7 +1841,7 @@ document.getElementById('auth-submit').addEventListener('click',async()=>{
   else{const res=await sbSignIn(email,pass);error=res.error;if(!error){await initAppForUser({email:_userEmail});return;}}
   setAuthLoading(false);setAuthError(error?.msg||error?.message||error?.error_description||'Email o contraseña incorrectos.');
 });
-document.getElementById('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter'&&_authMode!=='forgot')document.getElementById('auth-password').focus();else if(e.key==='Enter')document.getElementById('auth-submit').click();});
+document.getElementById('auth-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-continue').click();});
 document.getElementById('auth-password').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-submit').click();});
 document.getElementById('logout-btn').addEventListener('click',async()=>{await sbSignOut();state=emptyState();saveLocalState();showLogin();});
 document.getElementById('logout-btn-mobile').addEventListener('click',async()=>{await sbSignOut();state=emptyState();saveLocalState();showLogin();});
@@ -1821,13 +1880,18 @@ window.initVinanzasIcon=function(containerId,size=52){
 initVinanzasIcon('vi-login-icon',72);
 initVinanzasIcon('vi-sidebar-icon',34);
 
-// Primera visita sin sesión previa → registro por defecto (síncrono, antes del render)
-if(!localStorage.getItem('vin_visited') && !localStorage.getItem('sb_refresh')){
-  _setAuthMode('register');
-  document.getElementById('auth-toggle').textContent='¿Ya tenés cuenta? Ingresá';
-}
-
+// ── OAuth callback: Supabase devuelve tokens en el hash tras Google Sign-In
 (async()=>{
+  const hash=new URLSearchParams(window.location.hash.slice(1));
+  const at=hash.get('access_token'), rt=hash.get('refresh_token');
+  if(at&&rt){
+    history.replaceState(null,'',window.location.pathname);
+    _accessToken=at; _refreshToken=rt;
+    localStorage.setItem('sb_access',at); localStorage.setItem('sb_refresh',rt);
+    const r=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:sbHeaders()});
+    if(r.ok){const u=await r.json();_userId=u.id;_userEmail=u.email;await initAppForUser({email:_userEmail});}
+    return;
+  }
   showLogin();
   const user=await sbGetUser();
   if(user){await initAppForUser(user);}
