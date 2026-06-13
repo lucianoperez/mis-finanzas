@@ -1503,10 +1503,10 @@
       </div>
 
       <div class="admin-stats" id="admin-stats">
-        <div class="admin-stat"><div class="admin-stat-value" id="admin-stat-total">—</div><div class="admin-stat-label">Total usuarios</div></div>
-        <div class="admin-stat is-green"><div class="admin-stat-value" id="admin-stat-active">—</div><div class="admin-stat-label">Activos (7 días)</div></div>
-        <div class="admin-stat is-blue"><div class="admin-stat-value" id="admin-stat-new">—</div><div class="admin-stat-label">Nuevos este mes</div></div>
-        <div class="admin-stat is-amber"><div class="admin-stat-value" id="admin-stat-unconfirmed">—</div><div class="admin-stat-label">Sin confirmar</div></div>
+        <div class="admin-stat"><div class="admin-stat-value" id="admin-stat-total">—</div><div class="admin-stat-label">Registrados</div></div>
+        <div class="admin-stat is-green"><div class="admin-stat-value" id="admin-stat-activated">—</div><div class="admin-stat-label" id="admin-stat-activated-label">Activados</div></div>
+        <div class="admin-stat is-blue"><div class="admin-stat-value" id="admin-stat-retained">—</div><div class="admin-stat-label" id="admin-stat-retained-label">Retenidos</div></div>
+        <div class="admin-stat is-amber"><div class="admin-stat-value" id="admin-stat-cuotas">—</div><div class="admin-stat-label" id="admin-stat-cuotas-label">Usan cuotas</div></div>
       </div>
 
       <div class="panel">
@@ -1520,15 +1520,16 @@
               <tr>
                 <th>Email</th>
                 <th>Registrado</th>
-                <th>Último acceso</th>
+                <th>Última actividad</th>
+                <th>Activado</th>
+                <th>Uso</th>
                 <th>Confirmado</th>
-                <th>Datos</th>
                 <th>Estado</th>
                 <th>Acción</th>
               </tr>
             </thead>
             <tbody id="admin-users-tbody">
-              <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:28px;">Cargando…</td></tr>
+              <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:28px;">Cargando…</td></tr>
             </tbody>
           </table>
         </div>
@@ -1731,12 +1732,25 @@ function loadLocalState(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)ret
 function saveLocalState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}}
 let _syncTimeout=null;
 function setSyncStatus(m){const el=document.getElementById('sync-status');if(el)el.textContent=m;}
+// Huella del contenido financiero (ignora meses vacíos, perfil y mes/año actual).
+// Sirve para detectar si el usuario tocó algo respecto del ejemplo de onboarding.
+function _dataFingerprint(st){
+  const data=st.data||{},months={};
+  Object.keys(data).forEach(k=>{const md=data[k]||{};
+    if((md.ingresos&&md.ingresos.length)||(md.egresos&&md.egresos.length)||(md.ahorros&&md.ahorros.length))
+      months[k]={i:md.ingresos||[],e:md.egresos||[],a:md.ahorros||[]};});
+  return JSON.stringify({c:st.cards||[],r:st.recurring||[],rr:st.recurrentes||[],d:months});
+}
+let _exampleFP=null;
+function _exampleFingerprint(){if(_exampleFP===null)_exampleFP=_dataFingerprint(buildOnboardingExample());return _exampleFP;}
 async function saveState(){
+  // Si venía marcado como ejemplo y el contenido financiero ya difiere, dejó de ser el ejemplo.
+  if(state.onboardingExample && _dataFingerprint(state)!==_exampleFingerprint())state.onboardingExample=false;
   saveLocalState();
   if(_syncTimeout)clearTimeout(_syncTimeout);
   _syncTimeout=setTimeout(async()=>{
     if(!_userId)return;setSyncStatus('Guardando…');
-    try{await sbSaveState({cards:state.cards,data:state.data,recurring:state.recurring,recurrentes:state.recurrentes,profile:state.profile});setSyncStatus('✓ Guardado');}
+    try{await sbSaveState({cards:state.cards,data:state.data,recurring:state.recurring,recurrentes:state.recurrentes,profile:state.profile,onboardingExample:!!state.onboardingExample});setSyncStatus('✓ Guardado');}
     catch(e){setSyncStatus('⚠ Error al guardar');}
     setTimeout(()=>setSyncStatus(''),2000);
   },800);
@@ -2079,6 +2093,7 @@ function buildOnboardingExample(){
 }
 function loadOnboardingExample(){
   state=buildOnboardingExample();
+  state.onboardingExample=true; // se limpia solo cuando el usuario toca algo financiero (ver saveState)
   saveState();
   switchSection('mensual');
   renderAll();
@@ -3461,31 +3476,32 @@ document.getElementById('save-saving').addEventListener('click',()=>{
 const ADMIN_EMAIL='luciano.v.perez@hotmail.com';
 const EDGE_FN_URL=SUPABASE_URL+'/functions/v1/admin-users';
 
-// Formatea bytes a un texto legible en KB. Devuelve '—' si no hay datos.
-function adminFmtSize(bytes){
-  if(!bytes||bytes<=0)return'—';
-  const kb=bytes/1024;
-  if(kb<1)return'<1 KB';
-  if(kb<100)return kb.toFixed(1)+' KB';
-  return Math.round(kb)+' KB';
-}
 
 // Calcula y pinta las stats rápidas a partir de la lista de usuarios.
+const DAY_MS=24*60*60*1000;
 function adminRenderStats(users){
-  const now=new Date();
-  const weekAgo=new Date(now.getTime()-7*24*60*60*1000);
-  const monthStart=new Date(now.getFullYear(),now.getMonth(),1);
-  let active=0,newThisMonth=0,unconfirmed=0;
+  const total=users.length;
+  let activated=0,cuotas=0,retained=0,retainableUsers=0;
   users.forEach(u=>{
-    if(u.last_sign_in_at&&new Date(u.last_sign_in_at)>=weekAgo)active++;
-    if(u.created_at&&new Date(u.created_at)>=monthStart)newThisMonth++;
-    if(!u.email_confirmed_at)unconfirmed++;
+    const m=u.metrics||{};
+    if(m.activated)activated++;
+    if(m.hasCuotas)cuotas++;
+    // Retenido = guardó datos >24hs después de registrarse (volvió al menos una vez).
+    if(u.state_updated_at&&u.created_at){
+      retainableUsers++;
+      if(new Date(u.state_updated_at)-new Date(u.created_at)>DAY_MS)retained++;
+    }
   });
+  const pct=(n)=>total>0?' · '+Math.round(n/total*100)+'%':'';
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  set('admin-stat-total',users.length);
-  set('admin-stat-active',active);
-  set('admin-stat-new',newThisMonth);
-  set('admin-stat-unconfirmed',unconfirmed);
+  set('admin-stat-total',total);
+  set('admin-stat-activated',activated);
+  set('admin-stat-activated-label','Activados'+pct(activated));
+  set('admin-stat-cuotas',cuotas);
+  set('admin-stat-cuotas-label','Usan cuotas'+pct(cuotas));
+  // Sin updated_at en ningún usuario no se puede calcular retención → "—".
+  if(retainableUsers===0){set('admin-stat-retained','—');set('admin-stat-retained-label','Retenidos');}
+  else{set('admin-stat-retained',retained);set('admin-stat-retained-label','Retenidos'+pct(retained));}
 }
 
 // Ejecuta una acción admin por POST y refresca la tabla si tiene éxito.
@@ -3518,12 +3534,12 @@ async function adminLoadUsers(){
   tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:28px;">Cargando…</td></tr>';
   try{
     const r=await fetch(EDGE_FN_URL,{headers:{'Authorization':'Bearer '+_accessToken,'apikey':SUPABASE_ANON}});
-    if(!r.ok){const e=await r.json().catch(()=>({}));tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--red);padding:28px;">Error: '+(e.error||r.status)+'</td></tr>';return;}
+    if(!r.ok){const e=await r.json().catch(()=>({}));tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--red);padding:28px;">Error: '+(e.error||r.status)+'</td></tr>';return;}
     const data=await r.json();
     const users=(data.users||[]).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
     adminRenderStats(users);
     if(countEl)countEl.textContent=users.length+' usuario'+(users.length!==1?'s':'');
-    if(!users.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:28px;">Sin usuarios registrados.</td></tr>';return;}
+    if(!users.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:28px;">Sin usuarios registrados.</td></tr>';return;}
     const fmt=d=>d?new Date(d).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
     tbody.innerHTML=users.map(u=>{
       const banned=u.banned_until&&new Date(u.banned_until)>new Date();
@@ -3531,7 +3547,21 @@ async function adminLoadUsers(){
       const isMe=u.id===_userId;
       const badge=banned?'<span class="admin-badge banned">Baneado</span>':'<span class="admin-badge active">Activo</span>';
       const confBadge=confirmed?'<span style="color:var(--green);font-size:12px;">✓</span>':'<span style="color:var(--text3);font-size:12px;">✗</span>';
-      const size=adminFmtSize(u.data_bytes);
+      const m=u.metrics||{};
+      const activadoCell=m.activated
+        ?'<span style="color:var(--green);font-weight:600;font-size:12px;">Sí</span>'
+        :'<span style="color:var(--text3);font-size:12px;">No</span>';
+      const movs=m.movements||0,meses=m.monthsTracked||0,nCards=m.cards||0;
+      let usoCell;
+      if(movs>0||nCards>0){
+        const chip=(t,bg,c)=>`<span style="display:inline-block;font-size:10px;font-weight:600;padding:1px 7px;border-radius:10px;background:${bg};color:${c};margin-left:4px;">${t}</span>`;
+        let chips='';
+        if(m.hasCuotas)chips+=chip('cuotas','var(--blue-bg)','var(--blue)');
+        if(m.multiCurrency)chips+=chip('multimoneda','var(--green-bg)','var(--green)');
+        usoCell=`<span style="color:var(--text2);font-size:12px;white-space:nowrap;">${movs} movs · ${meses} ${meses===1?'mes':'meses'} · ${nCards} tarj</span>${chips}`;
+      }else{
+        usoCell='<span style="color:var(--text3);">—</span>';
+      }
       let actions;
       if(isMe){
         actions='<span style="font-size:11px;color:var(--text3);">Sos vos</span>';
@@ -3546,7 +3576,7 @@ async function adminLoadUsers(){
         btns.push(`<button class="admin-action-btn" data-id="${u.id}" data-action="delete-data" data-email="${u.email||''}" style="color:var(--red);">Borrar datos</button>`);
         actions='<div class="admin-row-actions">'+btns.join('')+'</div>';
       }
-      return`<tr><td>${u.email||'—'}</td><td>${fmt(u.created_at)}</td><td>${fmt(u.last_sign_in_at)}</td><td style="text-align:center;">${confBadge}</td><td style="color:var(--text2);">${size}</td><td>${badge}</td><td>${actions}</td></tr>`;
+      return`<tr><td>${u.email||'—'}</td><td>${fmt(u.created_at)}</td><td>${fmt(u.state_updated_at)}</td><td style="text-align:center;">${activadoCell}</td><td>${usoCell}</td><td style="text-align:center;">${confBadge}</td><td>${badge}</td><td>${actions}</td></tr>`;
     }).join('');
     tbody.querySelectorAll('.admin-action-btn').forEach(btn=>{
       btn.addEventListener('click',async()=>{
@@ -3560,7 +3590,7 @@ async function adminLoadUsers(){
       });
     });
   }catch(err){
-    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--red);padding:28px;">Error de conexión.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--red);padding:28px;">Error de conexión.</td></tr>';
   }
 }
 

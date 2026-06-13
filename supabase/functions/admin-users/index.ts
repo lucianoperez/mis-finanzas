@@ -23,6 +23,38 @@ function json(data: unknown, status = 200) {
   })
 }
 
+// Deriva métricas de interacción del `state` de un usuario. Solo devuelve
+// conteos/booleanos: nunca descripciones ni montos.
+function computeMetrics(state: any) {
+  const data = (state && typeof state === "object" && state.data) || {}
+  let movements = 0
+  let monthsTracked = 0
+  const currencies = new Set<string>()
+  for (const key of Object.keys(data)) {
+    const md = data[key] || {}
+    const ing = Array.isArray(md.ingresos) ? md.ingresos.length : 0
+    const eg  = Array.isArray(md.egresos)  ? md.egresos.length  : 0
+    const ah  = Array.isArray(md.ahorros)  ? md.ahorros.length  : 0
+    if (ing + eg + ah > 0) monthsTracked++
+    movements += ing + eg + ah
+    if (Array.isArray(md.ahorros)) {
+      for (const a of md.ahorros) currencies.add((a && a.moneda) || "USD")
+    }
+  }
+  const cards = (state && Array.isArray(state.cards)) ? state.cards.length : 0
+  const hasCuotas = !!(state && Array.isArray(state.recurring) && state.recurring.length > 0)
+  const isExample = !!(state && state.onboardingExample === true)
+  const activated = !isExample && (movements > 0 || cards > 0)
+  return {
+    activated,
+    monthsTracked,
+    movements,
+    cards,
+    hasCuotas,
+    multiCurrency: currencies.size > 1,
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors })
 
@@ -44,7 +76,7 @@ Deno.serve(async (req: Request) => {
     "Content-Type":  "application/json",
   }
 
-  // ── 3. GET — list users + per-user data usage ─────────────────────────
+  // ── 3. GET — list users + per-user data usage & interaction metrics ───
   if (req.method === "GET") {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=200`, {
       headers: adminHeaders,
@@ -52,31 +84,44 @@ Deno.serve(async (req: Request) => {
     const data = await res.json()
     if (!res.ok) return json(data, res.status)
 
-    // Fetch all finanzas_state rows once and compute byte size per user.
-    // Only the size is exposed — the raw state is never returned to the client.
-    const sizes: Record<string, number> = {}
+    // Fetch all finanzas_state rows once. From each user's `state` we derive
+    // only aggregate counts/booleans — the raw financial content (descriptions,
+    // amounts) is never returned to the client.
+    const sizes:   Record<string, number> = {}
+    const metrics: Record<string, unknown> = {}
+    const updatedAt: Record<string, string | null> = {}
     try {
-      const stateRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/finanzas_state?select=user_id,state`,
+      // Probe for the optional `updated_at` column; degrade gracefully if absent.
+      let stateRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/finanzas_state?select=user_id,state,updated_at`,
         { headers: adminHeaders },
       )
+      if (!stateRes.ok) {
+        stateRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/finanzas_state?select=user_id,state`,
+          { headers: adminHeaders },
+        )
+      }
       if (stateRes.ok) {
         const rows = await stateRes.json()
         for (const row of rows) {
           if (!row || !row.user_id) continue
-          const bytes = row.state == null
+          sizes[row.user_id] = row.state == null
             ? 0
             : new TextEncoder().encode(JSON.stringify(row.state)).length
-          sizes[row.user_id] = bytes
+          metrics[row.user_id] = computeMetrics(row.state)
+          updatedAt[row.user_id] = row.updated_at ?? null
         }
       }
     } catch (_e) {
-      // If the usage query fails, fall back to no sizes — users still load.
+      // If the usage query fails, fall back to no metrics — users still load.
     }
 
     const users = Array.isArray(data.users) ? data.users : []
     for (const u of users) {
-      u.data_bytes = sizes[u.id] ?? 0
+      u.data_bytes      = sizes[u.id] ?? 0
+      u.metrics         = metrics[u.id] ?? computeMetrics(null)
+      u.state_updated_at = updatedAt[u.id] ?? null
     }
     return json(data, res.status)
   }
