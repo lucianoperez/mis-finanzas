@@ -209,7 +209,7 @@
   .cuotas-bar-value.pos     { color: var(--green); }
   .cuotas-bar-value.neutral { color: var(--text); }
   .cuotas-bar-names { font-size: 11px; color: var(--text3); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; }
-  .cuotas-bar-mas { border-bottom: 1px dotted var(--text3); cursor: default; }
+  .cuotas-bar-mas { border-bottom: 1px dotted var(--text3); cursor: pointer; }
   .metric-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; font-weight: 600; }
   .metric-value { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; white-space: nowrap; }
   .metric-value.pos     { color: var(--green); }
@@ -2288,7 +2288,7 @@ function renderSummary(){
     const names=ending.map(r=>r.desc||r.descripcion||'');
     const vis=names.slice(0,3), hid=names.slice(3);
     let html=vis.join(' · ');
-    if(hid.length>0) html+=` <span class="cuotas-bar-mas" title="${hid.join(', ')}">+${hid.length} más</span>`;
+    if(hid.length>0) html+=` <span class="cuotas-bar-mas" data-hid="${hid.join('||')}">+${hid.length} más</span>`;
     ctList.innerHTML=html;
   }
 }
@@ -3118,6 +3118,13 @@ document.querySelectorAll('.saving-tipo-pill').forEach(p=>{
   });
 });
 
+document.getElementById('cuotas-terminan-list').addEventListener('click',e=>{
+  const el=e.target.closest('.cuotas-bar-mas');
+  if(!el)return;
+  const hid=el.dataset.hid.split('||');
+  el.insertAdjacentText('beforebegin',' · '+hid.join(' · '));
+  el.remove();
+});
 document.getElementById('open-saving').addEventListener('click',()=>openSavingModal());
 document.getElementById('close-savings-detail').addEventListener('click',()=>document.getElementById('modal-savings-detail').classList.remove('open'));
 document.getElementById('open-saving-from-detail').addEventListener('click',()=>{
