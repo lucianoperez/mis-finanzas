@@ -1557,6 +1557,31 @@
   </div>
 </div>
 
+<!-- ── MODAL: Bienvenida (onboarding cuenta nueva) ───────── -->
+<div class="modal-overlay" id="modal-welcome" role="dialog" aria-modal="true" aria-labelledby="modal-welcome-title">
+  <div class="modal" style="text-align:center;">
+    <div style="font-size:34px; line-height:1; margin-bottom:8px;">👋</div>
+    <h3 id="modal-welcome-title" style="font-size:19px; margin:0 0 6px;">¡Bienvenido a Vinanzas!</h3>
+    <p style="font-size:13px; color:var(--text2); margin:0 0 20px; line-height:1.55;">Tu espacio para saber exactamente a dónde va tu plata. Así de simple:</p>
+    <div style="text-align:left; display:flex; flex-direction:column; gap:14px; margin-bottom:24px;">
+      <div style="display:flex; align-items:flex-start; gap:11px;">
+        <span style="display:inline-flex; width:24px; height:24px; border-radius:50%; background:var(--green-bg); color:var(--green); align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0;">1</span>
+        <div style="font-size:13px; line-height:1.45;"><strong>Cargá tus movimientos</strong><br><span style="color:var(--text3);">Ingresos y egresos del mes, en segundos.</span></div>
+      </div>
+      <div style="display:flex; align-items:flex-start; gap:11px;">
+        <span style="display:inline-flex; width:24px; height:24px; border-radius:50%; background:var(--green-bg); color:var(--green); align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0;">2</span>
+        <div style="font-size:13px; line-height:1.45;"><strong>Seguí tus tarjetas y cuotas</strong><br><span style="color:var(--text3);">Vinanzas calcula los vencimientos por vos.</span></div>
+      </div>
+      <div style="display:flex; align-items:flex-start; gap:11px;">
+        <span style="display:inline-flex; width:24px; height:24px; border-radius:50%; background:var(--green-bg); color:var(--green); align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0;">3</span>
+        <div style="font-size:13px; line-height:1.45;"><strong>Mirá crecer tu ahorro</strong><br><span style="color:var(--text3);">En pesos, dólares o lo que uses.</span></div>
+      </div>
+    </div>
+    <button class="btn-save" id="welcome-example" style="width:100%; padding:11px; font-size:14px; margin-bottom:10px;">Cargar un ejemplo para explorar</button>
+    <button class="btn-cancel" id="welcome-scratch" style="width:100%; padding:10px;">Empezar de cero</button>
+  </div>
+</div>
+
 <!-- ── MODAL: Nuevo ahorro ───────────────────────────────── -->
 <div class="modal-overlay" id="modal-saving" role="dialog" aria-modal="true" aria-labelledby="modal-saving-title">
   <div class="modal">
@@ -1900,7 +1925,42 @@ async function initAppForUser(user){
   if(remote){state={...emptyState(),...remote};if(!state.recurring)state.recurring=[];if(!state.recurrentes)state.recurrentes=[];const n=nowAR();state.currentYear=n.getFullYear();state.currentMonth=n.getMonth();if(migrateCatToTags(state))saveState();else saveLocalState();}
   localStorage.setItem('vin_visited','1');
   setSyncStatus('');showApp(user.email);setAuthLoading(false);renderAll();
+  maybeShowWelcome();
 }
+
+// ── Onboarding: modal de bienvenida para cuentas nuevas ───────────────
+function buildOnboardingExample(){
+  const n=nowAR();const y=n.getFullYear(),m=n.getMonth();const mk=y+'-'+m;
+  return {
+    cards:['Mi tarjeta'],
+    currentYear:y, currentMonth:m,
+    recurring:[], recurrentes:[],
+    data:{ [mk]:{
+      ingresos:[{desc:'Sueldo',monto:850000,tags:['Trabajo'],dia:5}],
+      egresos:[
+        {desc:'Alquiler',monto:320000,tipo:'transferencia',dia:1},
+        {desc:'Supermercado',monto:90000,tipo:'débito',dia:6},
+        {desc:'Netflix',monto:4800,tipo:'tarjeta',card:'Mi tarjeta',dia:10},
+      ],
+      ahorros:[{tipo:'deposito',monto:300,desc:'Ahorro mensual',moneda:'USD'}]
+    }}
+  };
+}
+function loadOnboardingExample(){
+  state=buildOnboardingExample();
+  saveState();
+  switchSection('mensual');
+  renderAll();
+}
+function maybeShowWelcome(){
+  const empty=(!state.cards||!state.cards.length)&&(!state.data||!Object.keys(state.data).length)&&(!state.recurring||!state.recurring.length);
+  if(empty && !localStorage.getItem('vin_welcomed')){
+    localStorage.setItem('vin_welcomed','1'); // marcar al mostrar: se ve una sola vez, sin importar cómo se cierre
+    document.getElementById('modal-welcome').classList.add('open');
+  }
+}
+document.getElementById('welcome-example').addEventListener('click',()=>{loadOnboardingExample();document.getElementById('modal-welcome').classList.remove('open');});
+document.getElementById('welcome-scratch').addEventListener('click',()=>document.getElementById('modal-welcome').classList.remove('open'));
 // ── VinanzasIcon (vanilla JS) ─────────────────────────────────────
 (function(){const NS='http://www.w3.org/2000/svg',GEO={APEX:{x:50,y:93},TL:{x:6,y:6},TR:{x:94,y:6}},GEN={HW:10,SP:4.8,RAVG:2.4,JIT:.40},ANIM={STEP:50,DUR_BASE:270,DUR_SPREAD:40,HOLD:3800,FADE:600};
 function stonePath(cx,cy,r){const n=3+Math.floor(Math.random()*3),base=Math.random()*Math.PI*2,eA=Math.random()*Math.PI,eF=1.8+Math.random()*.9,pts=[];for(let i=0;i<n;i++){const s=(Math.PI*2)/n,a=base+i*s+(Math.random()-.5)*s*.45,d=r*(.72+Math.random()*.42),rx=d*Math.cos(a),ry=d*Math.sin(a),al=rx*Math.cos(eA)+ry*Math.sin(eA),pe=-rx*Math.sin(eA)+ry*Math.cos(eA);pts.push([cx+al*eF*Math.cos(eA)-pe*Math.sin(eA),cy+al*eF*Math.sin(eA)+pe*Math.cos(eA)]);}return pts.map((p,i)=>`${i?'L':'M'}${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(' ')+'Z';}
