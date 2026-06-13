@@ -1788,8 +1788,6 @@ document.getElementById('demo-btn-s2').addEventListener('click', startDemo);
 
 const _googleOAuth=()=>{const redirectTo=encodeURIComponent(window.location.origin+window.location.pathname);window.location.href=`${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`;};
 document.getElementById('google-btn').addEventListener('click',_googleOAuth);
-// Label dinámico según si el usuario ya visitó antes
-document.getElementById('google-btn-label').textContent=localStorage.getItem('vin_visited')?'Ingresar con Google':'Registrarse con Google';
 
 // ── Trust modales ─────────────────────────────────────────
 function openTrustModal(id){const m=document.getElementById('modal-'+id);if(m){m.style.display='flex';document.body.style.overflow='hidden';}}
