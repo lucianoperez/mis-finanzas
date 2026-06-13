@@ -167,6 +167,7 @@
   }
   .section-title { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
   .section-sub   { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .config-group-title { font-size: 12px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin: 1.75rem 0 0.75rem; }
   .section-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .month-nav-group { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center; }
 
@@ -1172,9 +1173,9 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         <span class="sidebar-label" data-short="Resumen">Resumen anual</span>
       </button>
-      <button class="sidebar-item" data-section="tarjetas" title="Tarjetas" aria-label="Tarjetas">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        <span class="sidebar-label">Tarjetas</span>
+      <button class="sidebar-item" data-section="tarjetas" title="Configuración" aria-label="Configuración">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span class="sidebar-label">Configuración</span>
       </button>
       <button class="sidebar-item" id="admin-nav-btn" data-section="admin" title="Admin" aria-label="Admin" style="display:none;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -1397,11 +1398,13 @@
     <section id="section-tarjetas" class="app-section">
       <div class="section-header">
         <div>
-          <h2 class="section-title">Configuración de tarjetas</h2>
-          <p class="section-sub">Administrá tus tarjetas de crédito y débito</p>
+          <h2 class="section-title">Configuración</h2>
+          <p class="section-sub">Gestioná tus tarjetas, tu cuenta y tus datos</p>
         </div>
       </div>
 
+      <!-- ── Bloque: Tarjetas ── -->
+      <h3 class="config-group-title">Tarjetas</h3>
       <div class="panel" style="margin-bottom:1.25rem;">
         <div class="panel-header"><span class="panel-title">Agregar nueva tarjeta</span></div>
         <div style="padding:1.25rem;">
@@ -1419,6 +1422,40 @@
           <span id="card-count-label" style="font-size:12px;color:var(--text3);"></span>
         </div>
         <div id="card-list-config" style="padding:8px;min-height:60px;"></div>
+      </div>
+
+      <!-- ── Bloque: Cuenta ── -->
+      <h3 class="config-group-title">Cuenta</h3>
+      <div class="panel">
+        <div style="padding:1.25rem; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+          <div style="min-width:0;">
+            <div style="font-size:12px; color:var(--text3); margin-bottom:3px;">Sesión iniciada como</div>
+            <div id="config-user-email" style="font-size:14px; font-weight:500; word-break:break-all;"></div>
+          </div>
+          <button id="config-logout" class="btn-cancel" style="flex-shrink:0;">Cerrar sesión</button>
+        </div>
+      </div>
+
+      <!-- ── Bloque: Datos ── -->
+      <h3 class="config-group-title">Datos</h3>
+      <div class="panel">
+        <div style="padding:1.25rem; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+          <div style="min-width:0;">
+            <div style="font-size:14px; font-weight:500;">Exportar mis datos</div>
+            <div style="font-size:12px; color:var(--text3);">Descargá el resumen del año en Excel o PDF.</div>
+          </div>
+          <div style="display:flex; gap:8px; flex-shrink:0;">
+            <button id="config-export-excel" class="btn-cancel">Excel</button>
+            <button id="config-export-pdf" class="btn-cancel">PDF</button>
+          </div>
+        </div>
+        <div style="padding:1.25rem; border-top:0.5px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+          <div style="min-width:0;">
+            <div style="font-size:14px; font-weight:500; color:var(--red);">Eliminar todos mis datos</div>
+            <div style="font-size:12px; color:var(--text3);">Borra tarjetas, movimientos y ahorros. No se puede deshacer.</div>
+          </div>
+          <button id="config-delete-data" class="btn-cancel" style="flex-shrink:0; color:var(--red); border-color:var(--red);">Eliminar</button>
+        </div>
       </div>
     </section>
 
@@ -1722,7 +1759,7 @@ function _setAuthMode(mode){
   setAuthError('');setAuthSuccess('');
 }
 function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('main-app').style.display='none';toggleDistPanel(false);const dtb=document.getElementById('dist-toggle-btn');if(dtb)dtb.style.display='none';const dp=document.getElementById('dist-panel');if(dp)dp.style.display='none';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display='none';document.body.classList.remove('demo-mode');const db=document.getElementById('demo-banner');if(db)db.style.display='none';window._previewMode=false;_savingsVisible=false;}
-function showApp(email){document.getElementById('login-screen').style.display='none';document.getElementById('main-app').style.display='';document.getElementById('dist-toggle-btn').style.display='';document.getElementById('dist-panel').style.display='';const el=document.getElementById('auth-user-email');if(el)el.textContent=email||'';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display=(email===ADMIN_EMAIL)?'':'none';}
+function showApp(email){document.getElementById('login-screen').style.display='none';document.getElementById('main-app').style.display='';document.getElementById('dist-toggle-btn').style.display='';document.getElementById('dist-panel').style.display='';const el=document.getElementById('auth-user-email');if(el)el.textContent=email||'';const ce=document.getElementById('config-user-email');if(ce)ce.textContent=email||'';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display=(email===ADMIN_EMAIL)?'':'none';}
 function setAuthError(m){const el=document.getElementById('login-error');el.textContent=m;el.style.display=m?'':'none';}
 function setAuthSuccess(m){const el=document.getElementById('login-success');el.textContent=m;el.style.display=m?'':'none';}
 function setAuthLoading(on){
@@ -1918,8 +1955,22 @@ document.getElementById('auth-password').addEventListener('keydown',e=>{if(e.key
 const _authCodeInp=document.getElementById('auth-code');
 _authCodeInp.addEventListener('input',()=>{_authCodeInp.value=_authCodeInp.value.replace(/\D/g,'').slice(0,6);});
 _authCodeInp.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('auth-password').focus();});
-document.getElementById('logout-btn').addEventListener('click',async()=>{await sbSignOut();state=emptyState();saveLocalState();showLogin();});
-document.getElementById('logout-btn-mobile').addEventListener('click',async()=>{await sbSignOut();state=emptyState();saveLocalState();showLogin();});
+async function doLogout(){await sbSignOut();state=emptyState();saveLocalState();showLogin();}
+document.getElementById('logout-btn').addEventListener('click',doLogout);
+document.getElementById('logout-btn-mobile').addEventListener('click',doLogout);
+document.getElementById('config-logout').addEventListener('click',doLogout);
+// Exportar desde Configuración: reusa los handlers del header Mensual
+document.getElementById('config-export-excel').addEventListener('click',()=>document.getElementById('export-excel').click());
+document.getElementById('config-export-pdf').addEventListener('click',()=>document.getElementById('export-pdf').click());
+// Eliminar todos los datos del usuario (acción destructiva, con confirmación)
+document.getElementById('config-delete-data').addEventListener('click',()=>{
+  if(!confirm('¿Eliminar TODOS tus datos? Se borrarán tus tarjetas, movimientos y ahorros de forma permanente. Esta acción no se puede deshacer.'))return;
+  state=emptyState();
+  saveState();
+  switchSection('mensual');
+  renderAll();
+  alert('Listo. Se eliminaron todos tus datos.');
+});
 async function initAppForUser(user){
   setSyncStatus('Cargando datos…');const remote=await sbLoadState();
   if(remote){state={...emptyState(),...remote};if(!state.recurring)state.recurring=[];if(!state.recurrentes)state.recurrentes=[];const n=nowAR();state.currentYear=n.getFullYear();state.currentMonth=n.getMonth();if(migrateCatToTags(state))saveState();else saveLocalState();}
@@ -1952,8 +2003,19 @@ function loadOnboardingExample(){
   switchSection('mensual');
   renderAll();
 }
+// Cuenta vacía = sin tarjetas, sin cuotas/recurrentes y sin movimientos reales.
+// (renderAll crea meses vacíos en state.data, así que no alcanza con mirar las claves)
+function isAccountEmpty(){
+  if(state.cards&&state.cards.length)return false;
+  if(state.recurring&&state.recurring.length)return false;
+  if(state.recurrentes&&state.recurrentes.length)return false;
+  const data=state.data||{};
+  for(const k in data){const md=data[k]||{};
+    if((md.ingresos&&md.ingresos.length)||(md.egresos&&md.egresos.length)||(md.ahorros&&md.ahorros.length))return false;}
+  return true;
+}
 function maybeShowWelcome(){
-  const empty=(!state.cards||!state.cards.length)&&(!state.data||!Object.keys(state.data).length)&&(!state.recurring||!state.recurring.length);
+  const empty=isAccountEmpty();
   if(empty && !localStorage.getItem('vin_welcomed')){
     localStorage.setItem('vin_welcomed','1'); // marcar al mostrar: se ve una sola vez, sin importar cómo se cierre
     document.getElementById('modal-welcome').classList.add('open');
