@@ -1838,7 +1838,7 @@ document.getElementById('auth-submit').addEventListener('click',async()=>{
   if(_authMode==='forgot'){
     if(!email){setAuthError('Ingresá tu email.');return;}
     setAuthLoading(true);
-    const r=await fetch(SUPABASE_URL+'/auth/v1/recover',{method:'POST',headers:sbHeaders(),body:JSON.stringify({email})});
+    const r=await fetch(SUPABASE_URL+'/auth/v1/recover',{method:'POST',headers:sbHeaders(),body:JSON.stringify({email,redirect_to:window.location.origin+window.location.pathname})});
     setAuthLoading(false);
     if(r.ok){setAuthSuccess('Email enviado. Revisá tu bandeja de entrada.');_setAuthMode('login');}
     else{setAuthError('No se pudo enviar el email. Verificá la dirección.');}
