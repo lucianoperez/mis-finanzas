@@ -7,6 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="logo.svg" />
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#1a2e1f" />
+<meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Vinanzas" />
@@ -1923,9 +1924,9 @@ initVinanzasIcon('vi-sidebar-icon',34);
   if(hashError){
     history.replaceState(null,'',window.location.pathname);
     showLogin();
+    _setAuthMode('step1');
     if(hash.get('error_code')==='otp_expired'){
-      _setAuthMode('forgot');
-      setAuthError('El link expiró o ya fue usado. Pedí un código nuevo más abajo.');
+      setAuthError('El link expiró o ya fue usado. Ingresá tu email para pedir un código nuevo.');
     } else {
       const desc=hash.get('error_description');
       setAuthError(desc?decodeURIComponent(desc.replace(/\+/g,' ')):'No se pudo completar la operación.');
@@ -2207,7 +2208,7 @@ function renderDistPanel(){
     bar.appendChild(seg);
   });
 }
-let _distOpen=false;
+var _distOpen=false;  // var (no let): se hoistea para que showLogin() del IIFE de init no caiga en TDZ
 let _collapsedGroups={};
 function toggleDistPanel(force){
   _distOpen=force!==undefined?force:!_distOpen;

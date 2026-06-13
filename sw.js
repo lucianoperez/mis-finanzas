@@ -25,6 +25,8 @@ self.addEventListener('fetch', e => {
   // Solo cachear GET, ignorar requests a Supabase (siempre online)
   if (e.request.method !== 'GET') return;
   if (e.request.url.includes('supabase.co')) return;
+  // Sólo http/https: evita errores al intentar cachear chrome-extension://, etc.
+  if (!e.request.url.startsWith('http')) return;
 
   e.respondWith(
     caches.match(e.request).then(cached => {
