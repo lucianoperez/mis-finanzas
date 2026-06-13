@@ -1696,7 +1696,7 @@ function _setAuthMode(mode){
   }
   setAuthError('');setAuthSuccess('');
 }
-function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('main-app').style.display='none';toggleDistPanel(false);const dtb=document.getElementById('dist-toggle-btn');if(dtb)dtb.style.display='none';const dp=document.getElementById('dist-panel');if(dp)dp.style.display='none';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display='none';document.body.classList.remove('demo-mode');const db=document.getElementById('demo-banner');if(db)db.style.display='none';window._previewMode=false;}
+function showLogin(){document.getElementById('login-screen').style.display='flex';document.getElementById('main-app').style.display='none';toggleDistPanel(false);const dtb=document.getElementById('dist-toggle-btn');if(dtb)dtb.style.display='none';const dp=document.getElementById('dist-panel');if(dp)dp.style.display='none';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display='none';document.body.classList.remove('demo-mode');const db=document.getElementById('demo-banner');if(db)db.style.display='none';window._previewMode=false;_savingsVisible=false;}
 function showApp(email){document.getElementById('login-screen').style.display='none';document.getElementById('main-app').style.display='';document.getElementById('dist-toggle-btn').style.display='';document.getElementById('dist-panel').style.display='';const el=document.getElementById('auth-user-email');if(el)el.textContent=email||'';const ab=document.getElementById('admin-nav-btn');if(ab)ab.style.display=(email===ADMIN_EMAIL)?'':'none';}
 function setAuthError(m){const el=document.getElementById('login-error');el.textContent=m;el.style.display=m?'':'none';}
 function setAuthSuccess(m){const el=document.getElementById('login-success');el.textContent=m;el.style.display=m?'':'none';}
@@ -1743,6 +1743,9 @@ function startDemo(){
           {desc:'Nafta YPF',monto:24000,tipo:'débito',dia:12},
           {desc:'Salida restaurante',monto:38000,tipo:'tarjeta',card:'Naranja X',dia:22},
           {desc:'Farmacia',monto:9500,tipo:'débito',dia:18},
+        ],
+        ahorros:[
+          {tipo:'deposito',monto:500,desc:'Ahorro mensual',moneda:'USD'},
         ]
       },
       [y+'-3']:{ // Abril
@@ -1760,6 +1763,9 @@ function startDemo(){
           {desc:'Ropa Zara',monto:78000,tipo:'tarjeta',card:'Naranja X',dia:25},
           {desc:'Nafta YPF',monto:26000,tipo:'débito',dia:11},
           {desc:'Médico clínica',monto:15000,tipo:'débito',dia:8,pendiente:true},
+        ],
+        ahorros:[
+          {tipo:'deposito',monto:350,desc:'Ahorro mensual',moneda:'USD'},
         ]
       },
       [y+'-4']:{ // Mayo
@@ -1776,6 +1782,10 @@ function startDemo(){
           {desc:'Nafta YPF',monto:28000,tipo:'débito',dia:14},
           {desc:'Cumpleaños amigo',monto:44000,tipo:'tarjeta',card:'Naranja X',dia:17},
           {desc:'Peluquería',monto:10000,tipo:'débito',dia:16,pendiente:true},
+        ],
+        ahorros:[
+          {tipo:'deposito',monto:500,desc:'Ahorro mensual',moneda:'USD'},
+          {tipo:'retiro',monto:200,desc:'Imprevisto',moneda:'USD'},
         ]
       },
       [y+'-5']:{ // Junio (mes actual)
@@ -1787,12 +1797,16 @@ function startDemo(){
           {desc:'Netflix',monto:4800,tipo:'tarjeta',card:'Visa Galicia',dia:10},
           {desc:'Spotify',monto:3200,tipo:'tarjeta',card:'Visa Galicia',dia:10},
           {desc:'Internet Personal',monto:14000,tipo:'débito',dia:20},
+        ],
+        ahorros:[
+          {tipo:'deposito',monto:400,desc:'Ahorro mensual',moneda:'USD'},
         ]
       }
     }
   };
   document.body.classList.add('demo-mode');
   document.getElementById('demo-banner').style.display='flex';
+  _savingsVisible=true;  // en demo mostramos los saldos para que se vea la feature
   showApp('demo');
   switchSection('mensual');
   renderAll();
@@ -2038,7 +2052,7 @@ function getSavingsBalance(upToYear,upToMonth,moneda='USD'){
   return total;
 }
 
-let _savingsVisible=false;
+var _savingsVisible=false;  // var (no let): showLogin() lo resetea durante el arranque, antes de esta línea
 const SVG_EYE_OPEN=`<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
 const SVG_EYE_OFF=`<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
 
