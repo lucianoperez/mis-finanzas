@@ -1004,7 +1004,7 @@
 
         <!-- PASO 2: contraseña -->
         <div id="auth-s2" style="display:none;">
-          <div class="auth-email-row">
+          <div class="auth-email-row" id="auth-email-row">
             <span class="auth-email-shown" id="auth-email-shown"></span>
             <button class="auth-change-email" id="auth-change-email">Cambiar</button>
           </div>
@@ -1646,13 +1646,13 @@ if(!state.recurring)state.recurring=[];
 if(!state.recurrentes)state.recurrentes=[];
 
 // ── AUTH ─────────────────────────────────────────────────────────────
-// _authMode: 'step1' | 'login' | 'register' | 'forgot'
+// _authMode: 'step1' | 'login' | 'register' | 'forgot' | 'reset'
 let _authMode='step1';
 function _setAuthMode(mode){
   _authMode=mode;
-  const isStep1=mode==='step1',isReg=mode==='register',isForgot=mode==='forgot';
-  const titles={step1:'Ingresá a Vinanzas',login:'Seguí donde lo dejaste',register:'Creá tu cuenta',forgot:'Recuperar contraseña'};
-  const subs={step1:'Elegí cómo continuar.',login:'Tu resumen financiero te espera.',register:'Creá tu cuenta gratuita.',forgot:'Te enviamos un email para restablecer tu contraseña.'};
+  const isStep1=mode==='step1',isReg=mode==='register',isForgot=mode==='forgot',isReset=mode==='reset';
+  const titles={step1:'Ingresá a Vinanzas',login:'Seguí donde lo dejaste',register:'Creá tu cuenta',forgot:'Recuperar contraseña',reset:'Creá tu nueva contraseña'};
+  const subs={step1:'Elegí cómo continuar.',login:'Tu resumen financiero te espera.',register:'Creá tu cuenta gratuita.',forgot:'Te enviamos un email para restablecer tu contraseña.',reset:'Elegí una contraseña segura para tu cuenta.'};
   document.getElementById('login-form-title').textContent=titles[mode]||'Bienvenido de vuelta';
   document.getElementById('login-subtitle').textContent=subs[mode]||'';
   // Mostrar paso correcto
@@ -1660,25 +1660,28 @@ function _setAuthMode(mode){
   document.getElementById('auth-s2').style.display=isStep1?'none':'';
   const badge=document.getElementById('login-free-badge');if(badge)badge.style.display=isReg?'flex':'none';
   if(!isStep1){
-    // Mostrar email capturado en paso 1
+    // En modo reset el email viene del token, no del paso 1
+    const emailRow=document.getElementById('auth-email-row');
+    if(emailRow)emailRow.style.display=isReset?'none':'';
     const shown=document.getElementById('auth-email-shown');
-    if(shown)shown.textContent=document.getElementById('auth-email').value.trim();
-    document.getElementById('auth-submit').textContent=isForgot?'Enviar email de recuperación':isReg?'Creá tu cuenta':'Ingresar';
+    if(shown&&!isReset)shown.textContent=document.getElementById('auth-email').value.trim();
+    document.getElementById('auth-submit').textContent=isForgot?'Enviar email de recuperación':isReg?'Creá tu cuenta':isReset?'Guardar nueva contraseña':'Ingresar';
     document.getElementById('auth-password-group').style.display=isForgot?'none':'';
     const p2=document.getElementById('auth-password2-group');
     const p2WasHidden=p2.style.display==='none';
-    p2.style.display=isReg?'':'none';
-    if(isReg&&p2WasHidden){p2.classList.remove('auth-fade');void p2.offsetWidth;p2.classList.add('auth-fade');}
-    document.getElementById('auth-forgot').style.display=(isForgot||isReg)?'none':'';
+    p2.style.display=(isReg||isReset)?'':'none';
+    if((isReg||isReset)&&p2WasHidden){p2.classList.remove('auth-fade');void p2.offsetWidth;p2.classList.add('auth-fade');}
+    document.getElementById('auth-forgot').style.display=(isForgot||isReg||isReset)?'none':'';
     document.getElementById('auth-back').style.display=isForgot?'':'none';
-    document.getElementById('auth-toggle').style.display=isForgot?'none':'';
+    document.getElementById('auth-toggle').style.display=(isForgot||isReset)?'none':'';
     document.getElementById('auth-toggle').textContent=isReg?'¿Ya tenés cuenta? Ingresá':'¿No tenés cuenta? Registrate';
-    const div=document.querySelector('#auth-s2 .login-divider');if(div)div.style.display=isForgot?'none':'';
+    const div=document.querySelector('#auth-s2 .login-divider');if(div)div.style.display=(isForgot||isReset)?'none':'';
     const hint=document.getElementById('auth-email-hint');if(hint)hint.style.display=isReg?'':'none';
+    const demoS2=document.getElementById('demo-btn-s2');if(demoS2)demoS2.style.display=isReset?'none':'';
     const passInp=document.getElementById('auth-password');
-    if(passInp)passInp.autocomplete=isReg?'new-password':'current-password';
+    if(passInp)passInp.autocomplete=(isReg||isReset)?'new-password':'current-password';
     const pass2Inp=document.getElementById('auth-password2');
-    if(pass2Inp)pass2Inp.autocomplete=isReg?'new-password':'';
+    if(pass2Inp)pass2Inp.autocomplete=(isReg||isReset)?'new-password':'';
   }
   setAuthError('');setAuthSuccess('');
 }
@@ -1690,11 +1693,11 @@ function setAuthLoading(on){
   const btn=document.getElementById('auth-submit');
   btn.disabled=on;
   if(on){
-    const labels={login:'Ingresando...',register:'Creando cuenta...',forgot:'Enviando...',step1:'Cargando...'};
+    const labels={login:'Ingresando...',register:'Creando cuenta...',forgot:'Enviando...',reset:'Guardando...',step1:'Cargando...'};
     const txt=labels[_authMode]||'Cargando...';
     btn.innerHTML='<svg class="coin-anim" width="24" height="19" viewBox="0 0 24 19" aria-hidden="true"><ellipse class="c1" cx="12" cy="15.5" rx="10" ry="3" fill="#b8860b"/><ellipse class="c2" cx="12" cy="10" rx="10" ry="3" fill="#daa520"/><ellipse class="c3" cx="12" cy="4.5" rx="10" ry="3" fill="#ffd700"/></svg>'+txt;
   } else {
-    const labels={login:'Ingresar',register:'Creá tu cuenta',forgot:'Enviar email de recuperación',step1:'Continuar →'};
+    const labels={login:'Ingresar',register:'Creá tu cuenta',forgot:'Enviar email de recuperación',reset:'Guardar nueva contraseña',step1:'Continuar →'};
     btn.textContent=labels[_authMode]||'Ingresar';
   }
 }
@@ -1822,6 +1825,16 @@ document.getElementById('auth-back').addEventListener('click',()=>_setAuthMode('
 document.getElementById('auth-submit').addEventListener('click',async()=>{
   const email=document.getElementById('auth-email').value.trim(),pass=document.getElementById('auth-password').value,pass2=document.getElementById('auth-password2').value;
   setAuthError('');setAuthSuccess('');
+  if(_authMode==='reset'){
+    if(pass.length<6){setAuthError('La contraseña debe tener al menos 6 caracteres.');return;}
+    if(pass!==pass2){setAuthError('Las contraseñas no coinciden.');return;}
+    setAuthLoading(true);
+    const r=await fetch(SUPABASE_URL+'/auth/v1/user',{method:'PUT',headers:{...sbHeaders(),'Authorization':'Bearer '+_accessToken},body:JSON.stringify({password:pass})});
+    setAuthLoading(false);
+    if(r.ok){setAuthSuccess('Contraseña actualizada. Ya podés ingresar.');_setAuthMode('step1');}
+    else{setAuthError('No se pudo actualizar la contraseña. Intentá de nuevo.');}
+    return;
+  }
   if(_authMode==='forgot'){
     if(!email){setAuthError('Ingresá tu email.');return;}
     setAuthLoading(true);
@@ -1885,6 +1898,14 @@ initVinanzasIcon('vi-sidebar-icon',34);
   if(at&&rt){
     history.replaceState(null,'',window.location.pathname);
     _accessToken=at; _refreshToken=rt;
+    if(hash.get('type')==='recovery'){
+      showLogin();
+      _setAuthMode('reset');
+      document.getElementById('auth-password').value='';
+      document.getElementById('auth-password2').value='';
+      setTimeout(()=>document.getElementById('auth-password').focus(),100);
+      return;
+    }
     localStorage.setItem('sb_access',at); localStorage.setItem('sb_refresh',rt);
     const r=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:sbHeaders()});
     if(r.ok){const u=await r.json();_userId=u.id;_userEmail=u.email;await initAppForUser({email:_userEmail});}
