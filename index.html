@@ -168,6 +168,17 @@
   .section-title { font-size: 22px; font-weight: 700; letter-spacing: -0.4px; }
   .section-sub   { font-size: 13px; color: var(--text2); margin-top: 2px; }
   .config-group-title { font-size: 12px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin: 1.75rem 0 0.75rem; }
+  .profile-avatar { border-radius: 50%; background: var(--green-bg); color: var(--green); display: flex; align-items: center; justify-content: center; font-weight: 700; overflow: hidden; flex-shrink: 0; background-size: cover; background-position: center; text-transform: uppercase; }
+  .profile-photo-link { font-size: 13px; font-weight: 600; color: var(--green); cursor: pointer; background: none; border: none; padding: 0; font-family: inherit; }
+  .profile-photo-link:hover { text-decoration: underline; }
+  .profile-photo-remove { font-size: 12px; color: var(--text3); cursor: pointer; background: none; border: none; padding: 0; font-family: inherit; text-align: left; }
+  .profile-photo-remove:hover { color: var(--red); }
+  .sidebar-footer-profile { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; min-width: 0; }
+  .sidebar-footer-profile .profile-avatar { width: 32px; height: 32px; font-size: 13px; }
+  .sidebar-footer-names { min-width: 0; overflow: hidden; }
+  .sidebar-footer-nick { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sidebar.collapsed .sidebar-footer-names { display: none; }
+  .sidebar.collapsed .sidebar-footer-profile { justify-content: center; margin-bottom: 8px; }
   .section-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .month-nav-group { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: center; }
 
@@ -1188,7 +1199,13 @@
     </div>
 
     <div class="sidebar-footer">
-      <div class="sidebar-footer-email" id="auth-user-email"></div>
+      <div class="sidebar-footer-profile">
+        <div id="sidebar-avatar" class="profile-avatar" aria-hidden="true"></div>
+        <div class="sidebar-footer-names">
+          <div class="sidebar-footer-nick" id="sidebar-nickname"></div>
+          <div class="sidebar-footer-email" id="auth-user-email" style="margin-bottom:0;"></div>
+        </div>
+      </div>
       <div class="sidebar-footer-row">
         <span id="sync-status" style="font-size:11px;color:var(--text3);"></span>
         <button id="logout-btn" class="add-btn" style="padding:4px 6px;display:flex;align-items:center;justify-content:center;" title="Cerrar sesión" aria-label="Cerrar sesión">
@@ -1403,6 +1420,32 @@
         </div>
       </div>
 
+      <!-- ── Bloque: Perfil ── -->
+      <h3 class="config-group-title">Perfil</h3>
+      <div class="panel">
+        <div style="padding:1.25rem;">
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:18px;">
+            <div id="config-avatar" class="profile-avatar" style="width:64px; height:64px; font-size:26px;" aria-hidden="true"></div>
+            <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
+              <button type="button" class="profile-photo-link" id="profile-photo-link">Cambiar foto</button>
+              <button type="button" class="profile-photo-remove" id="profile-photo-remove" style="display:none;">Quitar foto</button>
+              <input type="file" id="profile-photo-input" accept="image/png,image/jpeg,image/webp" style="display:none;" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="profile-nickname">Apodo</label>
+            <input type="text" id="profile-nickname" maxlength="30" placeholder="¿Cómo querés que te llamemos?" />
+          </div>
+        </div>
+        <div style="padding:1.25rem; border-top:0.5px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+          <div style="min-width:0;">
+            <div style="font-size:12px; color:var(--text3); margin-bottom:3px;">Sesión iniciada como</div>
+            <div id="config-user-email" style="font-size:14px; font-weight:500; word-break:break-all;"></div>
+          </div>
+          <button id="config-logout" class="btn-cancel" style="flex-shrink:0;">Cerrar sesión</button>
+        </div>
+      </div>
+
       <!-- ── Bloque: Tarjetas ── -->
       <h3 class="config-group-title">Tarjetas</h3>
       <div class="panel" style="margin-bottom:1.25rem;">
@@ -1422,18 +1465,6 @@
           <span id="card-count-label" style="font-size:12px;color:var(--text3);"></span>
         </div>
         <div id="card-list-config" style="padding:8px;min-height:60px;"></div>
-      </div>
-
-      <!-- ── Bloque: Cuenta ── -->
-      <h3 class="config-group-title">Cuenta</h3>
-      <div class="panel">
-        <div style="padding:1.25rem; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
-          <div style="min-width:0;">
-            <div style="font-size:12px; color:var(--text3); margin-bottom:3px;">Sesión iniciada como</div>
-            <div id="config-user-email" style="font-size:14px; font-weight:500; word-break:break-all;"></div>
-          </div>
-          <button id="config-logout" class="btn-cancel" style="flex-shrink:0;">Cerrar sesión</button>
-        </div>
       </div>
 
       <!-- ── Bloque: Datos ── -->
@@ -1694,7 +1725,7 @@ async function sbSaveState(payload){if(!_userId||window._previewMode)return;awai
 
 // ── STATE ────────────────────────────────────────────────────────────
 function nowAR(){return new Date(new Date().toLocaleString('en-US',{timeZone:'America/Argentina/Buenos_Aires'}));}
-function emptyState(){const n=nowAR();return{cards:[],data:{},recurring:[],recurrentes:[],currentYear:n.getFullYear(),currentMonth:n.getMonth()};}
+function emptyState(){const n=nowAR();return{cards:[],data:{},recurring:[],recurrentes:[],profile:{nickname:'',avatar:''},currentYear:n.getFullYear(),currentMonth:n.getMonth()};}
 function migrateCatToTags(st){let changed=false;Object.values(st.data||{}).forEach(md=>{(md.ingresos||[]).forEach(ing=>{if(ing.cat&&ing.cat!=='Ingreso'){if(!ing.tags)ing.tags=[];if(!ing.tags.includes(ing.cat))ing.tags.unshift(ing.cat);changed=true;}if('cat'in ing){delete ing.cat;changed=true;}});});return changed;}
 function loadLocalState(){try{const r=localStorage.getItem(STORAGE_KEY);if(r)return JSON.parse(r);}catch(e){}return emptyState();}
 function saveLocalState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){}}
@@ -1705,7 +1736,7 @@ async function saveState(){
   if(_syncTimeout)clearTimeout(_syncTimeout);
   _syncTimeout=setTimeout(async()=>{
     if(!_userId)return;setSyncStatus('Guardando…');
-    try{await sbSaveState({cards:state.cards,data:state.data,recurring:state.recurring,recurrentes:state.recurrentes});setSyncStatus('✓ Guardado');}
+    try{await sbSaveState({cards:state.cards,data:state.data,recurring:state.recurring,recurrentes:state.recurrentes,profile:state.profile});setSyncStatus('✓ Guardado');}
     catch(e){setSyncStatus('⚠ Error al guardar');}
     setTimeout(()=>setSyncStatus(''),2000);
   },800);
@@ -1971,6 +2002,54 @@ document.getElementById('config-delete-data').addEventListener('click',()=>{
   renderAll();
   alert('Listo. Se eliminaron todos tus datos.');
 });
+
+// ── Perfil: apodo + foto ──────────────────────────────────────────────
+function ensureProfile(){if(!state.profile||typeof state.profile!=='object')state.profile={nickname:'',avatar:''};return state.profile;}
+function profileInitial(){
+  const p=state.profile||{};
+  const base=(p.nickname||_userEmail||document.getElementById('auth-user-email')?.textContent||'').trim();
+  return base?base[0].toUpperCase():'?';
+}
+function renderProfile(){
+  const p=state.profile||{};
+  const ini=profileInitial();
+  [['config-avatar',true],['sidebar-avatar',true]].forEach(([id])=>{
+    const el=document.getElementById(id);if(!el)return;
+    if(p.avatar){el.style.backgroundImage='url('+p.avatar+')';el.textContent='';}
+    else{el.style.backgroundImage='';el.textContent=ini;}
+  });
+  const ni=document.getElementById('profile-nickname');
+  if(ni && document.activeElement!==ni)ni.value=p.nickname||'';
+  const rm=document.getElementById('profile-photo-remove');
+  if(rm)rm.style.display=p.avatar?'':'none';
+  const sn=document.getElementById('sidebar-nickname');
+  if(sn){sn.textContent=p.nickname||'';sn.style.display=p.nickname?'':'none';}
+}
+// Redimensiona y comprime la imagen a 256x256 (crop centrado) antes de guardar
+function handleProfilePhoto(file){
+  if(!file||!/^image\//.test(file.type))return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const S=256,c=document.createElement('canvas');c.width=S;c.height=S;
+      const ctx=c.getContext('2d');
+      const scale=Math.max(S/img.width,S/img.height),w=img.width*scale,h=img.height*scale;
+      ctx.drawImage(img,(S-w)/2,(S-h)/2,w,h);
+      ensureProfile().avatar=c.toDataURL('image/jpeg',0.85);
+      renderProfile();saveState();
+    };
+    img.onerror=()=>alert('No pudimos procesar esa imagen. Probá con otra.');
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+document.getElementById('profile-photo-link').addEventListener('click',()=>document.getElementById('profile-photo-input').click());
+document.getElementById('profile-photo-input').addEventListener('change',e=>{handleProfilePhoto(e.target.files[0]);e.target.value='';});
+document.getElementById('profile-photo-remove').addEventListener('click',()=>{ensureProfile().avatar='';renderProfile();saveState();});
+document.getElementById('profile-nickname').addEventListener('input',e=>{ensureProfile().nickname=e.target.value;renderProfile();saveLocalState();});
+document.getElementById('profile-nickname').addEventListener('change',()=>saveState());
+
 async function initAppForUser(user){
   setSyncStatus('Cargando datos…');const remote=await sbLoadState();
   if(remote){state={...emptyState(),...remote};if(!state.recurring)state.recurring=[];if(!state.recurrentes)state.recurrentes=[];const n=nowAR();state.currentYear=n.getFullYear();state.currentMonth=n.getMonth();if(migrateCatToTags(state))saveState();else saveLocalState();}
@@ -1986,6 +2065,7 @@ function buildOnboardingExample(){
     cards:['Mi tarjeta'],
     currentYear:y, currentMonth:m,
     recurring:[], recurrentes:[],
+    profile:{nickname:'',avatar:''},
     data:{ [mk]:{
       ingresos:[{desc:'Sueldo',monto:850000,tags:['Trabajo'],dia:5}],
       egresos:[
@@ -2357,7 +2437,7 @@ function toggleDistPanel(force){
 }
 
 function renderAll(){
-  renderMonthLabel();renderCards();renderLists();renderSummary();renderSavings();renderDistPanel();
+  renderMonthLabel();renderCards();renderLists();renderSummary();renderSavings();renderDistPanel();renderProfile();
   const rs=document.getElementById('section-resumen');
   if(rs&&rs.classList.contains('active')){
     if(document.getElementById('view-resumen').style.display!=='none'){renderCompChips();renderComparativo();renderResumen();}
